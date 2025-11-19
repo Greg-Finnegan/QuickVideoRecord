@@ -18,9 +18,6 @@ My use case: Record a quick video, upload WebM video stright from dowloads to Ji
 ## Installation
 
 1. Clone or download this repository:
-   ```bash
-   git clone https://github.com/yourusername/QuickVideoRecord.git
-   ```
 
 2. Open Chrome and navigate to `chrome://extensions/`
 
