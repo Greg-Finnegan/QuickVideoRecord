@@ -1,6 +1,6 @@
 {
   "name": "quick-video-record",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Chrome Window Recorder with Microphone - Fast screen recording with audio into WebM format",
   "license": "MIT",
   "repository": {

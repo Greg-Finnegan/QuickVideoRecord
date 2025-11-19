@@ -29,6 +29,7 @@ export default mergeConfig(
       rollupOptions: {
         input: {
           popup: resolve(__dirname, 'src/pages/popup/index.html'),
+          sidepanel: resolve(__dirname, 'src/pages/sidepanel/index.html'),
           recorder: resolve(__dirname, 'src/pages/recorder/index.html'),
         },
       },

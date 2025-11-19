@@ -12,7 +12,7 @@
     "default_title": "Window Recorder"
   },
   "side_panel": {
-    "default_path": "src/pages/popup/index.html"
+    "default_path": "src/pages/sidepanel/index.html"
   },
   "permissions": [
     "desktopCapture",
