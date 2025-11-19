@@ -17,7 +17,7 @@ My use case: Record a quick video, upload WebM video stright from dowloads to Ji
 
 ## Installation
 
-1. Clone or download this repository:
+1. Clone or download this repo
 
 2. Open Chrome and navigate to `chrome://extensions/`
 
