@@ -5,6 +5,8 @@ const SidePanel: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [status, setStatus] = useState('');
   const [recorderTabId, setRecorderTabId] = useState<number | null>(null);
+  const [micStatus, setMicStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [micStream, setMicStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
     console.log('SidePanel component mounted');
@@ -44,17 +46,17 @@ const SidePanel: React.FC = () => {
     setStatus('Opening recorder...');
     console.log('Starting capture flow...');
 
-    // Create recorder tab - it will handle everything
+    // Create recorder tab with autostart parameter
     chrome.tabs.create(
       {
-        url: chrome.runtime.getURL('src/pages/recorder/index.html'),
-        active: true, // Make it active so getDisplayMedia works
+        url: chrome.runtime.getURL('src/pages/recorder/index.html?autostart=true'),
+        active: true,
       },
       (createdTab) => {
         if (createdTab.id) {
           setRecorderTabId(createdTab.id);
           console.log('Created recorder tab:', createdTab.id);
-          setStatus('Recorder opened - click the button on that tab to start');
+          setStatus('Select your screen in the new tab...');
         }
       }
     );

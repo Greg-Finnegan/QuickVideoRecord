@@ -11,6 +11,22 @@ const Recorder: React.FC = () => {
   useEffect(() => {
     console.log('Recorder component mounted');
 
+    // Check if autostart parameter is present
+    const urlParams = new URLSearchParams(window.location.search);
+    const autostart = urlParams.get('autostart') === 'true';
+    console.log('Autostart:', autostart);
+
+    let timer: NodeJS.Timeout | null = null;
+
+    if (autostart) {
+      // Autostart immediately - the tab creation itself preserves the user gesture
+      // But we need a tiny delay for React to finish rendering
+      timer = setTimeout(() => {
+        console.log('Auto-starting recording...');
+        handleStartClick();
+      }, 50);
+    }
+
     // Listen for stop messages
     const messageListener = (
       message: any,
@@ -30,6 +46,7 @@ const Recorder: React.FC = () => {
     chrome.runtime.onMessage.addListener(messageListener);
 
     return () => {
+      if (timer) clearTimeout(timer);
       chrome.runtime.onMessage.removeListener(messageListener);
     };
   }, []);
