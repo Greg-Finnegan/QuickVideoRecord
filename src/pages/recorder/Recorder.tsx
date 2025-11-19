@@ -203,9 +203,18 @@ const Recorder: React.FC = () => {
         </div>
       )}
       {isRecording && (
-        <div className="recording-indicator">
-          <span className="recording-dot"></span>
-          Recording in progress...
+        <div className="recording-overlay">
+          <div className="recording-indicator">
+            <span className="recording-dot"></span>
+            <span className="recording-text">Recording in progress...</span>
+          </div>
+          <button className="stop-recording-button" onClick={stopRecording}>
+            <span className="stop-icon">⏹</span>
+            Stop & Download
+          </button>
+          <p className="recording-hint">
+            Recording will be saved as WebM file when you stop
+          </p>
         </div>
       )}
       <video ref={videoRef} autoPlay muted style={{ display: 'none' }} />

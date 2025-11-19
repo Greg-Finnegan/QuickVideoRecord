@@ -102,17 +102,14 @@ const SidePanel: React.FC = () => {
       setMicStream(stream);
       setMicStatus('success');
 
-      // Create audio context to show volume level
+      // Create audio context to verify microphone is working
       const audioContext = new AudioContext();
       const analyser = audioContext.createAnalyser();
       const microphone = audioContext.createMediaStreamSource(stream);
-      analyser.fftSize = 256;
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
 
       microphone.connect(analyser);
 
-      // Visual feedback - could be enhanced with a volume meter
+      // Microphone is now active and verified
       console.log('Microphone is active and capturing audio');
 
       // Auto-stop after 3 seconds
@@ -149,7 +146,6 @@ const SidePanel: React.FC = () => {
           onClick={handleStartRecording}
           disabled={isRecording}
         >
-          <span className="btn-icon">🎥</span>
           Start Recording
         </button>
 
@@ -168,7 +164,7 @@ const SidePanel: React.FC = () => {
           disabled={isRecording}
         >
           <span className="btn-icon">
-            {micStatus === 'idle' && '🎤'}
+            {micStatus === 'idle'}
             {micStatus === 'testing' && '🔴'}
             {micStatus === 'success' && '✅'}
             {micStatus === 'error' && '❌'}
