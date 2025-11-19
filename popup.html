@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Window Recorder</title>
+  <style>
+    body {
+      width: 100%;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    button {
+      padding: 12px 24px;
+      margin: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      transition: background-color 0.2s;
+      width: 200px;
+      font-weight: 500;
+    }
+    #recordBtn {
+      background-color: #4285f4;
+      color: white;
+    }
+    #recordBtn:hover { background-color: #3367d6; }
+    #stopBtn {
+      background-color: #db4437;
+      color: white;
+      display: none;
+    }
+    #stopBtn:hover { background-color: #c13524; }
+    #status {
+      margin-top: 16px;
+      font-size: 13px;
+      color: #555;
+      padding: 8px;
+      min-height: 20px;
+    }
+    #console {
+      margin-top: 20px;
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 11px;
+      text-align: left;
+      max-height: 300px;
+      overflow-y: auto;
+      color: #333;
+    }
+    .log-entry {
+      margin: 4px 0;
+      padding: 2px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .log-error {
+      color: #d32f2f;
+    }
+    .log-success {
+      color: #388e3c;
+    }
+  </style>
+</head>
+<body>
+  <h3>Window Recorder</h3>
+  <button id="recordBtn">Start Recording</button>
+  <button id="stopBtn">Stop & Download</button>
+  <div id="status"></div>
+  <!-- <div id="console">
+    <strong>Console Log:</strong>
+    <div id="consoleContent"></div>
+  </div> -->
+
+  <script src="popup.js"></script>
+</body>
+</html>
