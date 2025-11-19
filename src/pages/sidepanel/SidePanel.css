@@ -207,6 +207,32 @@
   margin-top: auto;
 }
 
+.manage-recordings-btn {
+  width: 100%;
+  background: var(--jira-neutral-0);
+  color: var(--jira-blue-primary);
+  border: 1px solid var(--jira-blue-primary);
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  transition: background-color 0.1s ease-out;
+}
+
+.manage-recordings-btn:hover {
+  background: rgba(0, 82, 204, 0.04);
+}
+
+.manage-recordings-btn:active {
+  background: rgba(0, 82, 204, 0.08);
+}
+
 .info-section {
   margin-bottom: 16px;
 }
@@ -242,7 +268,7 @@
   padding: 6px 8px;
   background: var(--jira-neutral-20);
   border: 1px solid var(--jira-neutral-30);
-  border-radius: 3px;
+  border-radius: 20px;
   font-size: 11px;
   text-align: center;
   color: var(--jira-text-secondary);

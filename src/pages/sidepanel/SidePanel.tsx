@@ -78,6 +78,12 @@ const SidePanel: React.FC = () => {
     }
   };
 
+  const handleManageRecordings = () => {
+    chrome.tabs.create({
+      url: chrome.runtime.getURL('src/pages/recordings/index.html'),
+    });
+  };
+
   const handleTestMicrophone = async () => {
     if (micStatus === 'testing') {
       // Stop testing
@@ -184,11 +190,15 @@ const SidePanel: React.FC = () => {
       </div>
 
       <div className="sidepanel-footer">
+        <button className="manage-recordings-btn" onClick={handleManageRecordings}>
+          <span className="btn-icon">📁</span>
+          Manage Recordings
+        </button>
+
         <div className="info-section">
           <h3>How to use:</h3>
           <ol>
             <li>Click "Start Recording"</li>
-            <li>Click the button on the new tab</li>
             <li>Select your screen/window</li>
             <li>Grant microphone access</li>
             <li>Click "Stop & Download" when done</li>
@@ -197,7 +207,7 @@ const SidePanel: React.FC = () => {
 
         <div className="features">
           <div className="feature-item">✓ Screen + Microphone</div>
-          <div className="feature-item">✓ System Audio (optional)</div>
+          <div className="feature-item">✓ System Audio</div>
           <div className="feature-item">✓ 1080p @ 30fps</div>
           <div className="feature-item">✓ WebM format</div>
         </div>

@@ -144,17 +144,41 @@ const Recorder: React.FC = () => {
         }
       };
 
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         console.log('Recording stopped, total chunks:', recordedChunksRef.current.length);
         const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
         const url = URL.createObjectURL(blob);
+        const filename = `recording_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
 
         console.log('Sending download request...');
         chrome.runtime.sendMessage({
           action: 'downloadVideo',
           url: url,
-          filename: `recording_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`,
+          filename: filename,
         });
+
+        // Save recording metadata
+        try {
+          const result = await chrome.storage.local.get('recordings');
+          const recordings = result.recordings || [];
+
+          recordings.unshift({
+            id: Date.now().toString(),
+            filename: filename,
+            timestamp: Date.now(),
+            size: blob.size,
+          });
+
+          // Keep only last 50 recordings
+          if (recordings.length > 50) {
+            recordings.splice(50);
+          }
+
+          await chrome.storage.local.set({ recordings });
+          console.log('Recording metadata saved');
+        } catch (error) {
+          console.error('Failed to save recording metadata:', error);
+        }
 
         // Close tab after download
         setTimeout(() => chrome.tabs.getCurrent((tab) => tab && tab.id && chrome.tabs.remove(tab.id)), 1000);

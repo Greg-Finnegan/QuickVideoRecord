@@ -31,6 +31,7 @@ export default mergeConfig(
           popup: resolve(__dirname, 'src/pages/popup/index.html'),
           sidepanel: resolve(__dirname, 'src/pages/sidepanel/index.html'),
           recorder: resolve(__dirname, 'src/pages/recorder/index.html'),
+          recordings: resolve(__dirname, 'src/pages/recordings/index.html'),
         },
       },
     },
