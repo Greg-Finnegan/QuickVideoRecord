@@ -39,8 +39,12 @@ const SidePanel: React.FC = () => {
 
     return () => {
       chrome.runtime.onMessage.removeListener(messageListener);
+      // Clean up mic stream on unmount
+      if (micStream) {
+        micStream.getTracks().forEach(track => track.stop());
+      }
     };
-  }, [recorderTabId]);
+  }, [recorderTabId, micStream]);
 
   const handleStartRecording = () => {
     setStatus('Opening recorder...');
@@ -74,6 +78,64 @@ const SidePanel: React.FC = () => {
     }
   };
 
+  const handleTestMicrophone = async () => {
+    if (micStatus === 'testing') {
+      // Stop testing
+      if (micStream) {
+        micStream.getTracks().forEach(track => track.stop());
+        setMicStream(null);
+      }
+      setMicStatus('idle');
+      return;
+    }
+
+    setMicStatus('testing');
+    console.log('Testing microphone...');
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+
+      console.log('Microphone access granted:', stream);
+      setMicStream(stream);
+      setMicStatus('success');
+
+      // Create audio context to show volume level
+      const audioContext = new AudioContext();
+      const analyser = audioContext.createAnalyser();
+      const microphone = audioContext.createMediaStreamSource(stream);
+      analyser.fftSize = 256;
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      microphone.connect(analyser);
+
+      // Visual feedback - could be enhanced with a volume meter
+      console.log('Microphone is active and capturing audio');
+
+      // Auto-stop after 3 seconds
+      setTimeout(() => {
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+          audioContext.close();
+          setMicStream(null);
+          setMicStatus('idle');
+        }
+      }, 3000);
+
+    } catch (err: any) {
+      console.error('Microphone test failed:', err);
+      setMicStatus('error');
+
+      // Reset after 3 seconds
+      setTimeout(() => {
+        setMicStatus('idle');
+      }, 3000);
+    }
+  };
+
   return (
     <div className="sidepanel-container">
       <div className="sidepanel-header">
@@ -98,6 +160,23 @@ const SidePanel: React.FC = () => {
         >
           <span className="btn-icon">⏹</span>
           Stop & Download
+        </button>
+
+        <button
+          className={`action-btn test-mic-btn ${micStatus === 'success' ? 'success' : ''} ${micStatus === 'error' ? 'error' : ''} ${isRecording ? 'hidden' : ''}`}
+          onClick={handleTestMicrophone}
+          disabled={isRecording}
+        >
+          <span className="btn-icon">
+            {micStatus === 'idle' && '🎤'}
+            {micStatus === 'testing' && '🔴'}
+            {micStatus === 'success' && '✅'}
+            {micStatus === 'error' && '❌'}
+          </span>
+          {micStatus === 'idle' && 'Test Microphone'}
+          {micStatus === 'testing' && 'Testing... (3s)'}
+          {micStatus === 'success' && 'Microphone OK!'}
+          {micStatus === 'error' && 'Microphone Error'}
         </button>
 
         {status && (

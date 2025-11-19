@@ -93,6 +93,36 @@
   transform: translateY(0);
 }
 
+.test-mic-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 14px;
+  padding: 12px 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.test-mic-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.test-mic-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.test-mic-btn.success {
+  background: rgba(76, 175, 80, 0.3);
+  border-color: #4caf50;
+}
+
+.test-mic-btn.error {
+  background: rgba(244, 67, 54, 0.3);
+  border-color: #f44336;
+}
+
 .hidden {
   display: none !important;
 }
