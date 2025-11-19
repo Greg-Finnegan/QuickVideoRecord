@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Chrome Window Recorder with Microphone",
-  "version": "1.0",
+  "version": "1.0.0",
   "description": "Records the current Chrome window with microphone audio in WebM format at a balanced resolution for clarity and file size.",
   "icons": {
     "16": "icon16.png",
@@ -12,7 +12,7 @@
     "default_title": "Window Recorder"
   },
   "side_panel": {
-    "default_path": "popup.html"
+    "default_path": "src/pages/popup/index.html"
   },
   "permissions": [
     "desktopCapture",
@@ -26,17 +26,18 @@
     "<all_urls>"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/pages/background/index.ts",
+    "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "js": ["src/pages/content/index.ts"]
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["recorder.html"],
+      "resources": ["src/pages/recorder/index.html"],
       "matches": ["<all_urls>"]
     }
   ]

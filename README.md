@@ -17,15 +17,37 @@ My use case: Record a quick video, upload WebM video stright from dowloads to Ji
 
 ## Installation
 
-1. Clone or download this repo
+### For Users (Pre-built Extension)
 
+1. Download the latest release from the releases page
 2. Open Chrome and navigate to `chrome://extensions/`
-
 3. Enable "Developer mode" using the toggle in the top right corner
-
-4. Click "Load unpacked" and select the project directory
-
+4. Click "Load unpacked" and select the `dist_chrome` directory from the downloaded release
 5. The extension icon should now appear in your Chrome toolbar
+
+### For Developers (Build from Source)
+
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/yourusername/QuickVideoRecord.git
+   cd QuickVideoRecord
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install --legacy-peer-deps
+   ```
+
+3. Build the extension:
+   ```bash
+   npm run build
+   ```
+
+4. Load the extension in Chrome:
+   - Open Chrome and navigate to `chrome://extensions/`
+   - Enable "Developer mode" using the toggle in the top right corner
+   - Click "Load unpacked" and select the `dist_chrome` directory
+   - The extension icon should now appear in your Chrome toolbar
 
 ## Usage
 
@@ -47,21 +69,42 @@ My use case: Record a quick video, upload WebM video stright from dowloads to Ji
 
 ```
 QuickVideoRecord/
-├── manifest.json       # Extension configuration
-├── popup.html          # Side panel UI
-├── popup.js            # Side panel logic
-├── recorder.html       # Recording page UI
-├── recorder.js         # Core recording functionality
-├── background.js       # Background service worker
-├── content.js          # Content script
-├── icon16.png          # Extension icon (16x16)
-├── icon48.png          # Extension icon (48x48)
-├── icon128.png         # Extension icon (128x128)
-└── create_icons.sh     # Icon generation script
+├── src/
+│   ├── pages/
+│   │   ├── popup/           # Side panel React component
+│   │   │   ├── Popup.tsx
+│   │   │   ├── Popup.css
+│   │   │   ├── index.tsx
+│   │   │   └── index.html
+│   │   ├── recorder/        # Recorder React component
+│   │   │   ├── Recorder.tsx
+│   │   │   ├── Recorder.css
+│   │   │   ├── index.tsx
+│   │   │   └── index.html
+│   │   ├── background/      # Background service worker
+│   │   │   └── index.ts
+│   │   └── content/         # Content script
+│   │       └── index.ts
+│   ├── global.d.ts
+│   └── vite-env.d.ts
+├── public/                  # Static assets
+│   ├── icon16.png
+│   ├── icon48.png
+│   └── icon128.png
+├── dist_chrome/             # Build output (Chrome)
+├── manifest.json            # Extension configuration
+├── manifest.dev.json        # Development manifest overrides
+├── package.json
+├── tsconfig.json
+├── vite.config.base.ts      # Base Vite configuration
+├── vite.config.chrome.ts    # Chrome-specific Vite config
+└── custom-vite-plugins.ts   # Custom Vite plugins
 ```
 
 ## Technical Details
 
+- **Framework**: React 19 + TypeScript
+- **Build Tool**: Vite 6 with @crxjs/vite-plugin
 - **Manifest Version**: 3 (latest Chrome extension standard)
 - **Video Codec**: VP9 (fallback to VP8 if not supported)
 - **Audio Codec**: Opus
@@ -94,12 +137,35 @@ The extension requires the following permissions:
 
 ## Development
 
-To modify or extend the extension:
+### Development Mode with Hot Reload
 
-1. Make your changes to the relevant files
-2. Go to `chrome://extensions/`
-3. Click the refresh icon on the extension card
+Run the extension in development mode with hot reload:
+
+```bash
+npm run dev
+```
+
+This will:
+- Build the extension in development mode
+- Watch for file changes
+- Automatically rebuild on changes
+- Output to `dist_chrome` directory
+
+Then load the `dist_chrome` directory in Chrome as an unpacked extension.
+
+### Making Changes
+
+1. Make your changes to files in the `src/` directory
+2. The extension will automatically rebuild
+3. Go to `chrome://extensions/` and click the refresh icon on the extension card
 4. Test your changes
+
+### Available Scripts
+
+- `npm run dev` - Development mode with hot reload (Chrome)
+- `npm run build` - Production build (Chrome)
+- `npm run build:chrome` - Production build for Chrome
+- `npm run build:firefox` - Production build for Firefox
 
 ## License
 
