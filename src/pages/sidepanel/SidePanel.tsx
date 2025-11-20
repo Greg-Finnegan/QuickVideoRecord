@@ -140,15 +140,15 @@ const SidePanel: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-screen m-0 p-0 font-sans bg-slate-50 text-slate-900 flex flex-col">
-      <div className="p-5 px-4 bg-white border-b-2 border-slate-200">
-        <h2 className="m-0 mb-1 text-xl font-medium text-slate-900">Window Recorder</h2>
-        <p className="m-0 text-xs text-slate-600 font-normal">Record your screen with audio</p>
+    <div className="w-full min-h-screen m-0 p-0 font-sans bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 flex flex-col">
+      <div className="p-5 px-4 bg-white dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700">
+        <h2 className="m-0 mb-1 text-xl font-medium text-slate-900 dark:text-slate-100">Window Recorder</h2>
+        <p className="m-0 text-xs text-slate-600 dark:text-slate-400 font-normal">Record your screen with audio</p>
       </div>
 
-      <div className="p-4 flex-1 bg-slate-100">
+      <div className="p-4 flex-1 bg-slate-100 dark:bg-slate-800/50">
         <button
-          className={`w-full px-4 py-2.5 mb-2 text-sm font-medium cursor-pointer border-none rounded-full transition-all flex items-center justify-center gap-2 shadow-none leading-relaxed bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-300 ${isRecording ? 'hidden' : ''}`}
+          className={`w-full px-4 py-2.5 mb-2 text-sm font-medium cursor-pointer border-none rounded-full transition-all flex items-center justify-center gap-2 shadow-none leading-relaxed bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 active:bg-blue-800 dark:active:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 ${isRecording ? 'hidden' : ''}`}
           onClick={handleStartRecording}
           disabled={isRecording}
         >
@@ -156,7 +156,7 @@ const SidePanel: React.FC = () => {
         </button>
 
         <button
-          className={`w-full px-4 py-2.5 mb-2 text-sm font-medium cursor-pointer border-none rounded-full transition-all flex items-center justify-center gap-2 shadow-none leading-relaxed bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-300 ${!isRecording ? 'hidden' : ''}`}
+          className={`w-full px-4 py-2.5 mb-2 text-sm font-medium cursor-pointer border-none rounded-full transition-all flex items-center justify-center gap-2 shadow-none leading-relaxed bg-red-600 dark:bg-red-500 text-white hover:bg-red-700 dark:hover:bg-red-600 active:bg-red-800 dark:active:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 ${!isRecording ? 'hidden' : ''}`}
           onClick={handleStopRecording}
           disabled={!isRecording}
         >
@@ -165,12 +165,12 @@ const SidePanel: React.FC = () => {
         </button>
 
         <button
-          className={`w-full px-4 py-2.5 mb-2 text-sm font-medium cursor-pointer rounded-full transition-all flex items-center justify-center gap-2 shadow-none leading-relaxed disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-300 ${
+          className={`w-full px-4 py-2.5 mb-2 text-sm font-medium cursor-pointer rounded-full transition-all flex items-center justify-center gap-2 shadow-none leading-relaxed disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 ${
             micStatus === 'success'
-              ? 'bg-green-600 text-white border-green-600 hover:bg-green-700'
+              ? 'bg-green-600 dark:bg-green-500 text-white border-green-600 dark:border-green-500 hover:bg-green-700 dark:hover:bg-green-600'
               : micStatus === 'error'
-              ? 'bg-red-600 text-white border-red-600 hover:bg-red-700'
-              : 'bg-white text-slate-900 border border-slate-300 hover:bg-slate-100 active:bg-slate-200'
+              ? 'bg-red-600 dark:bg-red-500 text-white border-red-600 dark:border-red-500 hover:bg-red-700 dark:hover:bg-red-600'
+              : 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600 active:bg-slate-200 dark:active:bg-slate-500'
           } ${isRecording ? 'hidden' : ''}`}
           onClick={handleTestMicrophone}
           disabled={isRecording}
@@ -188,16 +188,16 @@ const SidePanel: React.FC = () => {
         </button>
 
         {status && (
-          <div className="mt-3 px-3 py-2 bg-white border border-slate-300 rounded flex items-center gap-2 text-xs text-left text-slate-600">
-            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isRecording ? 'bg-red-600 animate-[pulse_1.5s_ease-in-out_infinite]' : 'bg-slate-400'}`}></span>
+          <div className="mt-3 px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded flex items-center gap-2 text-xs text-left text-slate-600 dark:text-slate-300">
+            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isRecording ? 'bg-red-600 animate-[pulse_1.5s_ease-in-out_infinite]' : 'bg-slate-400 dark:bg-slate-500'}`}></span>
             {status}
           </div>
         )}
       </div>
 
-      <div className="p-4 bg-white border-t-2 border-slate-200 mt-auto">
+      <div className="p-4 bg-white dark:bg-slate-800 border-t-2 border-slate-200 dark:border-slate-700 mt-auto">
         <button
-          className="w-full bg-white text-blue-600 border border-blue-600 px-4 py-2.5 text-sm font-medium rounded cursor-pointer flex items-center justify-center gap-2 mb-4 transition-colors hover:bg-blue-50 active:bg-blue-100"
+          className="w-full bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 px-4 py-2.5 text-sm font-medium rounded cursor-pointer flex items-center justify-center gap-2 mb-4 transition-colors hover:bg-blue-50 dark:hover:bg-slate-600 active:bg-blue-100 dark:active:bg-slate-500"
           onClick={handleManageRecordings}
         >
           <span className="text-base leading-none">📁</span>
@@ -205,8 +205,8 @@ const SidePanel: React.FC = () => {
         </button>
 
         <div className="mb-4">
-          <h3 className="m-0 mb-2 text-xs font-semibold text-slate-900 uppercase tracking-wide">How to use:</h3>
-          <ol className="m-0 pl-5 text-xs leading-relaxed text-slate-600">
+          <h3 className="m-0 mb-2 text-xs font-semibold text-slate-900 dark:text-slate-100 uppercase tracking-wide">How to use:</h3>
+          <ol className="m-0 pl-5 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
             <li className="mb-1">Click "Start Recording"</li>
             <li className="mb-1">Select your screen/window</li>
             <li className="mb-1">Grant microphone access</li>
@@ -215,10 +215,10 @@ const SidePanel: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-2 gap-1.5">
-          <div className="px-2 py-1.5 bg-slate-100 border border-slate-200 rounded-full text-[11px] text-center text-slate-600 font-medium">✓ Screen + Microphone</div>
-          <div className="px-2 py-1.5 bg-slate-100 border border-slate-200 rounded-full text-[11px] text-center text-slate-600 font-medium">✓ System Audio</div>
-          <div className="px-2 py-1.5 bg-slate-100 border border-slate-200 rounded-full text-[11px] text-center text-slate-600 font-medium">✓ 1080p @ 30fps</div>
-          <div className="px-2 py-1.5 bg-slate-100 border border-slate-200 rounded-full text-[11px] text-center text-slate-600 font-medium">✓ WebM format</div>
+          <div className="px-2 py-1.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full text-[11px] text-center text-slate-600 dark:text-slate-400 font-medium">✓ Screen + Microphone</div>
+          <div className="px-2 py-1.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full text-[11px] text-center text-slate-600 dark:text-slate-400 font-medium">✓ System Audio</div>
+          <div className="px-2 py-1.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full text-[11px] text-center text-slate-600 dark:text-slate-400 font-medium">✓ 1080p @ 30fps</div>
+          <div className="px-2 py-1.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full text-[11px] text-center text-slate-600 dark:text-slate-400 font-medium">✓ WebM format</div>
         </div>
       </div>
     </div>

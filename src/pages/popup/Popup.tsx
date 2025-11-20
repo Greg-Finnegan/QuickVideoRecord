@@ -71,23 +71,23 @@ const Popup: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-screen m-0 p-5 font-sans text-center">
-      <h3 className="mt-0 text-slate-900">Window Recorder</h3>
+    <div className="w-full min-h-screen m-0 p-5 font-sans text-center bg-white dark:bg-slate-900">
+      <h3 className="mt-0 text-slate-900 dark:text-slate-100">Window Recorder</h3>
       <button
         id="recordBtn"
-        className={`px-6 py-3 my-2 text-sm cursor-pointer border-none rounded-md transition-colors w-[200px] font-medium bg-blue-600 text-white hover:bg-blue-700 ${isRecording ? 'hidden' : ''}`}
+        className={`px-6 py-3 my-2 text-sm cursor-pointer border-none rounded-md transition-colors w-[200px] font-medium bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 ${isRecording ? 'hidden' : ''}`}
         onClick={handleStartRecording}
       >
         Start Recording
       </button>
       <button
         id="stopBtn"
-        className={`px-6 py-3 my-2 text-sm cursor-pointer border-none rounded-md transition-colors w-[200px] font-medium bg-red-600 text-white hover:bg-red-700 ${!isRecording ? 'hidden' : ''}`}
+        className={`px-6 py-3 my-2 text-sm cursor-pointer border-none rounded-md transition-colors w-[200px] font-medium bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 ${!isRecording ? 'hidden' : ''}`}
         onClick={handleStopRecording}
       >
         Stop & Download
       </button>
-      <div id="status" className="mt-4 text-[13px] text-slate-600 p-2 min-h-[20px]">
+      <div id="status" className="mt-4 text-[13px] text-slate-600 dark:text-slate-400 p-2 min-h-[20px]">
         {status}
       </div>
     </div>
