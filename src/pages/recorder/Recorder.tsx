@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import '../../index.css';
 import Button from '../../components/Button';
+import { Recording, RecordingStorage } from '../../types/recording';
 
 const Recorder: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -160,15 +161,17 @@ const Recorder: React.FC = () => {
 
         // Save recording metadata
         try {
-          const result = await chrome.storage.local.get('recordings');
-          const recordings = result.recordings || [];
+          const result = await chrome.storage.local.get('recordings') as RecordingStorage;
+          const recordings: Recording[] = result.recordings || [];
 
-          recordings.unshift({
+          const newRecording: Recording = {
             id: Date.now().toString(),
             filename: filename,
             timestamp: Date.now(),
             size: blob.size,
-          });
+          };
+
+          recordings.unshift(newRecording);
 
           // Keep only last 50 recordings
           if (recordings.length > 50) {

@@ -1,14 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import '../../index.css';
-import Button from '../../components/Button';
-
-interface Recording {
-  id: string;
-  filename: string;
-  timestamp: number;
-  duration?: number;
-  size?: number;
-}
+import React, { useState, useEffect } from "react";
+import "../../index.css";
+import Button from "../../components/Button";
+import { Recording, RecordingStorage } from "../../types/recording";
 
 const Recordings: React.FC = () => {
   const [recordings, setRecordings] = useState<Recording[]>([]);
@@ -20,11 +13,11 @@ const Recordings: React.FC = () => {
 
   const loadRecordings = async () => {
     try {
-      const result = await chrome.storage.local.get('recordings');
-      const savedRecordings = result.recordings || [];
+      const result = await chrome.storage.local.get("recordings") as RecordingStorage;
+      const savedRecordings: Recording[] = result.recordings || [];
       setRecordings(savedRecordings);
     } catch (error) {
-      console.error('Failed to load recordings:', error);
+      console.error("Failed to load recordings:", error);
     } finally {
       setLoading(false);
     }
@@ -37,7 +30,9 @@ const Recordings: React.FC = () => {
   };
 
   const clearAllRecordings = async () => {
-    if (window.confirm('Are you sure you want to clear all recording history?')) {
+    if (
+      window.confirm("Are you sure you want to clear all recording history?")
+    ) {
       await chrome.storage.local.set({ recordings: [] });
       setRecordings([]);
     }
@@ -48,22 +43,24 @@ const Recordings: React.FC = () => {
   };
 
   const formatSize = (bytes?: number) => {
-    if (!bytes) return 'Unknown';
+    if (!bytes) return "Unknown";
     const mb = bytes / (1024 * 1024);
     return `${mb.toFixed(2)} MB`;
   };
 
   const formatDuration = (seconds?: number) => {
-    if (!seconds) return 'Unknown';
+    if (!seconds) return "Unknown";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   return (
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans">
       <div className="bg-white dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700 px-10 py-8">
-        <h1 className="m-0 mb-2 text-2xl font-medium text-slate-900 dark:text-slate-100">Recording History</h1>
+        <h1 className="m-0 mb-2 text-2xl font-medium text-slate-900 dark:text-slate-100">
+          Recording History
+        </h1>
         <p className="m-0 text-sm text-slate-600 dark:text-slate-400">
           View and manage your screen recordings
         </p>
@@ -77,15 +74,20 @@ const Recordings: React.FC = () => {
         ) : recordings.length === 0 ? (
           <div className="text-center py-20 px-5">
             <div className="text-6xl mb-4">📹</div>
-            <h2 className="m-0 mb-2 text-xl font-medium text-slate-900 dark:text-slate-100">No recordings yet</h2>
-            <p className="m-0 text-sm text-slate-600 dark:text-slate-400">Your recording history will appear here after you create your first recording.</p>
+            <h2 className="m-0 mb-2 text-xl font-medium text-slate-900 dark:text-slate-100">
+              No recordings yet
+            </h2>
+            <p className="m-0 text-sm text-slate-600 dark:text-slate-400">
+              Your recording history will appear here after you create your
+              first recording.
+            </p>
           </div>
         ) : (
           <>
             <div className="flex justify-end mb-4">
               <Button
                 variant="secondary"
-                rounded='full'
+                rounded="full"
                 onClick={clearAllRecordings}
               >
                 Clear All History
@@ -99,7 +101,9 @@ const Recordings: React.FC = () => {
                 >
                   <div className="text-[32px] flex-shrink-0">🎥</div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="m-0 mb-2 text-sm font-medium text-slate-900 dark:text-slate-100 break-words">{recording.filename}</h3>
+                    <h3 className="m-0 mb-2 text-sm font-medium text-slate-900 dark:text-slate-100 break-words">
+                      {recording.filename}
+                    </h3>
                     <div className="flex flex-wrap gap-4">
                       <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
                         📅 {formatDate(recording.timestamp)}
