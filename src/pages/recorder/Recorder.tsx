@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import '../../index.css';
 import Button from '../../components/Button';
 import { Recording, RecordingStorage } from '../../types/recording';
+import { videoStorage } from '../../utils/videoStorage';
 
 const Recorder: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -151,6 +152,7 @@ const Recorder: React.FC = () => {
         const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
         const url = URL.createObjectURL(blob);
         const filename = `recording_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
+        const recordingId = Date.now().toString();
 
         console.log('Sending download request...');
         chrome.runtime.sendMessage({
@@ -159,13 +161,18 @@ const Recorder: React.FC = () => {
           filename: filename,
         });
 
-        // Save recording metadata
+        // Save recording metadata and video to IndexedDB
         try {
+          // Save video blob to IndexedDB
+          await videoStorage.saveVideo(recordingId, blob);
+          console.log('Video blob saved to IndexedDB');
+
+          // Save recording metadata
           const result = await chrome.storage.local.get('recordings') as RecordingStorage;
           const recordings: Recording[] = result.recordings || [];
 
           const newRecording: Recording = {
-            id: Date.now().toString(),
+            id: recordingId,
             filename: filename,
             timestamp: Date.now(),
             size: blob.size,
@@ -175,13 +182,17 @@ const Recorder: React.FC = () => {
 
           // Keep only last 50 recordings
           if (recordings.length > 50) {
-            recordings.splice(50);
+            const oldRecordings = recordings.splice(50);
+            // Clean up old videos from IndexedDB
+            for (const oldRec of oldRecordings) {
+              await videoStorage.deleteVideo(oldRec.id);
+            }
           }
 
           await chrome.storage.local.set({ recordings });
           console.log('Recording metadata saved');
         } catch (error) {
-          console.error('Failed to save recording metadata:', error);
+          console.error('Failed to save recording:', error);
         }
 
         // Close tab after download

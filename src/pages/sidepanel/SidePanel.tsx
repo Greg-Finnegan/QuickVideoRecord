@@ -223,6 +223,7 @@ const SidePanel: React.FC = () => {
         <Button
           variant="secondary"
           fullWidth
+          rounded="full"
           className="mb-4 px-4 py-2.5 border border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600"
           onClick={handleManageRecordings}
         >

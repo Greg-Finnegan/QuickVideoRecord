@@ -2,10 +2,15 @@ import React, { useState, useEffect } from "react";
 import "../../index.css";
 import Button from "../../components/Button";
 import { Recording, RecordingStorage } from "../../types/recording";
+import { videoStorage } from "../../utils/videoStorage";
 
 const Recordings: React.FC = () => {
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedRecording, setSelectedRecording] = useState<Recording | null>(
+    null
+  );
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     loadRecordings();
@@ -13,7 +18,9 @@ const Recordings: React.FC = () => {
 
   const loadRecordings = async () => {
     try {
-      const result = await chrome.storage.local.get("recordings") as RecordingStorage;
+      const result = (await chrome.storage.local.get(
+        "recordings"
+      )) as RecordingStorage;
       const savedRecordings: Recording[] = result.recordings || [];
       setRecordings(savedRecordings);
     } catch (error) {
@@ -26,7 +33,13 @@ const Recordings: React.FC = () => {
   const deleteRecording = async (id: string) => {
     const updatedRecordings = recordings.filter((r) => r.id !== id);
     await chrome.storage.local.set({ recordings: updatedRecordings });
+    await videoStorage.deleteVideo(id);
     setRecordings(updatedRecordings);
+
+    // Close player if deleted recording was being played
+    if (selectedRecording?.id === id) {
+      closePlayer();
+    }
   };
 
   const clearAllRecordings = async () => {
@@ -34,8 +47,36 @@ const Recordings: React.FC = () => {
       window.confirm("Are you sure you want to clear all recording history?")
     ) {
       await chrome.storage.local.set({ recordings: [] });
+      await videoStorage.clearAll();
       setRecordings([]);
+      closePlayer();
     }
+  };
+
+  const playRecording = async (recording: Recording) => {
+    try {
+      const blob = await videoStorage.getVideo(recording.id);
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        setVideoUrl(url);
+        setSelectedRecording(recording);
+      } else {
+        alert(
+          "Video not found. It may have been deleted or not saved properly."
+        );
+      }
+    } catch (error) {
+      console.error("Failed to load video:", error);
+      alert("Failed to load video");
+    }
+  };
+
+  const closePlayer = () => {
+    if (videoUrl) {
+      URL.revokeObjectURL(videoUrl);
+    }
+    setVideoUrl(null);
+    setSelectedRecording(null);
   };
 
   const formatDate = (timestamp: number) => {
@@ -100,8 +141,11 @@ const Recordings: React.FC = () => {
                   className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-4 flex items-center gap-4 transition-all hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-[0_1px_3px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
                 >
                   <div className="text-[32px] flex-shrink-0">🎥</div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="m-0 mb-2 text-sm font-medium text-slate-900 dark:text-slate-100 break-words">
+                  <div
+                    className="flex-1 min-w-0 cursor-pointer"
+                    onClick={() => playRecording(recording)}
+                  >
+                    <h3 className="m-0 mb-2 text-sm font-medium text-slate-900 dark:text-slate-100 break-words hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                       {recording.filename}
                     </h3>
                     <div className="flex flex-wrap gap-4">
@@ -123,7 +167,10 @@ const Recordings: React.FC = () => {
                   <Button
                     variant="secondary"
                     className="bg-transparent px-3 py-2 text-lg hover:bg-red-600 dark:hover:bg-red-500 hover:border-red-600 dark:hover:border-red-500 hover:text-white flex-shrink-0"
-                    onClick={() => deleteRecording(recording.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteRecording(recording.id);
+                    }}
                     title="Remove from history"
                   >
                     🗑️
@@ -134,6 +181,41 @@ const Recordings: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Video Player Modal */}
+      {selectedRecording && videoUrl && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          onClick={closePlayer}
+        >
+          <div
+            className="bg-white dark:bg-slate-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <h2 className="text-lg font-medium text-slate-900 dark:text-slate-100 truncate">
+                {selectedRecording.filename}
+              </h2>
+              <Button
+                variant="ghost"
+                className="text-2xl p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
+                onClick={closePlayer}
+              >
+                ✕
+              </Button>
+            </div>
+            <div className="p-4">
+              <video
+                src={videoUrl}
+                controls
+                autoPlay
+                className="w-full rounded"
+                style={{ maxHeight: "calc(90vh - 120px)" }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
