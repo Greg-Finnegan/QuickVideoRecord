@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './Recordings.css';
+import '../../index.css';
 
 interface Recording {
   id: string;
@@ -60,56 +60,62 @@ const Recordings: React.FC = () => {
   };
 
   return (
-    <div className="recordings-container">
-      <div className="recordings-header">
-        <h1>Recording History</h1>
-        <p className="recordings-subtitle">
+    <div className="w-full min-h-screen bg-slate-50 text-slate-900 font-sans">
+      <div className="bg-white border-b-2 border-slate-200 px-10 py-8">
+        <h1 className="m-0 mb-2 text-2xl font-medium text-slate-900">Recording History</h1>
+        <p className="m-0 text-sm text-slate-600">
           View and manage your screen recordings
         </p>
       </div>
 
-      <div className="recordings-content">
+      <div className="px-10 py-6 max-w-[1200px] mx-auto">
         {loading ? (
-          <div className="recordings-empty">
+          <div className="text-center py-20 px-5">
             <p>Loading recordings...</p>
           </div>
         ) : recordings.length === 0 ? (
-          <div className="recordings-empty">
-            <div className="empty-icon">📹</div>
-            <h2>No recordings yet</h2>
-            <p>Your recording history will appear here after you create your first recording.</p>
+          <div className="text-center py-20 px-5">
+            <div className="text-6xl mb-4">📹</div>
+            <h2 className="m-0 mb-2 text-xl font-medium text-slate-900">No recordings yet</h2>
+            <p className="m-0 text-sm text-slate-600">Your recording history will appear here after you create your first recording.</p>
           </div>
         ) : (
           <>
-            <div className="recordings-actions">
-              <button className="clear-all-btn" onClick={clearAllRecordings}>
+            <div className="flex justify-end mb-4">
+              <button
+                className="bg-white text-slate-600 border border-slate-300 px-4 py-2 text-sm font-medium rounded cursor-pointer transition-colors hover:bg-slate-100"
+                onClick={clearAllRecordings}
+              >
                 Clear All History
               </button>
             </div>
-            <div className="recordings-list">
+            <div className="flex flex-col gap-3">
               {recordings.map((recording) => (
-                <div key={recording.id} className="recording-card">
-                  <div className="recording-icon">🎥</div>
-                  <div className="recording-info">
-                    <h3 className="recording-filename">{recording.filename}</h3>
-                    <div className="recording-meta">
-                      <span className="meta-item">
+                <div
+                  key={recording.id}
+                  className="bg-white border border-slate-300 rounded p-4 flex items-center gap-4 transition-all hover:border-slate-400 hover:shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
+                >
+                  <div className="text-[32px] flex-shrink-0">🎥</div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="m-0 mb-2 text-sm font-medium text-slate-900 break-words">{recording.filename}</h3>
+                    <div className="flex flex-wrap gap-4">
+                      <span className="text-xs text-slate-600 flex items-center gap-1">
                         📅 {formatDate(recording.timestamp)}
                       </span>
                       {recording.duration && (
-                        <span className="meta-item">
+                        <span className="text-xs text-slate-600 flex items-center gap-1">
                           ⏱️ {formatDuration(recording.duration)}
                         </span>
                       )}
                       {recording.size && (
-                        <span className="meta-item">
+                        <span className="text-xs text-slate-600 flex items-center gap-1">
                           💾 {formatSize(recording.size)}
                         </span>
                       )}
                     </div>
                   </div>
                   <button
-                    className="delete-btn"
+                    className="bg-transparent border border-slate-300 px-3 py-2 text-lg rounded cursor-pointer transition-all flex-shrink-0 hover:bg-red-600 hover:border-red-600"
                     onClick={() => deleteRecording(recording.id)}
                     title="Remove from history"
                   >

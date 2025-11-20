@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import './Recorder.css';
+import '../../index.css';
 
 const Recorder: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -215,33 +215,39 @@ const Recorder: React.FC = () => {
   };
 
   return (
-    <div className="recorder-container">
+    <div className="w-full h-screen bg-[#1a1a1a] flex items-center justify-center relative">
       {showStartButton && (
-        <div className="start-overlay">
-          <button className="start-button" onClick={handleStartClick}>
+        <div className="text-center text-white">
+          <button
+            className="bg-blue-600 text-white border-none px-8 py-4 text-base font-medium rounded-lg cursor-pointer transition-colors shadow-[0_2px_8px_rgba(66,133,244,0.3)] hover:bg-blue-700 active:scale-[0.98]"
+            onClick={handleStartClick}
+          >
             Click to Start Screen Recording
           </button>
-          <p className="instruction-text">
+          <p className="mt-4 text-[#aaa] text-sm">
             You'll be prompted to select which screen, window, or tab to record
           </p>
         </div>
       )}
       {isRecording && (
-        <div className="recording-overlay">
-          <div className="recording-indicator">
-            <span className="recording-dot"></span>
-            <span className="recording-text">Recording in progress...</span>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center flex flex-col items-center gap-6">
+          <div className="bg-black/85 text-white px-8 py-4 rounded-xl flex items-center gap-3 text-base font-medium shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <span className="w-3 h-3 bg-red-600 rounded-full flex-shrink-0 animate-[pulse_1.5s_ease-in-out_infinite]"></span>
+            <span className="leading-none">Recording in progress...</span>
           </div>
-          <button className="stop-recording-button" onClick={stopRecording}>
-            <span className="stop-icon">⏹</span>
+          <button
+            className="bg-red-600 text-white border-none px-10 py-4 text-base font-semibold rounded-lg cursor-pointer flex items-center gap-2.5 transition-all shadow-[0_4px_12px_rgba(222,53,11,0.3)] hover:bg-red-700 hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,53,11,0.4)] active:translate-y-0"
+            onClick={stopRecording}
+          >
+            <span className="text-lg leading-none">⏹</span>
             Stop & Download
           </button>
-          <p className="recording-hint">
+          <p className="m-0 text-[#aaa] text-[13px] max-w-[300px]">
             Recording will be saved as WebM file when you stop
           </p>
         </div>
       )}
-      <video ref={videoRef} autoPlay muted style={{ display: 'none' }} />
+      <video ref={videoRef} autoPlay muted className="hidden" />
     </div>
   );
 };
