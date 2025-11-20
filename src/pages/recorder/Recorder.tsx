@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import '../../index.css';
+import Button from '../../components/Button';
 
 const Recorder: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -218,12 +219,13 @@ const Recorder: React.FC = () => {
     <div className="w-full h-screen bg-slate-900 dark:bg-black flex items-center justify-center relative">
       {showStartButton && (
         <div className="text-center text-white">
-          <button
-            className="bg-blue-600 dark:bg-blue-500 text-white border-none px-8 py-4 text-base font-medium rounded-lg cursor-pointer transition-colors shadow-[0_2px_8px_rgba(66,133,244,0.3)] hover:bg-blue-700 dark:hover:bg-blue-600 active:scale-[0.98]"
+          <Button
+            variant="primary"
+            className="px-8 py-4 text-base rounded-lg shadow-[0_2px_8px_rgba(66,133,244,0.3)] active:scale-[0.98]"
             onClick={handleStartClick}
           >
             Click to Start Screen Recording
-          </button>
+          </Button>
           <p className="mt-4 text-slate-400 dark:text-slate-500 text-sm">
             You'll be prompted to select which screen, window, or tab to record
           </p>
@@ -235,13 +237,14 @@ const Recorder: React.FC = () => {
             <span className="w-3 h-3 bg-red-600 dark:bg-red-500 rounded-full flex-shrink-0 animate-[pulse_1.5s_ease-in-out_infinite]"></span>
             <span className="leading-none">Recording in progress...</span>
           </div>
-          <button
-            className="bg-red-600 dark:bg-red-500 text-white border-none px-10 py-4 text-base font-semibold rounded-lg cursor-pointer flex items-center gap-2.5 transition-all shadow-[0_4px_12px_rgba(222,53,11,0.3)] hover:bg-red-700 dark:hover:bg-red-600 hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,53,11,0.4)] active:translate-y-0"
+          <Button
+            variant="warning"
+            className="px-10 py-4 text-base font-semibold rounded-lg shadow-[0_4px_12px_rgba(222,53,11,0.3)] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,53,11,0.4)] active:translate-y-0"
             onClick={stopRecording}
           >
             <span className="text-lg leading-none">⏹</span>
             Stop & Download
-          </button>
+          </Button>
           <p className="m-0 text-slate-400 dark:text-slate-500 text-[13px] max-w-[300px]">
             Recording will be saved as WebM file when you stop
           </p>
