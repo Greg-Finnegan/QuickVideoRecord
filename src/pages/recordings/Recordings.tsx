@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "../../index.css";
 import Button from "../../components/Button";
+import JiraConnect from "../../components/JiraConnect";
 import { Recording, RecordingStorage } from "../../types/recording";
 import { videoStorage } from "../../utils/videoStorage";
 import { transcriptionService } from "../../utils/transcription";
@@ -13,7 +14,8 @@ const Recordings: React.FC = () => {
   );
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [transcribing, setTranscribing] = useState(false);
-  const [transcriptionProgress, setTranscriptionProgress] = useState<string>('');
+  const [transcriptionProgress, setTranscriptionProgress] =
+    useState<string>("");
 
   useEffect(() => {
     loadRecordings();
@@ -81,19 +83,19 @@ const Recordings: React.FC = () => {
     setVideoUrl(null);
     setSelectedRecording(null);
     setTranscribing(false);
-    setTranscriptionProgress('');
+    setTranscriptionProgress("");
   };
 
   const transcribeRecording = async (recording: Recording) => {
     if (!recording.id) return;
 
     setTranscribing(true);
-    setTranscriptionProgress('Starting transcription...');
+    setTranscriptionProgress("Starting transcription...");
 
     try {
       const blob = await videoStorage.getVideo(recording.id);
       if (!blob) {
-        alert('Video not found');
+        alert("Video not found");
         return;
       }
 
@@ -105,7 +107,9 @@ const Recordings: React.FC = () => {
       );
 
       // Update recording with transcript
-      const result = await chrome.storage.local.get('recordings') as RecordingStorage;
+      const result = (await chrome.storage.local.get(
+        "recordings"
+      )) as RecordingStorage;
       const allRecordings: Recording[] = result.recordings || [];
       const updatedRecordings = allRecordings.map((r) =>
         r.id === recording.id ? { ...r, transcript } : r
@@ -119,12 +123,12 @@ const Recordings: React.FC = () => {
         setSelectedRecording({ ...selectedRecording, transcript });
       }
 
-      setTranscriptionProgress('Transcription complete!');
-      setTimeout(() => setTranscriptionProgress(''), 3000);
+      setTranscriptionProgress("Transcription complete!");
+      setTimeout(() => setTranscriptionProgress(""), 3000);
     } catch (error) {
-      console.error('Transcription error:', error);
-      alert('Transcription failed. Please try again.');
-      setTranscriptionProgress('');
+      console.error("Transcription error:", error);
+      alert("Transcription failed. Please try again.");
+      setTranscriptionProgress("");
     } finally {
       setTranscribing(false);
     }
@@ -150,12 +154,19 @@ const Recordings: React.FC = () => {
   return (
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans">
       <div className="bg-white dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700 px-10 py-8">
-        <h1 className="m-0 mb-2 text-2xl font-medium text-slate-900 dark:text-slate-100">
-          Recording History
-        </h1>
-        <p className="m-0 text-sm text-slate-600 dark:text-slate-400">
-          View and manage your screen recordings
-        </p>
+        <div className="flex justify-between items-center max-w-[1250px] mx-auto">
+          <div className="flex flex-col">
+            <h1 className="m-0 text-2xl font-medium text-slate-900 dark:text-slate-100">
+              Recording History
+            </h1>
+            <p className="m-0 text-sm text-slate-600 dark:text-slate-400">
+              View and manage your screen recordings
+            </p>
+          </div>
+          <div className="mt-2">
+            <JiraConnect />
+          </div>
+        </div>
       </div>
 
       <div className="px-10 py-6 max-w-[1200px] mx-auto">

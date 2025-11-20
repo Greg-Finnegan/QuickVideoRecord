@@ -1,12 +1,12 @@
 // Jira OAuth Configuration
-const JIRA_CONFIG = {
+const getJiraConfig = () => ({
   clientId: import.meta.env.VITE_JIRA_CLIENT_ID,
   clientSecret: import.meta.env.VITE_JIRA_CLIENT_SECRET,
-  redirectUri: chrome.identity.getRedirectURL("oauth2"),
+  redirectUri: chrome.identity?.getRedirectURL("oauth2") || "",
   authUrl: "https://auth.atlassian.com/authorize",
   tokenUrl: "https://auth.atlassian.com/oauth/token",
   scope: "read:jira-user read:jira-work write:jira-work offline_access",
-};
+});
 
 interface JiraTokens {
   accessToken: string;
@@ -19,77 +19,24 @@ interface JiraTokens {
 class JiraAuthService {
   async authenticate(): Promise<boolean> {
     try {
-      // Build OAuth URL
-      const authUrl = new URL(JIRA_CONFIG.authUrl);
-      authUrl.searchParams.append("audience", "api.atlassian.com");
-      authUrl.searchParams.append("client_id", JIRA_CONFIG.clientId);
-      authUrl.searchParams.append("scope", JIRA_CONFIG.scope);
-      authUrl.searchParams.append("redirect_uri", JIRA_CONFIG.redirectUri);
-      authUrl.searchParams.append("response_type", "code");
-      authUrl.searchParams.append("prompt", "consent");
+      const config = getJiraConfig();
 
-      console.log("Starting Jira OAuth flow...");
-      console.log("Redirect URI:", JIRA_CONFIG.redirectUri);
-
-      // Launch OAuth flow
-      const responseUrl = await chrome.identity.launchWebAuthFlow({
-        url: authUrl.toString(),
-        interactive: true,
-      });
-
-      // Extract authorization code from response
-      const url = new URL(responseUrl);
-      const code = url.searchParams.get("code");
-
-      if (!code) {
-        throw new Error("No authorization code received");
-      }
-
-      console.log("Authorization code received, exchanging for tokens...");
-
-      // Exchange code for tokens
-      const tokenParams = new URLSearchParams({
-        grant_type: "authorization_code",
-        client_id: JIRA_CONFIG.clientId,
-        client_secret: JIRA_CONFIG.clientSecret,
-        code: code,
-        redirect_uri: JIRA_CONFIG.redirectUri,
-      });
-
-      const tokenResponse = await fetch(JIRA_CONFIG.tokenUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+      // Send message to background script to handle OAuth flow
+      const response = await chrome.runtime.sendMessage({
+        action: "jiraAuth",
+        config: {
+          clientId: config.clientId,
+          clientSecret: config.clientSecret,
         },
-        body: tokenParams.toString(),
       });
 
-      if (!tokenResponse.ok) {
-        const errorText = await tokenResponse.text();
-        console.error("Token exchange failed:", tokenResponse.status, errorText);
-        throw new Error(`Failed to exchange code for tokens: ${tokenResponse.status} ${errorText}`);
+      if (response.success) {
+        console.log("Jira authentication successful!");
+        return true;
+      } else {
+        console.error("Jira authentication failed:", response.error);
+        return false;
       }
-
-      const tokens = await tokenResponse.json();
-
-      // Get Jira cloud ID and site name
-      const cloudInfo = await this.getAccessibleResources(tokens.access_token);
-
-      // Store tokens
-      const jiraTokens: JiraTokens = {
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
-        expiresAt: Date.now() + tokens.expires_in * 1000,
-        cloudId: cloudInfo?.cloudId,
-        siteName: cloudInfo?.siteName,
-      };
-
-      await chrome.storage.local.set({ jiraTokens });
-
-      console.log("Jira authentication successful!");
-      console.log("Connected to:", cloudInfo?.siteName);
-
-      return true;
     } catch (error) {
       console.error("Jira authentication failed:", error);
       return false;
@@ -134,7 +81,7 @@ class JiraAuthService {
   async isAuthenticated(): Promise<boolean> {
     try {
       const result = await chrome.storage.local.get("jiraTokens");
-      const tokens: JiraTokens | undefined = result.jiraTokens;
+      const tokens = result.jiraTokens as JiraTokens | undefined;
 
       if (!tokens) {
         return false;
@@ -155,8 +102,9 @@ class JiraAuthService {
 
   async refreshToken(): Promise<boolean> {
     try {
+      const config = getJiraConfig();
       const result = await chrome.storage.local.get("jiraTokens");
-      const tokens: JiraTokens | undefined = result.jiraTokens;
+      const tokens = result.jiraTokens as JiraTokens | undefined;
 
       if (!tokens || !tokens.refreshToken) {
         return false;
@@ -164,12 +112,12 @@ class JiraAuthService {
 
       const refreshParams = new URLSearchParams({
         grant_type: "refresh_token",
-        client_id: JIRA_CONFIG.clientId,
-        client_secret: JIRA_CONFIG.clientSecret,
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
         refresh_token: tokens.refreshToken,
       });
 
-      const response = await fetch(JIRA_CONFIG.tokenUrl, {
+      const response = await fetch(config.tokenUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -180,7 +128,9 @@ class JiraAuthService {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Token refresh failed:", response.status, errorText);
-        throw new Error(`Failed to refresh token: ${response.status} ${errorText}`);
+        throw new Error(
+          `Failed to refresh token: ${response.status} ${errorText}`
+        );
       }
 
       const newTokens = await response.json();
@@ -209,7 +159,7 @@ class JiraAuthService {
 
   async getTokens(): Promise<JiraTokens | null> {
     const result = await chrome.storage.local.get("jiraTokens");
-    return result.jiraTokens || null;
+    return (result.jiraTokens as JiraTokens) || null;
   }
 
   async getAccessToken(): Promise<string | null> {
