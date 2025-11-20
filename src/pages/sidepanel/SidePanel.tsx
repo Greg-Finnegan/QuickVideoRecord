@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "../../index.css";
 import Button from "../../components/Button";
+import Badge from "../../components/Badge";
 
 const SidePanel: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -242,18 +243,10 @@ const SidePanel: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-2 gap-1.5">
-          <div className="px-2 py-1.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full text-[11px] text-center text-slate-600 dark:text-slate-400 font-medium">
-            ✓ Screen + Microphone
-          </div>
-          <div className="px-2 py-1.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full text-[11px] text-center text-slate-600 dark:text-slate-400 font-medium">
-            ✓ System Audio
-          </div>
-          <div className="px-2 py-1.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full text-[11px] text-center text-slate-600 dark:text-slate-400 font-medium">
-            ✓ 1080p @ 30fps
-          </div>
-          <div className="px-2 py-1.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full text-[11px] text-center text-slate-600 dark:text-slate-400 font-medium">
-            ✓ WebM format
-          </div>
+          <Badge>✓ Screen + Microphone</Badge>
+          <Badge>✓ System Audio</Badge>
+          <Badge>✓ 1080p @ 30fps</Badge>
+          <Badge>✓ WebM format</Badge>
         </div>
       </div>
     </div>

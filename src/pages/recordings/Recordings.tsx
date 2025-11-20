@@ -85,7 +85,7 @@ const Recordings: React.FC = () => {
             <div className="flex justify-end mb-4">
               <Button
                 variant="secondary"
-                className="px-4 py-2"
+                rounded='full'
                 onClick={clearAllRecordings}
               >
                 Clear All History
