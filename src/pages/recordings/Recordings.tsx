@@ -3,6 +3,7 @@ import "../../index.css";
 import Button from "../../components/Button";
 import { Recording, RecordingStorage } from "../../types/recording";
 import { videoStorage } from "../../utils/videoStorage";
+import { transcriptionService } from "../../utils/transcription";
 
 const Recordings: React.FC = () => {
   const [recordings, setRecordings] = useState<Recording[]>([]);
@@ -11,6 +12,8 @@ const Recordings: React.FC = () => {
     null
   );
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [transcribing, setTranscribing] = useState(false);
+  const [transcriptionProgress, setTranscriptionProgress] = useState<string>('');
 
   useEffect(() => {
     loadRecordings();
@@ -77,6 +80,54 @@ const Recordings: React.FC = () => {
     }
     setVideoUrl(null);
     setSelectedRecording(null);
+    setTranscribing(false);
+    setTranscriptionProgress('');
+  };
+
+  const transcribeRecording = async (recording: Recording) => {
+    if (!recording.id) return;
+
+    setTranscribing(true);
+    setTranscriptionProgress('Starting transcription...');
+
+    try {
+      const blob = await videoStorage.getVideo(recording.id);
+      if (!blob) {
+        alert('Video not found');
+        return;
+      }
+
+      const transcript = await transcriptionService.transcribeVideo(
+        blob,
+        (status, progress) => {
+          setTranscriptionProgress(`${status} (${progress}%)`);
+        }
+      );
+
+      // Update recording with transcript
+      const result = await chrome.storage.local.get('recordings') as RecordingStorage;
+      const allRecordings: Recording[] = result.recordings || [];
+      const updatedRecordings = allRecordings.map((r) =>
+        r.id === recording.id ? { ...r, transcript } : r
+      );
+
+      await chrome.storage.local.set({ recordings: updatedRecordings });
+      setRecordings(updatedRecordings);
+
+      // Update selected recording
+      if (selectedRecording?.id === recording.id) {
+        setSelectedRecording({ ...selectedRecording, transcript });
+      }
+
+      setTranscriptionProgress('Transcription complete!');
+      setTimeout(() => setTranscriptionProgress(''), 3000);
+    } catch (error) {
+      console.error('Transcription error:', error);
+      alert('Transcription failed. Please try again.');
+      setTranscriptionProgress('');
+    } finally {
+      setTranscribing(false);
+    }
   };
 
   const formatDate = (timestamp: number) => {
@@ -193,9 +244,19 @@ const Recordings: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-              <h2 className="text-lg font-medium text-slate-900 dark:text-slate-100 truncate">
+              <h2 className="text-lg font-medium text-slate-900 dark:text-slate-100 truncate flex-1">
                 {selectedRecording.filename}
               </h2>
+              {!selectedRecording.transcript && !transcribing && (
+                <Button
+                  variant="primary"
+                  rounded="full"
+                  className="mr-2 px-4 py-2 text-sm"
+                  onClick={() => transcribeRecording(selectedRecording)}
+                >
+                  🎤 Transcribe
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 className="text-2xl p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
@@ -209,9 +270,36 @@ const Recordings: React.FC = () => {
                 src={videoUrl}
                 controls
                 autoPlay
-                className="w-full rounded"
-                style={{ maxHeight: "calc(90vh - 120px)" }}
+                className="w-full rounded mb-4"
+                style={{ maxHeight: "calc(60vh - 120px)" }}
               />
+
+              {transcribing && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded p-4 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="animate-spin text-2xl">⚙️</div>
+                    <div className="flex-1">
+                      <div className="font-medium text-slate-900 dark:text-slate-100">
+                        Transcribing...
+                      </div>
+                      <div className="text-sm text-slate-600 dark:text-slate-400">
+                        {transcriptionProgress}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedRecording.transcript && (
+                <div className="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded p-4">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
+                    📝 Transcript
+                  </h3>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                    {selectedRecording.transcript}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

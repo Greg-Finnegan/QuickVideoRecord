@@ -4,6 +4,8 @@ export interface Recording {
   timestamp: number;
   duration?: number;
   size?: number;
+  transcript?: string;
+  transcribing?: boolean;
 }
 
 export interface RecordingStorage {
