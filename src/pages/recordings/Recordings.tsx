@@ -4,7 +4,6 @@ import Button from "../../components/Button";
 import VideoPlayerModal from "../../components/VideoPlayerModal";
 import MainApplicationHeader from "../../components/MainApplicationHeader";
 import RecordingCard from "./RecordingCard";
-import CreateJiraIssueModal from "../../components/CreateJiraIssueModal";
 import ToastContainer from "../../components/ToastContainer";
 import { useRecordings } from "./hooks/useRecordings";
 import { useRecordingRename } from "./hooks/useRecordingRename";
@@ -16,9 +15,9 @@ import { useJiraProjects } from "../settings/hooks/useJiraProjects";
 import { useToast } from "../../hooks/useToast";
 import { formatDate, formatSize, formatDuration } from "./utils/formatters";
 import type { Recording } from "../../types";
+import CreateJiraIssueModal from "@src/components/jira/CreateJiraIssueModal";
 
 const Recordings: React.FC = () => {
-
   const {
     recordings,
     loading,
@@ -59,10 +58,13 @@ const Recordings: React.FC = () => {
 
   // Jira issue creation modal state
   const [showCreateIssueModal, setShowCreateIssueModal] = useState(false);
-  const [selectedRecordingForJira, setSelectedRecordingForJira] = useState<Recording | null>(null);
+  const [selectedRecordingForJira, setSelectedRecordingForJira] =
+    useState<Recording | null>(null);
 
   const handleDeleteRecording = async (id: string) => {
-    const confirmed = confirm("Are you sure you want to delete this recording? This action cannot be undone.");
+    const confirmed = confirm(
+      "Are you sure you want to delete this recording? This action cannot be undone."
+    );
     if (!confirmed) return;
 
     await deleteRecording(id);
@@ -109,13 +111,15 @@ const Recordings: React.FC = () => {
 
   const handleUnlinkJiraIssue = async (recordingId: string) => {
     // Confirm before unlinking
-    const confirmed = confirm("Are you sure you want to unlink this Jira issue? This won't delete the issue in Jira.");
+    const confirmed = confirm(
+      "Are you sure you want to unlink this Jira issue? This won't delete the issue in Jira."
+    );
     if (!confirmed) return;
 
     try {
       // Get recordings from storage
       const result = await chrome.storage.local.get("recordings");
-      const recordings = result.recordings || [];
+      const recordings = (result.recordings as Recording[]) || [];
 
       // Find and update the recording
       const updatedRecordings = recordings.map((r: Recording) =>

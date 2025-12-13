@@ -1,6 +1,7 @@
 import React from "react";
 import Button from "../../components/Button";
 import ContextMenu from "../../components/ContextMenu";
+import RecordingMetadata from "./RecordingMetadata";
 import { Recording } from "../../types/recording";
 
 interface RecordingCardProps {
@@ -88,39 +89,13 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
         </>
       ) : (
         <>
-          <div
-            className="flex-1 min-w-0 cursor-pointer"
-            onClick={() => onPlay(recording)}
-          >
-            <h3 className="m-0 mb-2 text-sm font-medium text-slate-900 dark:text-slate-100 break-words hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-              {recording.filename}
-            </h3>
-            <div className="flex flex-wrap gap-4">
-              <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                📅 {formatDate(recording.timestamp)}
-              </span>
-              {recording.duration && (
-                <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                  ⏱️ {formatDuration(recording.duration)}
-                </span>
-              )}
-              {recording.size && (
-                <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                  💾 {formatSize(recording.size)}
-                </span>
-              )}
-              {recording.transcribing && (
-                <span className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                  🎤 Transcribing...
-                </span>
-              )}
-              {recording.transcript && !recording.transcribing && (
-                <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                  ✓ Transcribed
-                </span>
-              )}
-            </div>
-          </div>
+          <RecordingMetadata
+            recording={recording}
+            onPlay={onPlay}
+            formatDate={formatDate}
+            formatSize={formatSize}
+            formatDuration={formatDuration}
+          />
           <Button
             variant="ghost"
             rounded="full"

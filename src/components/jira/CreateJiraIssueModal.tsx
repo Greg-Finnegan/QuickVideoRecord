@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import Button from "./Button";
-import JiraDropdown from "./jira/JiraDropdown";
-import { useJiraConnection } from "../pages/settings/hooks/useJiraConnection";
-import { useJiraProjects } from "../pages/settings/hooks/useJiraProjects";
-import { useJiraIssueTypes } from "../pages/recordings/hooks/useJiraIssueTypes";
-import { useJiraIssueCreation } from "../pages/recordings/hooks/useJiraIssueCreation";
-import type { Recording, CreateIssueFormData } from "../types";
+import Button from "../Button";
+import JiraDropdown from "./JiraDropdown";
+import { useJiraConnection } from "../../pages/settings/hooks/useJiraConnection";
+import { useJiraProjects } from "../../pages/settings/hooks/useJiraProjects";
+import { useJiraIssueTypes } from "../../pages/recordings/hooks/useJiraIssueTypes";
+import { useJiraIssueCreation } from "../../pages/recordings/hooks/useJiraIssueCreation";
+import type { Recording, CreateIssueFormData } from "../../types";
 
 interface CreateJiraIssueModalProps {
   recording: Recording;
