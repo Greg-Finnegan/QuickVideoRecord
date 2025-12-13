@@ -1,9 +1,9 @@
 import React from "react";
 import "../../index.css";
 import Button from "../../components/Button";
-import JiraConnect from "../../components/JiraConnect";
 import VideoPlayerModal from "../../components/VideoPlayerModal";
 import RecordingCard from "./RecordingCard";
+import RecordingsHeader from "./RecordingsHeader";
 import { useRecordings } from "./hooks/useRecordings";
 import { useRecordingRename } from "./hooks/useRecordingRename";
 import { useVideoPlayer } from "./hooks/useVideoPlayer";
@@ -12,6 +12,7 @@ import { useRecordingTranscriptionUpdates } from "./hooks/useRecordingTranscript
 import { formatDate, formatSize, formatDuration } from "./utils/formatters";
 
 const Recordings: React.FC = () => {
+
   const {
     recordings,
     loading,
@@ -61,21 +62,7 @@ const Recordings: React.FC = () => {
 
   return (
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans">
-      <div className="bg-white dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700 px-10 py-8">
-        <div className="flex justify-between items-center max-w-[1250px] mx-auto">
-          <div className="flex flex-col">
-            <h1 className="m-0 text-2xl font-medium text-slate-900 dark:text-slate-100">
-              Recording History
-            </h1>
-            <p className="m-0 text-sm text-slate-600 dark:text-slate-400">
-              View and manage your screen recordings
-            </p>
-          </div>
-          <div className="mt-2">
-            <JiraConnect />
-          </div>
-        </div>
-      </div>
+      <RecordingsHeader />
 
       <div className="px-10 py-6 max-w-[1200px] mx-auto">
         {loading ? (
