@@ -7,13 +7,11 @@ import JiraProfile from "../../components/jira/JiraProfile";
 import Button from "../../components/Button";
 import ThemeSlider from "../../components/ThemeSlider";
 import DefaultProjectSetting from "./components/DefaultProjectSetting";
-import DefaultSprintSetting from "./components/DefaultSprintSetting";
 import DefaultPrioritySetting from "./components/DefaultPrioritySetting";
 import DefaultAssigneeSetting from "./components/DefaultAssigneeSetting";
 import { useTheme } from "../../hooks/useTheme";
 import { useJiraConnection } from "./hooks/useJiraConnection";
 import { useJiraProjects } from "./hooks/useJiraProjects";
-import { useJiraSprints } from "./hooks/useJiraSprints";
 import { useJiraPriorities } from "./hooks/useJiraPriorities";
 import { useJiraUsers } from "./hooks/useJiraUsers";
 import { useRecordings } from "../recordings/hooks/useRecordings";
@@ -28,10 +26,12 @@ const Settings: React.FC = () => {
     loadingProjects,
     handleDefaultProjectChange,
   } = useJiraProjects(isJiraConnected);
-  const { sprints, defaultSprint, loadingSprints, handleSprintChange } =
-    useJiraSprints(isJiraConnected, defaultProject);
-  const { priorities, defaultPriority, loadingPriorities, handlePriorityChange } =
-    useJiraPriorities(isJiraConnected);
+  const {
+    priorities,
+    defaultPriority,
+    loadingPriorities,
+    handlePriorityChange,
+  } = useJiraPriorities(isJiraConnected);
   const { users, defaultAssignee, loadingUsers, handleAssigneeChange } =
     useJiraUsers(isJiraConnected, defaultProject);
   const { clearAllRecordings } = useRecordings();
@@ -99,13 +99,6 @@ const Settings: React.FC = () => {
                   defaultProject={defaultProject}
                   loadingProjects={loadingProjects}
                   onProjectChange={handleDefaultProjectChange}
-                />
-
-                <DefaultSprintSetting
-                  sprints={sprints}
-                  defaultSprint={defaultSprint}
-                  loadingSprints={loadingSprints}
-                  onSprintChange={handleSprintChange}
                 />
 
                 <DefaultPrioritySetting

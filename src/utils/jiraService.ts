@@ -233,45 +233,6 @@ class JiraService {
       throw error;
     }
   }
-
-  /**
-   * Get all boards for a project
-   */
-  async getBoards(projectKey: string): Promise<any[]> {
-    const client = await this.getClient();
-    if (!client) {
-      throw new Error("Not authenticated with Jira");
-    }
-
-    try {
-      const result = await client.board.getAllBoards({
-        projectKeyOrId: projectKey,
-      });
-      return result.values || [];
-    } catch (error) {
-      console.error("Failed to fetch boards:", error);
-      return [];
-    }
-  }
-
-  /**
-   * Get sprints for a board
-   */
-  async getSprints(boardId: number): Promise<any[]> {
-    const client = await this.getClient();
-    if (!client) {
-      throw new Error("Not authenticated with Jira");
-    }
-
-    try {
-      const result = await client.board.getAllSprints({ boardId });
-      return result.values || [];
-    } catch (error) {
-      console.error("Failed to fetch sprints:", error);
-      return [];
-    }
-  }
-
   /**
    * Get all priorities
    */
