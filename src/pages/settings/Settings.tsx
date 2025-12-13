@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import "../../index.css";
 import MainApplicationHeader from "../../components/MainApplicationHeader";
 import Breadcrumb from "../../components/Breadcrumb";
@@ -7,102 +7,21 @@ import JiraProfile from "../../components/jira/JiraProfile";
 import JiraDropdown from "../../components/jira/JiraDropdown";
 import Button from "../../components/Button";
 import ThemeSlider from "../../components/ThemeSlider";
-import { jiraAuth } from "../../utils/jiraAuth";
-import { jiraService } from "../../utils/jiraService";
 import { useTheme } from "../../hooks/useTheme";
-import type { JiraProjectOption, JiraSettingsStorage } from "../../types";
-import type { Version3Models } from "jira.js";
+import { useJiraConnection } from "./hooks/useJiraConnection";
+import { useJiraProjects } from "./hooks/useJiraProjects";
+import type { JiraProjectOption } from "../../types";
 
 const Settings: React.FC = () => {
-  const [isJiraConnected, setIsJiraConnected] = useState(false);
-  const [jiraProjects, setJiraProjects] = useState<Version3Models.Project[]>(
-    []
-  );
-  const [defaultProject, setDefaultProject] = useState<string>("");
-  const [loadingProjects, setLoadingProjects] = useState(false);
   const { theme, setTheme, loading: themeLoading } = useTheme();
-
-  useEffect(() => {
-    checkJiraConnection();
-    loadDefaultProject();
-
-    const storageListener = (changes: {
-      [key: string]: chrome.storage.StorageChange;
-    }) => {
-      if (changes.jiraTokens) {
-        checkJiraConnection();
-      }
-      if (changes.defaultJiraProject) {
-        const newValue = changes.defaultJiraProject.newValue;
-        setDefaultProject(typeof newValue === "string" ? newValue : "");
-      }
-    };
-
-    chrome.storage.local.onChanged.addListener(storageListener);
-
-    return () => {
-      chrome.storage.local.onChanged.removeListener(storageListener);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isJiraConnected) {
-      loadJiraProjects();
-    } else {
-      setJiraProjects([]);
-      setDefaultProject("");
-    }
-  }, [isJiraConnected]);
-
-  const checkJiraConnection = async () => {
-    const connected = await jiraAuth.isAuthenticated();
-    setIsJiraConnected(connected);
-  };
-
-  const loadJiraProjects = async () => {
-    setLoadingProjects(true);
-    try {
-      const projects = await jiraService.getProjects();
-      setJiraProjects(projects);
-    } catch (error) {
-      console.error("Failed to load Jira projects:", error);
-      setJiraProjects([]);
-    } finally {
-      setLoadingProjects(false);
-    }
-  };
-
-  const loadDefaultProject = async () => {
-    try {
-      const result = (await chrome.storage.local.get(
-        "defaultJiraProject"
-      )) as JiraSettingsStorage;
-      if (result.defaultJiraProject) {
-        setDefaultProject(result.defaultJiraProject);
-      }
-    } catch (error) {
-      console.error("Failed to load default project:", error);
-    }
-  };
-
-  const handleDefaultProjectChange = async (projectKey: string) => {
-    setDefaultProject(projectKey);
-    try {
-      await chrome.storage.local.set({ defaultJiraProject: projectKey });
-    } catch (error) {
-      console.error("Failed to save default project:", error);
-    }
-  };
-
-  const handleConnect = async () => {
-    await jiraAuth.authenticate();
-  };
-
-  const handleDisconnect = async () => {
-    if (window.confirm("Are you sure you want to disconnect from Jira?")) {
-      await jiraAuth.disconnect();
-    }
-  };
+  const { isJiraConnected, handleConnect, handleDisconnect } =
+    useJiraConnection();
+  const {
+    jiraProjects,
+    defaultProject,
+    loadingProjects,
+    handleDefaultProjectChange,
+  } = useJiraProjects(isJiraConnected);
 
   return (
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans">
