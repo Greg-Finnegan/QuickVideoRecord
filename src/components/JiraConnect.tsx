@@ -67,8 +67,12 @@ const JiraConnect: React.FC = () => {
         rounded="full"
         onClick={handleDisconnect}
         title={siteName ? `Connected to ${siteName}` : "Connected to Jira"}
+        className="!bg-green-500 dark:!bg-green-400 hover:!bg-green-600 dark:hover:!bg-green-500"
       >
-        ✓ Connected{siteName ? ` to ${siteName}` : " to Jira"}
+        <span className="flex items-center gap-2">
+          <img src="/jiraIcon2.png" alt="Jira" className="w-4 h-4" />
+          Connected{siteName ? ` to ${siteName}` : " to Jira"}
+        </span>
       </Button>
     );
   }

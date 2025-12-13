@@ -1,3 +1,5 @@
+import { Version3Client } from "jira.js";
+
 // Jira OAuth Configuration
 const getJiraConfig = () => ({
   clientId: import.meta.env.VITE_JIRA_CLIENT_ID,
@@ -170,6 +172,36 @@ class JiraAuthService {
 
     const tokens = await this.getTokens();
     return tokens?.accessToken || null;
+  }
+
+  async getClient(): Promise<Version3Client | null> {
+    const tokens = await this.getTokens();
+    if (!tokens || !tokens.accessToken || !tokens.cloudId) {
+      console.error("Missing tokens or cloudId for Jira client");
+      return null;
+    }
+
+    // Ensure token is not expired
+    const isAuth = await this.isAuthenticated();
+    if (!isAuth) {
+      console.error("Token is expired and could not be refreshed");
+      return null;
+    }
+
+    // Get fresh tokens after potential refresh
+    const freshTokens = await this.getTokens();
+    if (!freshTokens) {
+      return null;
+    }
+
+    return new Version3Client({
+      host: `https://api.atlassian.com/ex/jira/${freshTokens.cloudId}`,
+      authentication: {
+        oauth2: {
+          accessToken: freshTokens.accessToken,
+        },
+      },
+    });
   }
 }
 

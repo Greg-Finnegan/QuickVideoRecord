@@ -118,7 +118,7 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
           <Button
             variant="ghost"
             rounded="full"
-            className="bg-transparent px-3 py-2 text-lg hover:text-white flex-shrink-0"
+            className="bg-transparent px-3 py-2 text-lg flex-shrink-0"
             onClick={(e) => {
               e.stopPropagation();
               onStartRename(recording);
