@@ -1,264 +1,62 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import "../../index.css";
 import Button from "../../components/Button";
-import CopyButton from "../../components/CopyButton";
 import JiraConnect from "../../components/JiraConnect";
-import ContextMenu from "../../components/ContextMenu";
-import EditableFilename from "../../components/EditableFilename";
 import VideoPlayerModal from "../../components/VideoPlayerModal";
-import { Recording, RecordingStorage } from "../../types/recording";
-import { videoStorage } from "../../utils/videoStorage";
-import { transcriptionService } from "../../utils/transcription";
+import RecordingCard from "./RecordingCard";
+import { useRecordings } from "./hooks/useRecordings";
+import { useRecordingRename } from "./hooks/useRecordingRename";
+import { useVideoPlayer } from "./hooks/useVideoPlayer";
+import { useTranscription } from "./hooks/useTranscription";
+import { useRecordingTranscriptionUpdates } from "./hooks/useRecordingTranscriptionUpdates";
+import { formatDate, formatSize, formatDuration } from "./utils/formatters";
 
 const Recordings: React.FC = () => {
-  const [recordings, setRecordings] = useState<Recording[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedRecording, setSelectedRecording] = useState<Recording | null>(
-    null
-  );
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [transcribing, setTranscribing] = useState(false);
-  const [transcriptionProgress, setTranscriptionProgress] =
-    useState<string>("");
-  const [renamingId, setRenamingId] = useState<string | null>(null);
-  const [newFilename, setNewFilename] = useState<string>("");
+  const {
+    recordings,
+    loading,
+    setRecordings,
+    deleteRecording,
+    clearAllRecordings,
+  } = useRecordings();
 
-  useEffect(() => {
-    loadRecordings();
+  const {
+    renamingId,
+    newFilename,
+    setNewFilename,
+    startRename,
+    cancelRename,
+    renameRecording,
+  } = useRecordingRename();
 
-    // Listen for transcription updates
-    const messageListener = (message: any) => {
-      if (message.action === "transcriptionStarted") {
-        // Update the recording to show it's transcribing
-        setRecordings((prevRecordings) =>
-          prevRecordings.map((r) =>
-            r.id === message.recordingId ? { ...r, transcribing: true } : r
-          )
-        );
-      } else if (message.action === "transcriptionComplete") {
-        // Update the recording with the transcript
-        setRecordings((prevRecordings) =>
-          prevRecordings.map((r) =>
-            r.id === message.recordingId
-              ? { ...r, transcript: message.transcript, transcribing: false }
-              : r
-          )
-        );
-        // Update selected recording if it's the one being transcribed
-        if (selectedRecording && selectedRecording.id === message.recordingId) {
-          setSelectedRecording({
-            ...selectedRecording,
-            transcript: message.transcript,
-            transcribing: false,
-          });
-        }
-      } else if (message.action === "transcriptionFailed") {
-        // Update the recording to show transcription failed
-        setRecordings((prevRecordings) =>
-          prevRecordings.map((r) =>
-            r.id === message.recordingId ? { ...r, transcribing: false } : r
-          )
-        );
-      }
-    };
+  const {
+    selectedRecording,
+    videoUrl,
+    playRecording,
+    closePlayer,
+    updateSelectedRecording,
+  } = useVideoPlayer();
 
-    // Listen for storage changes (for when recordings are updated)
-    const storageListener = (changes: {
-      [key: string]: chrome.storage.StorageChange;
-    }) => {
-      if (changes.recordings) {
-        const newRecordings = changes.recordings.newValue as Recording[];
-        if (newRecordings) {
-          setRecordings(newRecordings);
-          // Update selected recording if it changed
-          if (selectedRecording) {
-            const updatedSelected = newRecordings.find(
-              (r) => r.id === selectedRecording.id
-            );
-            if (updatedSelected) {
-              setSelectedRecording(updatedSelected);
-            }
-          }
-        }
-      }
-    };
+  const { transcribing, transcriptionProgress, transcribeRecording } =
+    useTranscription({
+      selectedRecording,
+      onRecordingUpdate: updateSelectedRecording,
+    });
 
-    chrome.runtime.onMessage.addListener(messageListener);
-    chrome.storage.local.onChanged.addListener(storageListener);
+  useRecordingTranscriptionUpdates({ setRecordings });
 
-    return () => {
-      chrome.runtime.onMessage.removeListener(messageListener);
-      chrome.storage.local.onChanged.removeListener(storageListener);
-    };
-  }, [selectedRecording]);
-
-  const loadRecordings = async () => {
-    try {
-      const result = (await chrome.storage.local.get(
-        "recordings"
-      )) as RecordingStorage;
-      const savedRecordings: Recording[] = result.recordings || [];
-      setRecordings(savedRecordings);
-    } catch (error) {
-      console.error("Failed to load recordings:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteRecording = async (id: string) => {
-    const updatedRecordings = recordings.filter((r) => r.id !== id);
-    await chrome.storage.local.set({ recordings: updatedRecordings });
-    await videoStorage.deleteVideo(id);
-    setRecordings(updatedRecordings);
-
-    // Close player if deleted recording was being played
+  const handleDeleteRecording = async (id: string) => {
+    await deleteRecording(id);
     if (selectedRecording?.id === id) {
       closePlayer();
     }
   };
 
-  const clearAllRecordings = async () => {
-    if (
-      window.confirm("Are you sure you want to clear all recording history?")
-    ) {
-      await chrome.storage.local.set({ recordings: [] });
-      await videoStorage.clearAll();
-      setRecordings([]);
+  const handleClearAll = async () => {
+    const cleared = await clearAllRecordings();
+    if (cleared) {
       closePlayer();
     }
-  };
-
-  const playRecording = async (recording: Recording) => {
-    try {
-      const blob = await videoStorage.getVideo(recording.id);
-      if (blob) {
-        const url = URL.createObjectURL(blob);
-        setVideoUrl(url);
-        setSelectedRecording(recording);
-      } else {
-        alert(
-          "Video not found. It may have been deleted or not saved properly."
-        );
-      }
-    } catch (error) {
-      console.error("Failed to load video:", error);
-      alert("Failed to load video");
-    }
-  };
-
-  const closePlayer = () => {
-    if (videoUrl) {
-      URL.revokeObjectURL(videoUrl);
-    }
-    setVideoUrl(null);
-    setSelectedRecording(null);
-    setTranscribing(false);
-    setTranscriptionProgress("");
-  };
-
-  const transcribeRecording = async (recording: Recording) => {
-    if (!recording.id) return;
-
-    setTranscribing(true);
-    setTranscriptionProgress("Starting transcription...");
-
-    try {
-      const blob = await videoStorage.getVideo(recording.id);
-      if (!blob) {
-        alert("Video not found");
-        return;
-      }
-
-      const transcript = await transcriptionService.transcribeVideo(
-        blob,
-        (status, progress) => {
-          setTranscriptionProgress(`${status} (${progress}%)`);
-        }
-      );
-
-      // Update recording with transcript
-      const result = (await chrome.storage.local.get(
-        "recordings"
-      )) as RecordingStorage;
-      const allRecordings: Recording[] = result.recordings || [];
-      const updatedRecordings = allRecordings.map((r) =>
-        r.id === recording.id ? { ...r, transcript } : r
-      );
-
-      await chrome.storage.local.set({ recordings: updatedRecordings });
-      setRecordings(updatedRecordings);
-
-      // Update selected recording
-      if (selectedRecording?.id === recording.id) {
-        setSelectedRecording({ ...selectedRecording, transcript });
-      }
-
-      setTranscriptionProgress("Transcription complete!");
-      setTimeout(() => setTranscriptionProgress(""), 3000);
-    } catch (error) {
-      console.error("Transcription error:", error);
-      alert("Transcription failed. Please try again.");
-      setTranscriptionProgress("");
-    } finally {
-      setTranscribing(false);
-    }
-  };
-
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleString();
-  };
-
-  const formatSize = (bytes?: number) => {
-    if (!bytes) return "Unknown";
-    const mb = bytes / (1024 * 1024);
-    return `${mb.toFixed(2)} MB`;
-  };
-
-  const formatDuration = (seconds?: number) => {
-    if (!seconds) return "Unknown";
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const renameRecording = async (id: string) => {
-    if (!newFilename.trim()) {
-      alert("Please enter a valid filename");
-      return;
-    }
-
-    const result = (await chrome.storage.local.get(
-      "recordings"
-    )) as RecordingStorage;
-    const allRecordings: Recording[] = result.recordings || [];
-    const updatedRecordings = allRecordings.map((r) =>
-      r.id === id ? { ...r, filename: newFilename.trim() } : r
-    );
-
-    await chrome.storage.local.set({ recordings: updatedRecordings });
-    setRecordings(updatedRecordings);
-
-    // Update selected recording if it's the one being renamed
-    if (selectedRecording?.id === id) {
-      setSelectedRecording({
-        ...selectedRecording,
-        filename: newFilename.trim(),
-      });
-    }
-
-    setRenamingId(null);
-    setNewFilename("");
-  };
-
-  const startRename = (recording: Recording) => {
-    setRenamingId(recording.id);
-    setNewFilename(recording.filename);
-  };
-
-  const cancelRename = () => {
-    setRenamingId(null);
-    setNewFilename("");
   };
 
   return (
@@ -301,129 +99,28 @@ const Recordings: React.FC = () => {
               <Button
                 variant="secondary"
                 rounded="full"
-                onClick={clearAllRecordings}
+                onClick={handleClearAll}
               >
                 Clear All History
               </Button>
             </div>
             <div className="flex flex-col gap-3">
               {recordings.map((recording) => (
-                <div
+                <RecordingCard
                   key={recording.id}
-                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-4 flex items-center gap-4 transition-all hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-[0_1px_3px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
-                >
-                  <div className="text-[32px] flex-shrink-0">🎥</div>
-                  {renamingId === recording.id ? (
-                    <>
-                      <div className="flex-1 min-w-0 flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={newFilename}
-                          onChange={(e) => setNewFilename(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              renameRecording(recording.id);
-                            } else if (e.key === "Escape") {
-                              cancelRename();
-                            }
-                          }}
-                          className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          autoFocus
-                        />
-                      </div>
-                      <Button
-                        variant="primary"
-                        rounded="full"
-                        className="px-3 py-2 text-sm flex-shrink-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          renameRecording(recording.id);
-                        }}
-                        title="Save new name"
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        rounded="full"
-                        className="bg-transparent px-3 py-2 text-sm flex-shrink-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          cancelRename();
-                        }}
-                        title="Cancel rename"
-                      >
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <div
-                        className="flex-1 min-w-0 cursor-pointer"
-                        onClick={() => playRecording(recording)}
-                      >
-                        <h3 className="m-0 mb-2 text-sm font-medium text-slate-900 dark:text-slate-100 break-words hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                          {recording.filename}
-                        </h3>
-                        <div className="flex flex-wrap gap-4">
-                          <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                            📅 {formatDate(recording.timestamp)}
-                          </span>
-                          {recording.duration && (
-                            <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                              ⏱️ {formatDuration(recording.duration)}
-                            </span>
-                          )}
-                          {recording.size && (
-                            <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                              💾 {formatSize(recording.size)}
-                            </span>
-                          )}
-                          {recording.transcribing && (
-                            <span className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                              🎤 Transcribing...
-                            </span>
-                          )}
-                          {recording.transcript && !recording.transcribing && (
-                            <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                              ✓ Transcribed
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        rounded="full"
-                        className="bg-transparent px-3 py-2 text-lg hover:text-white flex-shrink-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          startRename(recording);
-                        }}
-                        title="Rename video"
-                      >
-                        Rename
-                      </Button>
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <ContextMenu
-                          items={[
-                            {
-                              label: "Delete",
-                              icon: "🗑️",
-                              onClick: () => deleteRecording(recording.id),
-                              className:
-                                "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20",
-                            },
-                          ]}
-                          triggerButton={
-                            <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
-                              <span className="text-lg">⋮</span>
-                            </button>
-                          }
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
+                  recording={recording}
+                  renamingId={renamingId}
+                  newFilename={newFilename}
+                  onFilenameChange={setNewFilename}
+                  onRename={renameRecording}
+                  onCancelRename={cancelRename}
+                  onStartRename={startRename}
+                  onPlay={playRecording}
+                  onDelete={handleDeleteRecording}
+                  formatDate={formatDate}
+                  formatSize={formatSize}
+                  formatDuration={formatDuration}
+                />
               ))}
             </div>
           </>
@@ -440,7 +137,7 @@ const Recordings: React.FC = () => {
           onClose={closePlayer}
           onTranscribe={transcribeRecording}
           onUpdateRecording={(updatedRecording) => {
-            setSelectedRecording(updatedRecording);
+            updateSelectedRecording(updatedRecording);
             setRecordings((prevRecordings) =>
               prevRecordings.map((r) =>
                 r.id === updatedRecording.id ? updatedRecording : r
