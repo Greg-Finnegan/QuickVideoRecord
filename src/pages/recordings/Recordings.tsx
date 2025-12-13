@@ -4,6 +4,7 @@ import VideoPlayerModal from "../../components/VideoPlayerModal";
 import MainApplicationHeader from "../../components/MainApplicationHeader";
 import RecordingCard from "./RecordingCard";
 import EmptyRecordingsState from "./EmptyRecordingsState";
+import Pagination from "./Pagination";
 import ToastContainer from "../../components/ToastContainer";
 import { useRecordings } from "./hooks/useRecordings";
 import { useRecordingRename } from "./hooks/useRecordingRename";
@@ -11,6 +12,7 @@ import { useVideoPlayer } from "./hooks/useVideoPlayer";
 import { useTranscription } from "./hooks/useTranscription";
 import { useRecordingTranscriptionUpdates } from "./hooks/useRecordingTranscriptionUpdates";
 import { useJiraIssueManagement } from "./hooks/useJiraIssueManagement";
+import { usePagination } from "./hooks/usePagination";
 import { useJiraConnection } from "../settings/hooks/useJiraConnection";
 import { useJiraProjects } from "../settings/hooks/useJiraProjects";
 import { useToast } from "../../hooks/useToast";
@@ -20,6 +22,20 @@ import CreateJiraIssueModal from "@src/components/jira/CreateJiraIssueModal";
 const Recordings: React.FC = () => {
   const { recordings, loading, setRecordings, deleteRecording } =
     useRecordings();
+
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems: paginatedRecordings,
+    goToPage,
+    goToNextPage,
+    goToPreviousPage,
+    hasNextPage,
+    hasPreviousPage,
+  } = usePagination({
+    items: recordings,
+    itemsPerPage: 15,
+  });
 
   const {
     renamingId,
@@ -92,7 +108,7 @@ const Recordings: React.FC = () => {
         ) : (
           <>
             <div className="flex flex-col gap-3">
-              {recordings.map((recording) => (
+              {paginatedRecordings.map((recording) => (
                 <RecordingCard
                   key={recording.id}
                   recording={recording}
@@ -113,6 +129,18 @@ const Recordings: React.FC = () => {
                 />
               ))}
             </div>
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={recordings.length}
+              itemsPerPage={15}
+              onPageChange={goToPage}
+              onNextPage={goToNextPage}
+              onPreviousPage={goToPreviousPage}
+              hasNextPage={hasNextPage}
+              hasPreviousPage={hasPreviousPage}
+            />
           </>
         )}
       </div>

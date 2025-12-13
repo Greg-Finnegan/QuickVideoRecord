@@ -20,6 +20,8 @@ import {
   Timer,
   HardDrive,
   Check,
+  ChevronLeft,
+  ChevronRight,
   type LucideProps,
 } from "lucide-react";
 
@@ -46,7 +48,9 @@ export type IconName =
   | "calendar"
   | "timer"
   | "save"
-  | "check";
+  | "check"
+  | "chevron-left"
+  | "chevron-right";
 
 /**
  * Icon component props
@@ -80,6 +84,8 @@ const iconMap: Record<IconName, React.ComponentType<LucideProps>> = {
   timer: Timer,
   save: HardDrive,
   check: Check,
+  "chevron-left": ChevronLeft,
+  "chevron-right": ChevronRight,
 };
 
 /**
