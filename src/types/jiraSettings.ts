@@ -62,7 +62,7 @@ export interface JiraIssueParams {
 export interface JiraSettingsStorage {
   jiraTokens?: JiraTokens;
   defaultJiraProject?: string;
-  defaultJiraSprint?: string;
+  defaultJiraSprint?: JiraSprint;
   jiraProjectSettings?: JiraProjectSettings;
 }
 

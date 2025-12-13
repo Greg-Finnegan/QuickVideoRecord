@@ -6,7 +6,9 @@ import { useJiraConnection } from "../../pages/settings/hooks/useJiraConnection"
 import { useJiraProjects } from "../../pages/settings/hooks/useJiraProjects";
 import { useJiraIssueTypes } from "../../pages/recordings/hooks/useJiraIssueTypes";
 import { useJiraIssueCreation } from "../../pages/recordings/hooks/useJiraIssueCreation";
-import type { Recording, CreateIssueFormData } from "../../types";
+import { jiraService } from "../../utils/jiraService";
+import type { Recording, CreateIssueFormData, JiraSprint } from "../../types";
+import type { Version3Models } from "jira.js";
 
 interface CreateJiraIssueModalProps {
   recording: Recording;
@@ -29,15 +31,30 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
   const [issueTypeName, setIssueTypeName] = useState("Task");
   const [summary, setSummary] = useState(recording.filename);
   const [description, setDescription] = useState(
-    `Recording captured on ${new Date(recording.timestamp).toLocaleString()}${recording.transcript ? `\n\nTranscript:\n${recording.transcript}` : ""}`
+    `Recording captured on ${new Date(recording.timestamp).toLocaleString()}${
+      recording.transcript ? `\n\nTranscript:\n${recording.transcript}` : ""
+    }`
   );
   const [priority, setPriority] = useState("");
+  const [assigneeId, setAssigneeId] = useState("");
+  const [sprintId, setSprintId] = useState("");
   const [labelsInput, setLabelsInput] = useState("");
   const [attachVideo, setAttachVideo] = useState(true);
 
+  // Additional data state
+  const [priorities, setPriorities] = useState<Version3Models.Priority[]>([]);
+  const [users, setUsers] = useState<Version3Models.User[]>([]);
+  const [sprints, setSprints] = useState<JiraSprint[]>([]);
+  const [defaultSprintObject, setDefaultSprintObject] = useState<JiraSprint | null>(null);
+  const [loadingPriorities, setLoadingPriorities] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingSprints, setLoadingSprints] = useState(false);
+  const [sprintsLoaded, setSprintsLoaded] = useState(false);
+
   // Hooks for business logic
-  const { issueTypes, loading: loadingIssueTypes } = useJiraIssueTypes(projectKey);
-  const { creating, error, createIssue, reset } = useJiraIssueCreation();
+  const { issueTypes, loading: loadingIssueTypes } =
+    useJiraIssueTypes(projectKey);
+  const { creating, error, createIssue } = useJiraIssueCreation();
 
   // Update issue type when issue types load
   useEffect(() => {
@@ -47,6 +64,88 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
       setIssueTypeName(taskType ? taskType.name! : issueTypes[0].name!);
     }
   }, [issueTypes, issueTypeName]);
+
+  // Load defaults from storage on mount
+  useEffect(() => {
+    const loadDefaults = async () => {
+      try {
+        const result = await chrome.storage.local.get([
+          "defaultJiraPriority",
+          "defaultJiraAssignee",
+          "defaultJiraSprint",
+        ]);
+        if (
+          result.defaultJiraPriority &&
+          typeof result.defaultJiraPriority === "string"
+        ) {
+          setPriority(result.defaultJiraPriority);
+        }
+        if (
+          result.defaultJiraAssignee &&
+          typeof result.defaultJiraAssignee === "string"
+        ) {
+          setAssigneeId(result.defaultJiraAssignee);
+        }
+        // Handle JiraSprint object from storage
+        if (
+          result.defaultJiraSprint &&
+          typeof result.defaultJiraSprint === "object" &&
+          "id" in result.defaultJiraSprint &&
+          result.defaultJiraSprint.id != null
+        ) {
+          const sprintObj = result.defaultJiraSprint as JiraSprint;
+          setDefaultSprintObject(sprintObj);
+          setSprintId(sprintObj.id.toString());
+        }
+      } catch (error) {
+        console.error("Failed to load defaults:", error);
+      }
+    };
+
+    loadDefaults();
+  }, []);
+
+  // Load priorities when modal opens
+  useEffect(() => {
+    const loadPriorities = async () => {
+      if (!isJiraConnected) return;
+
+      setLoadingPriorities(true);
+      try {
+        const fetchedPriorities = await jiraService.getPriorities();
+        setPriorities(fetchedPriorities);
+      } catch (error) {
+        console.error("Failed to load priorities:", error);
+      } finally {
+        setLoadingPriorities(false);
+      }
+    };
+
+    loadPriorities();
+  }, [isJiraConnected]);
+
+  // Load users when project changes
+  useEffect(() => {
+    const loadUsers = async () => {
+      if (!isJiraConnected || !projectKey) {
+        setUsers([]);
+        return;
+      }
+
+      setLoadingUsers(true);
+      try {
+        const fetchedUsers = await jiraService.getProjectUsers(projectKey);
+        setUsers(fetchedUsers);
+      } catch (error) {
+        console.error("Failed to load users:", error);
+        setUsers([]);
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+
+    loadUsers();
+  }, [isJiraConnected, projectKey]);
 
   // Escape key handler
   useEffect(() => {
@@ -63,6 +162,58 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose, creating]);
+
+  // Load sprints (only called when dropdown is opened)
+  const loadSprints = async () => {
+    if (sprintsLoaded || !isJiraConnected) return;
+
+    setLoadingSprints(true);
+    try {
+      // Query for issues that have sprint data (customfield_10020)
+      const issues = await jiraService.searchIssues(
+        "created >= -365d AND customfield_10020 IS NOT EMPTY ORDER BY created DESC",
+        100
+      );
+
+      // Extract unique sprints from issues
+      const sprintMap = new Map<number, JiraSprint>();
+
+      issues.forEach((issue) => {
+        const sprintField = issue.fields?.customfield_10020;
+        if (Array.isArray(sprintField)) {
+          sprintField.forEach((sprint: any) => {
+            if (sprint && sprint.id && !sprintMap.has(sprint.id)) {
+              sprintMap.set(sprint.id, {
+                id: sprint.id,
+                name: sprint.name || "Unnamed Sprint",
+                state: sprint.state || "future",
+                boardId: sprint.boardId || 0,
+                goal: sprint.goal || "",
+              });
+            }
+          });
+        }
+      });
+
+      // Convert to array and sort by state (active first, then future, then closed)
+      const sprintArray = Array.from(sprintMap.values()).sort((a, b) => {
+        const stateOrder = { active: 0, future: 1, closed: 2 };
+        const stateCompare =
+          stateOrder[a.state as keyof typeof stateOrder] -
+          stateOrder[b.state as keyof typeof stateOrder];
+        if (stateCompare !== 0) return stateCompare;
+        return b.id - a.id; // Sort by ID descending within same state
+      });
+
+      setSprints(sprintArray);
+      setSprintsLoaded(true);
+    } catch (error) {
+      console.error("Failed to load sprints:", error);
+      setSprints([]);
+    } finally {
+      setLoadingSprints(false);
+    }
+  };
 
   // Parse labels from comma-separated input
   const parseLabels = (input: string): string[] => {
@@ -82,6 +233,8 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
       description: description.trim() || undefined,
       issueTypeName,
       priority: priority || undefined,
+      assigneeId: assigneeId || undefined,
+      sprintId: sprintId || undefined,
       labels: parseLabels(labelsInput),
       attachVideo,
     };
@@ -116,14 +269,61 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
     description: type.description,
   }));
 
-  // Priority options
+  // Priority options from Jira API
   const priorityOptions = [
     { value: "", label: "None", description: "No priority" },
-    { value: "Highest", label: "Highest", description: "Highest priority" },
-    { value: "High", label: "High", description: "High priority" },
-    { value: "Medium", label: "Medium", description: "Medium priority" },
-    { value: "Low", label: "Low", description: "Low priority" },
-    { value: "Lowest", label: "Lowest", description: "Lowest priority" },
+    ...priorities.map((priority) => ({
+      value: priority.id || "",
+      label: priority.name || "",
+      description: priority.description || "",
+    })),
+  ];
+
+  // Assignee options from Jira API
+  const assigneeOptions = [
+    { value: "", label: "Unassigned", description: "No assignee" },
+    ...users.map((user) => ({
+      value: user.accountId || "",
+      label: user.displayName || "Unknown User",
+      description: user.emailAddress || "",
+    })),
+  ];
+
+  // Sprint options from Jira API
+  const getSprintStateLabel = (state: string) => {
+    switch (state) {
+      case "active":
+        return "🟢";
+      case "future":
+        return "🔵";
+      case "closed":
+        return "⚪";
+      default:
+        return "";
+    }
+  };
+
+  // Build sprint options - include default sprint if loaded, even if sprints list is empty
+  const sprintOptions = [
+    { value: "", label: "No Sprint", description: "Not assigned to a sprint" },
+    // Add default sprint first if it exists and is not in the sprints list
+    ...(defaultSprintObject &&
+    defaultSprintObject.id != null &&
+    !sprints.some((s) => s.id === defaultSprintObject.id)
+      ? [
+          {
+            value: defaultSprintObject.id.toString(),
+            label: `${getSprintStateLabel(defaultSprintObject.state)} ${defaultSprintObject.name}`,
+            description: defaultSprintObject.goal || `Sprint ID: ${defaultSprintObject.id}`,
+          },
+        ]
+      : []),
+    // Add all loaded sprints
+    ...sprints.map((sprint) => ({
+      value: sprint.id.toString(),
+      label: `${getSprintStateLabel(sprint.state)} ${sprint.name}`,
+      description: sprint.goal || `Sprint ID: ${sprint.id}`,
+    })),
   ];
 
   return (
@@ -242,9 +442,47 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
               onChange={setPriority}
               placeholder="Select priority (optional)"
               disabled={creating}
+              loading={loadingPriorities}
             />
             <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
               Issue priority (optional)
+            </p>
+          </div>
+
+          {/* Assignee */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-2">
+              Assignee
+            </label>
+            <JiraDropdown
+              options={assigneeOptions}
+              value={assigneeId}
+              onChange={setAssigneeId}
+              placeholder="Select assignee (optional)"
+              disabled={creating || !projectKey}
+              loading={loadingUsers}
+            />
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+              User to assign this issue to (optional)
+            </p>
+          </div>
+
+          {/* Sprint */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-2">
+              Sprint
+            </label>
+            <JiraDropdown
+              options={sprintOptions}
+              value={sprintId}
+              onChange={setSprintId}
+              placeholder="Select sprint (optional)"
+              disabled={creating}
+              loading={loadingSprints}
+              onOpen={loadSprints}
+            />
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+              Sprint to assign this issue to (optional)
             </p>
           </div>
 
@@ -318,7 +556,9 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
             <Button
               type="submit"
               variant="primary"
-              disabled={creating || !projectKey || !summary.trim() || !issueTypeName}
+              disabled={
+                creating || !projectKey || !summary.trim() || !issueTypeName
+              }
             >
               {creating
                 ? attachVideo

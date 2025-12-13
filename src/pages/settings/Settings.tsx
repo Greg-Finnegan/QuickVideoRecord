@@ -16,7 +16,6 @@ import { useJiraProjects } from "./hooks/useJiraProjects";
 import { useJiraPriorities } from "./hooks/useJiraPriorities";
 import { useJiraUsers } from "./hooks/useJiraUsers";
 import { useJiraSprints } from "./hooks/useJiraSprints";
-import { useJiraIssues } from "./hooks/useJiraIssues";
 import { useRecordings } from "../recordings/hooks/useRecordings";
 
 const Settings: React.FC = () => {
@@ -44,9 +43,6 @@ const Settings: React.FC = () => {
     handleDefaultSprintChange,
   } = useJiraSprints(isJiraConnected);
   const { clearAllRecordings } = useRecordings();
-
-  // Fetch and console log the last 5 Jira issues
-  useJiraIssues(isJiraConnected);
 
   return (
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans">

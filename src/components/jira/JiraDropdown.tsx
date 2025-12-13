@@ -13,6 +13,7 @@ interface JiraDropdownProps {
   placeholder?: string;
   disabled?: boolean;
   loading?: boolean;
+  onOpen?: () => void;
 }
 
 const JiraDropdown: React.FC<JiraDropdownProps> = ({
@@ -22,6 +23,7 @@ const JiraDropdown: React.FC<JiraDropdownProps> = ({
   placeholder = "Select an option...",
   disabled = false,
   loading = false,
+  onOpen,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -56,8 +58,10 @@ const JiraDropdown: React.FC<JiraDropdownProps> = ({
 
   const handleToggle = () => {
     if (!disabled && !loading) {
-      setIsOpen(!isOpen);
-      if (!isOpen) {
+      const willOpen = !isOpen;
+      setIsOpen(willOpen);
+      if (willOpen) {
+        onOpen?.();
         setTimeout(() => inputRef.current?.focus(), 0);
       }
     }

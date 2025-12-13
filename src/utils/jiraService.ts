@@ -56,6 +56,8 @@ class JiraService {
     description?: string;
     issueTypeName?: string;
     priority?: string;
+    assigneeId?: string;
+    sprintId?: string;
     labels?: string[];
   }): Promise<Version3Models.CreatedIssue> {
     const client = await this.getClient();
@@ -95,7 +97,16 @@ class JiraService {
       }
 
       if (params.priority) {
-        issueData.fields.priority = { name: params.priority };
+        issueData.fields.priority = { id: params.priority };
+      }
+
+      if (params.assigneeId) {
+        issueData.fields.assignee = { accountId: params.assigneeId };
+      }
+
+      if (params.sprintId) {
+        // Sprint is stored in customfield_10020 (Jira's default sprint field)
+        issueData.fields.customfield_10020 = parseInt(params.sprintId, 10);
       }
 
       if (params.labels && params.labels.length > 0) {

@@ -9,6 +9,8 @@ export interface CreateIssueFormData {
   issueTypeName: string;
   priority?: string;
   labels?: string[];
+  sprintId?: string;
+  assigneeId?: string;
   attachVideo: boolean;
 }
 

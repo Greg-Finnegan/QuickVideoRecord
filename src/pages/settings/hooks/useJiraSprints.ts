@@ -7,7 +7,7 @@ import type { JiraSettingsStorage, JiraSprint } from "../../../types";
  */
 export const useJiraSprints = (isJiraConnected: boolean) => {
   const [sprints, setSprints] = useState<JiraSprint[]>([]);
-  const [defaultSprint, setDefaultSprint] = useState<string>("");
+  const [defaultSprint, setDefaultSprint] = useState<JiraSprint | null>(null);
   const [loadingSprints, setLoadingSprints] = useState(false);
 
   // Load default sprint on mount
@@ -20,7 +20,17 @@ export const useJiraSprints = (isJiraConnected: boolean) => {
     }) => {
       if (changes.defaultJiraSprint) {
         const newValue = changes.defaultJiraSprint.newValue;
-        setDefaultSprint(typeof newValue === "string" ? newValue : "");
+        // Check if newValue is a valid JiraSprint object
+        if (
+          newValue &&
+          typeof newValue === "object" &&
+          "id" in newValue &&
+          newValue.id != null
+        ) {
+          setDefaultSprint(newValue as JiraSprint);
+        } else {
+          setDefaultSprint(null);
+        }
       }
     };
 
@@ -37,7 +47,7 @@ export const useJiraSprints = (isJiraConnected: boolean) => {
       loadJiraSprints();
     } else {
       setSprints([]);
-      setDefaultSprint("");
+      setDefaultSprint(null);
     }
   }, [isJiraConnected]);
 
@@ -94,7 +104,12 @@ export const useJiraSprints = (isJiraConnected: boolean) => {
       const result = (await chrome.storage.local.get(
         "defaultJiraSprint"
       )) as JiraSettingsStorage;
-      if (result.defaultJiraSprint) {
+      // Validate that the sprint object has required properties
+      if (
+        result.defaultJiraSprint &&
+        typeof result.defaultJiraSprint === "object" &&
+        result.defaultJiraSprint.id != null
+      ) {
         setDefaultSprint(result.defaultJiraSprint);
       }
     } catch (error) {
@@ -102,10 +117,10 @@ export const useJiraSprints = (isJiraConnected: boolean) => {
     }
   };
 
-  const handleDefaultSprintChange = async (sprintId: string) => {
-    setDefaultSprint(sprintId);
+  const handleDefaultSprintChange = async (sprint: JiraSprint | null) => {
+    setDefaultSprint(sprint);
     try {
-      await chrome.storage.local.set({ defaultJiraSprint: sprintId });
+      await chrome.storage.local.set({ defaultJiraSprint: sprint });
     } catch (error) {
       console.error("Failed to save default sprint:", error);
     }

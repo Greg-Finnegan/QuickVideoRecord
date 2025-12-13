@@ -3,6 +3,7 @@ import { jiraService } from "../../../utils/jiraService";
 
 /**
  * Hook to fetch and log the last 5 Jira issues
+ * Just for testing at this point. Used to find method to map sprints.
  */
 export const useJiraIssues = (isJiraConnected: boolean) => {
   useEffect(() => {

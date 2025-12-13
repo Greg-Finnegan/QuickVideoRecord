@@ -4,9 +4,9 @@ import type { JiraSprintOption, JiraSprint } from "../../../types";
 
 interface DefaultSprintSettingProps {
   sprints: JiraSprint[];
-  defaultSprint: string;
+  defaultSprint: JiraSprint | null;
   loadingSprints: boolean;
-  onSprintChange: (sprintId: string) => void;
+  onSprintChange: (sprint: JiraSprint | null) => void;
 }
 
 /**
@@ -31,6 +31,15 @@ const DefaultSprintSetting: React.FC<DefaultSprintSettingProps> = ({
     }
   };
 
+  const handleSprintChange = (sprintId: string) => {
+    if (!sprintId) {
+      onSprintChange(null);
+      return;
+    }
+    const selectedSprint = sprints.find((s) => s.id.toString() === sprintId);
+    onSprintChange(selectedSprint || null);
+  };
+
   return (
     <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
       <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-3">
@@ -46,24 +55,25 @@ const DefaultSprintSetting: React.FC<DefaultSprintSettingProps> = ({
         <li>⚪ Closed</li>
       </ul>
       <JiraDropdown
-        options={sprints.map(
-          (sprint): JiraSprintOption => ({
-            value: sprint.id.toString(),
-            label: `${getSprintStateLabel(sprint.state)} ${sprint.name}`,
-            description: sprint.goal || `Sprint ID: ${sprint.id}`,
-            sprint: sprint,
-          })
-        )}
-        value={defaultSprint}
-        onChange={onSprintChange}
+        options={[
+          { value: "", label: "No Sprint", description: "Not assigned to a sprint" },
+          ...sprints.map(
+            (sprint): JiraSprintOption => ({
+              value: sprint.id.toString(),
+              label: `${getSprintStateLabel(sprint.state)} ${sprint.name}`,
+              description: sprint.goal || `Sprint ID: ${sprint.id}`,
+              sprint: sprint,
+            })
+          ),
+        ]}
+        value={defaultSprint?.id.toString() || ""}
+        onChange={handleSprintChange}
         placeholder="Select a sprint..."
         loading={loadingSprints}
       />
       {defaultSprint && (
         <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          Selected:{" "}
-          {sprints.find((s) => s.id.toString() === defaultSprint)?.name ||
-            defaultSprint}
+          Selected: {defaultSprint.name}
         </p>
       )}
     </div>

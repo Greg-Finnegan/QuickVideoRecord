@@ -80,6 +80,8 @@ export const useJiraIssueCreation = () => {
         description: formData.description,
         issueTypeName: formData.issueTypeName,
         priority: formData.priority,
+        assigneeId: formData.assigneeId,
+        sprintId: formData.sprintId,
         labels,
       });
 
