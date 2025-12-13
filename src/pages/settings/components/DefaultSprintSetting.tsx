@@ -37,8 +37,14 @@ const DefaultSprintSetting: React.FC<DefaultSprintSettingProps> = ({
         Default Sprint
       </label>
       <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-        Select the default Jira sprint for tickets created by this extension.
+        Select the default Jira sprint for tickets created by this extension. <br></br>
+        Jira makes getting sprints harder than it should be. This could take some time or not work at all.
       </p>
+      <ul className="text-sm text-slate-600 dark:text-slate-400 mb-4 list-disc pl-5">
+        <li>🟢 Active</li>
+        <li>🔵 Future</li>
+        <li>⚪ Closed</li>
+      </ul>
       <JiraDropdown
         options={sprints.map(
           (sprint): JiraSprintOption => ({
