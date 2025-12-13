@@ -13,6 +13,8 @@ interface RecordingCardProps {
   onStartRename: (recording: Recording) => void;
   onPlay: (recording: Recording) => void;
   onDelete: (id: string) => void;
+  onCreateJiraIssue?: (recording: Recording) => void;
+  isJiraConnected?: boolean;
   formatDate: (timestamp: number) => string;
   formatSize: (bytes?: number) => string;
   formatDuration: (seconds?: number) => string;
@@ -28,6 +30,8 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
   onStartRename,
   onPlay,
   onDelete,
+  onCreateJiraIssue,
+  isJiraConnected,
   formatDate,
   formatSize,
   formatDuration,
@@ -127,6 +131,20 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
           >
             Rename
           </Button>
+          {isJiraConnected && onCreateJiraIssue && (
+            <Button
+              variant="primary"
+              rounded="full"
+              className="px-3 py-2 text-sm flex-shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCreateJiraIssue(recording);
+              }}
+              title="Create Jira Issue"
+            >
+              Jira
+            </Button>
+          )}
           <div onClick={(e) => e.stopPropagation()}>
             <ContextMenu
               items={[

@@ -21,6 +21,18 @@ export type {
   JiraIntegrationStatus,
 } from "./jiraSettings";
 
+// Jira issue creation types
+export type {
+  CreateIssueFormData,
+  CreateIssueResult,
+} from "./jiraIssue";
+
+// Toast notification types
+export type {
+  Toast,
+  ToastLink,
+} from "./toast";
+
 // Extension settings types
 export type {
   ThemeOption,

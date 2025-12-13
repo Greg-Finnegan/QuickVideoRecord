@@ -1,15 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import "../../index.css";
 import Button from "../../components/Button";
 import VideoPlayerModal from "../../components/VideoPlayerModal";
 import MainApplicationHeader from "../../components/MainApplicationHeader";
 import RecordingCard from "./RecordingCard";
+import CreateJiraIssueModal from "../../components/CreateJiraIssueModal";
+import ToastContainer from "../../components/ToastContainer";
 import { useRecordings } from "./hooks/useRecordings";
 import { useRecordingRename } from "./hooks/useRecordingRename";
 import { useVideoPlayer } from "./hooks/useVideoPlayer";
 import { useTranscription } from "./hooks/useTranscription";
 import { useRecordingTranscriptionUpdates } from "./hooks/useRecordingTranscriptionUpdates";
+import { useJiraConnection } from "../settings/hooks/useJiraConnection";
+import { useJiraProjects } from "../settings/hooks/useJiraProjects";
+import { useToast } from "../../hooks/useToast";
 import { formatDate, formatSize, formatDuration } from "./utils/formatters";
+import type { Recording } from "../../types";
 
 const Recordings: React.FC = () => {
 
@@ -46,6 +52,15 @@ const Recordings: React.FC = () => {
 
   useRecordingTranscriptionUpdates({ setRecordings });
 
+  // Jira integration
+  const { isJiraConnected } = useJiraConnection();
+  const { defaultProject } = useJiraProjects(isJiraConnected);
+  const { toasts, removeToast, success, warning } = useToast();
+
+  // Jira issue creation modal state
+  const [showCreateIssueModal, setShowCreateIssueModal] = useState(false);
+  const [selectedRecordingForJira, setSelectedRecordingForJira] = useState<Recording | null>(null);
+
   const handleDeleteRecording = async (id: string) => {
     await deleteRecording(id);
     if (selectedRecording?.id === id) {
@@ -58,6 +73,24 @@ const Recordings: React.FC = () => {
     if (cleared) {
       closePlayer();
     }
+  };
+
+  const handleOpenCreateIssue = (recording: Recording) => {
+    setSelectedRecordingForJira(recording);
+    setShowCreateIssueModal(true);
+  };
+
+  const handleCloseCreateIssue = () => {
+    setShowCreateIssueModal(false);
+    setSelectedRecordingForJira(null);
+  };
+
+  const handleIssueCreated = (issueKey: string, issueUrl: string) => {
+    success(`Jira issue ${issueKey} created successfully!`, {
+      text: "Open in Jira",
+      url: issueUrl,
+    });
+    handleCloseCreateIssue();
   };
 
   return (
@@ -107,6 +140,8 @@ const Recordings: React.FC = () => {
                   onStartRename={startRename}
                   onPlay={playRecording}
                   onDelete={handleDeleteRecording}
+                  onCreateJiraIssue={handleOpenCreateIssue}
+                  isJiraConnected={isJiraConnected}
                   formatDate={formatDate}
                   formatSize={formatSize}
                   formatDuration={formatDuration}
@@ -136,6 +171,19 @@ const Recordings: React.FC = () => {
           }}
         />
       )}
+
+      {/* Create Jira Issue Modal */}
+      {showCreateIssueModal && selectedRecordingForJira && (
+        <CreateJiraIssueModal
+          recording={selectedRecordingForJira}
+          onClose={handleCloseCreateIssue}
+          onSuccess={handleIssueCreated}
+          defaultProjectKey={defaultProject}
+        />
+      )}
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </div>
   );
 };
