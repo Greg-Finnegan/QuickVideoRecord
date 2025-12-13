@@ -42,7 +42,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({ items, triggerButton }) => {
     <div className="relative" ref={menuRef}>
       <div onClick={() => setIsOpen(!isOpen)}>
         {triggerButton || (
-          <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
+          <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
             <Icon name="menu" size={18} />
           </button>
         )}

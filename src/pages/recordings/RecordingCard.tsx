@@ -41,7 +41,7 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
   formatDuration,
 }) => {
   return (
-    <div className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-4 flex items-center gap-4 transition-all hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-[0_1px_3px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
+    <div className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-full p-4 flex items-center gap-4 transition-all hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-[0_1px_3px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
       <div className="text-slate-600 dark:text-slate-400 flex-shrink-0">
         <Icon name="video" size={32} />
       </div>

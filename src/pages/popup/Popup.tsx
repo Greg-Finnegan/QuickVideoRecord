@@ -79,7 +79,7 @@ const Popup: React.FC = () => {
       <Button
         id="recordBtn"
         variant="primary"
-        className={`my-2 w-[200px] ${isRecording ? "hidden" : ""}`}
+        className={`my-2 w-[200px]rounded-full ${isRecording ? "hidden" : ""}`}
         onClick={handleStartRecording}
       >
         Start Recording
@@ -87,7 +87,7 @@ const Popup: React.FC = () => {
       <Button
         id="stopBtn"
         variant="warning"
-        className={`my-2 w-[200px] ${!isRecording ? "hidden" : ""}`}
+        className={`my-2 w-[200px] rounded-full ${!isRecording ? "hidden" : ""}`}
         onClick={handleStopRecording}
       >
         Stop & Download

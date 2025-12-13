@@ -242,7 +242,7 @@ const Recorder: React.FC = () => {
         <div className="text-center text-white">
           <Button
             variant="primary"
-            className="px-8 py-4 text-base rounded-lg shadow-[0_2px_8px_rgba(66,133,244,0.3)] active:scale-[0.98]"
+            className="px-8 py-4 text-base rounded-full shadow-[0_2px_8px_rgba(66,133,244,0.3)] active:scale-[0.98]"
             onClick={handleStartClick}
           >
             Click to Start Screen Recording
@@ -254,13 +254,13 @@ const Recorder: React.FC = () => {
       )}
       {isRecording && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center flex flex-col items-center gap-6">
-          <div className="bg-black/85 dark:bg-black/90 text-white px-8 py-4 rounded-xl flex items-center gap-3 text-base font-medium shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+          <div className="bg-black/85 dark:bg-black/90 text-white px-8 py-4 rounded-full flex items-center gap-3 text-base font-medium shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
             <span className="w-3 h-3 bg-red-600 dark:bg-red-500 rounded-full flex-shrink-0 animate-[pulse_1.5s_ease-in-out_infinite]"></span>
             <span className="leading-none">Recording in progress...</span>
           </div>
           <Button
             variant="warning"
-            className="px-10 py-4 text-base font-semibold rounded-lg shadow-[0_4px_12px_rgba(222,53,11,0.3)] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,53,11,0.4)] active:translate-y-0 flex items-center gap-2"
+            className="px-10 py-4 text-base font-semibold rounded-full shadow-[0_4px_12px_rgba(222,53,11,0.3)] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,53,11,0.4)] active:translate-y-0 flex items-center gap-2"
             onClick={stopRecording}
           >
             <Icon name="stop" size={18} />
