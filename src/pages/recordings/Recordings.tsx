@@ -2,8 +2,8 @@ import React from "react";
 import "../../index.css";
 import Button from "../../components/Button";
 import VideoPlayerModal from "../../components/VideoPlayerModal";
+import MainApplicationHeader from "../../components/MainApplicationHeader";
 import RecordingCard from "./RecordingCard";
-import RecordingsHeader from "./RecordingsHeader";
 import { useRecordings } from "./hooks/useRecordings";
 import { useRecordingRename } from "./hooks/useRecordingRename";
 import { useVideoPlayer } from "./hooks/useVideoPlayer";
@@ -62,7 +62,10 @@ const Recordings: React.FC = () => {
 
   return (
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans">
-      <RecordingsHeader />
+      <MainApplicationHeader
+        title="Recording History"
+        subtitle="View and manage your screen recordings"
+      />
 
       <div className="px-10 py-6 max-w-[1200px] mx-auto">
         {loading ? (

@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from "react";
-import JiraConnect from "../../components/JiraConnect";
-import JiraProfile from "../../components/JiraProfile";
-import { jiraAuth } from "../../utils/jiraAuth";
+import JiraConnect from "./JiraConnect";
+import JiraProfile from "./JiraProfile";
+import { jiraAuth } from "../utils/jiraAuth";
 
-const RecordingsHeader: React.FC = () => {
+interface MainApplicationHeaderProps {
+  title: string;
+  subtitle: string;
+}
+
+const MainApplicationHeader: React.FC<MainApplicationHeaderProps> = ({
+  title,
+  subtitle,
+}) => {
   const [isJiraConnected, setIsJiraConnected] = useState(false);
 
   useEffect(() => {
@@ -35,10 +43,10 @@ const RecordingsHeader: React.FC = () => {
       <div className="flex justify-between items-center max-w-[1250px] mx-auto">
         <div className="flex flex-col">
           <h1 className="m-0 text-2xl font-medium text-slate-900 dark:text-slate-100">
-            Recording History
+            {title}
           </h1>
           <p className="m-0 text-sm text-slate-600 dark:text-slate-400">
-            View and manage your screen recordings
+            {subtitle}
           </p>
         </div>
         <div className="mt-2 flex items-center gap-3">
@@ -49,4 +57,4 @@ const RecordingsHeader: React.FC = () => {
   );
 };
 
-export default RecordingsHeader;
+export default MainApplicationHeader;
