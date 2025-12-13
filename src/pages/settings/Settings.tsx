@@ -4,14 +4,19 @@ import MainApplicationHeader from "../../components/MainApplicationHeader";
 import Breadcrumb from "../../components/Breadcrumb";
 import SettingsCard from "../../components/SettingsCard";
 import JiraProfile from "../../components/jira/JiraProfile";
-import JiraDropdown from "../../components/jira/JiraDropdown";
 import Button from "../../components/Button";
 import ThemeSlider from "../../components/ThemeSlider";
+import DefaultProjectSetting from "./components/DefaultProjectSetting";
+import DefaultSprintSetting from "./components/DefaultSprintSetting";
+import DefaultPrioritySetting from "./components/DefaultPrioritySetting";
+import DefaultAssigneeSetting from "./components/DefaultAssigneeSetting";
 import { useTheme } from "../../hooks/useTheme";
 import { useJiraConnection } from "./hooks/useJiraConnection";
 import { useJiraProjects } from "./hooks/useJiraProjects";
+import { useJiraSprints } from "./hooks/useJiraSprints";
+import { useJiraPriorities } from "./hooks/useJiraPriorities";
+import { useJiraUsers } from "./hooks/useJiraUsers";
 import { useRecordings } from "../recordings/hooks/useRecordings";
-import type { JiraProjectOption } from "../../types";
 
 const Settings: React.FC = () => {
   const { theme, setTheme, loading: themeLoading } = useTheme();
@@ -23,6 +28,12 @@ const Settings: React.FC = () => {
     loadingProjects,
     handleDefaultProjectChange,
   } = useJiraProjects(isJiraConnected);
+  const { sprints, defaultSprint, loadingSprints, handleSprintChange } =
+    useJiraSprints(isJiraConnected, defaultProject);
+  const { priorities, defaultPriority, loadingPriorities, handlePriorityChange } =
+    useJiraPriorities(isJiraConnected);
+  const { users, defaultAssignee, loadingUsers, handleAssigneeChange } =
+    useJiraUsers(isJiraConnected, defaultProject);
   const { clearAllRecordings } = useRecordings();
 
   return (
@@ -82,37 +93,34 @@ const Settings: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Default Project Selection */}
-                <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-                  <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-3">
-                    Default Project
-                  </label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                    Select the default Jira project for tickets created by this
-                    extension.
-                  </p>
-                  <JiraDropdown
-                    options={jiraProjects.map(
-                      (project): JiraProjectOption => ({
-                        value: project.key || "",
-                        label: project.name || "Unnamed Project",
-                        description: project.key || "",
-                        project: project,
-                      })
-                    )}
-                    value={defaultProject}
-                    onChange={handleDefaultProjectChange}
-                    placeholder="Select a project..."
-                    loading={loadingProjects}
-                  />
-                  {defaultProject && (
-                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                      Selected:{" "}
-                      {jiraProjects.find((p) => p.key === defaultProject)
-                        ?.name || defaultProject}
-                    </p>
-                  )}
-                </div>
+                {/* Default Jira Settings */}
+                <DefaultProjectSetting
+                  jiraProjects={jiraProjects}
+                  defaultProject={defaultProject}
+                  loadingProjects={loadingProjects}
+                  onProjectChange={handleDefaultProjectChange}
+                />
+
+                <DefaultSprintSetting
+                  sprints={sprints}
+                  defaultSprint={defaultSprint}
+                  loadingSprints={loadingSprints}
+                  onSprintChange={handleSprintChange}
+                />
+
+                <DefaultPrioritySetting
+                  priorities={priorities}
+                  defaultPriority={defaultPriority}
+                  loadingPriorities={loadingPriorities}
+                  onPriorityChange={handlePriorityChange}
+                />
+
+                <DefaultAssigneeSetting
+                  users={users}
+                  defaultAssignee={defaultAssignee}
+                  loadingUsers={loadingUsers}
+                  onAssigneeChange={handleAssigneeChange}
+                />
               </div>
             ) : (
               <div className="space-y-4">

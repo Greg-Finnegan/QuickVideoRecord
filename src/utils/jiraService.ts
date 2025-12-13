@@ -233,6 +233,82 @@ class JiraService {
       throw error;
     }
   }
+
+  /**
+   * Get all boards for a project
+   */
+  async getBoards(projectKey: string): Promise<any[]> {
+    const client = await this.getClient();
+    if (!client) {
+      throw new Error("Not authenticated with Jira");
+    }
+
+    try {
+      const result = await client.board.getAllBoards({
+        projectKeyOrId: projectKey,
+      });
+      return result.values || [];
+    } catch (error) {
+      console.error("Failed to fetch boards:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get sprints for a board
+   */
+  async getSprints(boardId: number): Promise<any[]> {
+    const client = await this.getClient();
+    if (!client) {
+      throw new Error("Not authenticated with Jira");
+    }
+
+    try {
+      const result = await client.board.getAllSprints({ boardId });
+      return result.values || [];
+    } catch (error) {
+      console.error("Failed to fetch sprints:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get all priorities
+   */
+  async getPriorities(): Promise<Version3Models.Priority[]> {
+    const client = await this.getClient();
+    if (!client) {
+      throw new Error("Not authenticated with Jira");
+    }
+
+    try {
+      const priorities = await client.issuePriorities.getPriorities();
+      return priorities || [];
+    } catch (error) {
+      console.error("Failed to fetch priorities:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get users who can be assigned to issues in a project
+   */
+  async getProjectUsers(projectKey: string): Promise<Version3Models.User[]> {
+    const client = await this.getClient();
+    if (!client) {
+      throw new Error("Not authenticated with Jira");
+    }
+
+    try {
+      const users = await client.userSearch.findAssignableUsers({
+        project: projectKey,
+      });
+      return users || [];
+    } catch (error) {
+      console.error("Failed to fetch project users:", error);
+      return [];
+    }
+  }
 }
 
 export const jiraService = new JiraService();
