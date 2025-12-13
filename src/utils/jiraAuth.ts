@@ -1,7 +1,8 @@
 import { Version3Client } from "jira.js";
+import type { JiraTokens, JiraOAuthConfig } from "../types";
 
 // Jira OAuth Configuration
-const getJiraConfig = () => ({
+const getJiraConfig = (): JiraOAuthConfig => ({
   clientId: import.meta.env.VITE_JIRA_CLIENT_ID,
   clientSecret: import.meta.env.VITE_JIRA_CLIENT_SECRET,
   redirectUri: chrome.identity?.getRedirectURL("oauth2") || "",
@@ -9,14 +10,6 @@ const getJiraConfig = () => ({
   tokenUrl: "https://auth.atlassian.com/oauth/token",
   scope: "read:jira-user read:jira-work write:jira-work offline_access",
 });
-
-interface JiraTokens {
-  accessToken: string;
-  refreshToken: string;
-  expiresAt: number;
-  cloudId?: string;
-  siteName?: string;
-}
 
 class JiraAuthService {
   async authenticate(): Promise<boolean> {
@@ -206,4 +199,6 @@ class JiraAuthService {
 }
 
 export const jiraAuth = new JiraAuthService();
-export type { JiraTokens };
+
+// Re-export types for convenience
+export type { JiraTokens, JiraOAuthConfig };

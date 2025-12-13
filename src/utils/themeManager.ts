@@ -1,5 +1,4 @@
-export type ThemeOption = "light" | "dark" | "system";
-export type AppliedTheme = "light" | "dark";
+import type { ThemeOption, AppliedTheme } from "../types";
 
 class ThemeManager {
   private mediaQuery: MediaQueryList;
@@ -89,3 +88,6 @@ class ThemeManager {
 }
 
 export const themeManager = new ThemeManager();
+
+// Re-export types for convenience
+export type { ThemeOption, AppliedTheme };
