@@ -19,6 +19,8 @@ export type {
   JiraSettingsStorage,
   JiraProjectOption,
   JiraIntegrationStatus,
+  JiraSprint,
+  JiraSprintOption,
 } from "./jiraSettings";
 
 // Jira issue creation types

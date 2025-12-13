@@ -62,6 +62,7 @@ export interface JiraIssueParams {
 export interface JiraSettingsStorage {
   jiraTokens?: JiraTokens;
   defaultJiraProject?: string;
+  defaultJiraSprint?: string;
   jiraProjectSettings?: JiraProjectSettings;
 }
 
@@ -84,4 +85,25 @@ export interface JiraIntegrationStatus {
   cloudId?: string;
   user?: Version3Models.User;
   lastSync?: number;
+}
+
+/**
+ * Jira Sprint information (from customfield_10020)
+ */
+export interface JiraSprint {
+  id: number;
+  name: string;
+  state: "future" | "active" | "closed";
+  boardId: number;
+  goal?: string;
+}
+
+/**
+ * Dropdown option for Jira sprint selection
+ */
+export interface JiraSprintOption {
+  value: string;
+  label: string;
+  description?: string;
+  sprint?: JiraSprint;
 }
