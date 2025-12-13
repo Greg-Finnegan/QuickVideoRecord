@@ -191,6 +191,12 @@ const Recorder: React.FC = () => {
 
           await chrome.storage.local.set({ recordings });
           console.log('Recording metadata saved');
+
+          // Trigger automatic transcription
+          chrome.runtime.sendMessage({
+            action: 'startAutoTranscription',
+            recordingId: recordingId,
+          });
         } catch (error) {
           console.error('Failed to save recording:', error);
         }

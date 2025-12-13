@@ -21,7 +21,8 @@
     "downloads",
     "storage",
     "sidePanel",
-    "identity"
+    "identity",
+    "offscreen"
   ],
   "host_permissions": [
     "<all_urls>"

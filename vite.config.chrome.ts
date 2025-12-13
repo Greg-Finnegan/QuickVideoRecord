@@ -32,6 +32,7 @@ export default mergeConfig(
           sidepanel: resolve(__dirname, 'src/pages/sidepanel/index.html'),
           recorder: resolve(__dirname, 'src/pages/recorder/index.html'),
           recordings: resolve(__dirname, 'src/pages/recordings/index.html'),
+          offscreen: resolve(__dirname, 'src/pages/offscreen/offscreen.html'),
         },
       },
     },

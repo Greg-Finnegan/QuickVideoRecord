@@ -23,7 +23,72 @@ const Recordings: React.FC = () => {
 
   useEffect(() => {
     loadRecordings();
-  }, []);
+
+    // Listen for transcription updates
+    const messageListener = (message: any) => {
+      if (message.action === 'transcriptionStarted') {
+        // Update the recording to show it's transcribing
+        setRecordings((prevRecordings) =>
+          prevRecordings.map((r) =>
+            r.id === message.recordingId ? { ...r, transcribing: true } : r
+          )
+        );
+      } else if (message.action === 'transcriptionComplete') {
+        // Update the recording with the transcript
+        setRecordings((prevRecordings) =>
+          prevRecordings.map((r) =>
+            r.id === message.recordingId
+              ? { ...r, transcript: message.transcript, transcribing: false }
+              : r
+          )
+        );
+        // Update selected recording if it's the one being transcribed
+        if (selectedRecording?.id === message.recordingId) {
+          setSelectedRecording({
+            ...selectedRecording,
+            transcript: message.transcript,
+            transcribing: false,
+          });
+        }
+      } else if (message.action === 'transcriptionFailed') {
+        // Update the recording to show transcription failed
+        setRecordings((prevRecordings) =>
+          prevRecordings.map((r) =>
+            r.id === message.recordingId ? { ...r, transcribing: false } : r
+          )
+        );
+      }
+    };
+
+    // Listen for storage changes (for when recordings are updated)
+    const storageListener = (changes: {
+      [key: string]: chrome.storage.StorageChange;
+    }) => {
+      if (changes.recordings) {
+        const newRecordings = changes.recordings.newValue as Recording[];
+        if (newRecordings) {
+          setRecordings(newRecordings);
+          // Update selected recording if it changed
+          if (selectedRecording) {
+            const updatedSelected = newRecordings.find(
+              (r) => r.id === selectedRecording.id
+            );
+            if (updatedSelected) {
+              setSelectedRecording(updatedSelected);
+            }
+          }
+        }
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(messageListener);
+    chrome.storage.local.onChanged.addListener(storageListener);
+
+    return () => {
+      chrome.runtime.onMessage.removeListener(messageListener);
+      chrome.storage.local.onChanged.removeListener(storageListener);
+    };
+  }, [selectedRecording]);
 
   const loadRecordings = async () => {
     try {
@@ -310,6 +375,16 @@ const Recordings: React.FC = () => {
                           {recording.size && (
                             <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
                               💾 {formatSize(recording.size)}
+                            </span>
+                          )}
+                          {recording.transcribing && (
+                            <span className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                              🎤 Transcribing...
+                            </span>
+                          )}
+                          {recording.transcript && !recording.transcribing && (
+                            <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                              ✓ Transcribed
                             </span>
                           )}
                         </div>
