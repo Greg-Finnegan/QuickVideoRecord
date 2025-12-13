@@ -205,9 +205,11 @@ class JiraService {
     }
 
     try {
-      const result = await client.issueSearch.searchForIssuesUsingJql({
+      const result = await client.issueSearch.searchForIssuesUsingJqlEnhancedSearch({
         jql,
         maxResults,
+        fields: ["*all"],
+        expand: "renderedFields,names,schema,transitions,operations,editmeta,changelog",
       });
       return result.issues || [];
     } catch (error) {
