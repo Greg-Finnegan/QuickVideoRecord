@@ -1,4 +1,5 @@
 import React from "react";
+import { Sun, Moon, Monitor } from "lucide-react";
 
 export type ThemeOption = "light" | "dark" | "system";
 
@@ -8,10 +9,10 @@ interface ThemeSliderProps {
 }
 
 const ThemeSlider: React.FC<ThemeSliderProps> = ({ value, onChange }) => {
-  const options: { value: ThemeOption; label: string; icon: string }[] = [
-    { value: "light", label: "Light", icon: "☀️" },
-    { value: "dark", label: "Dark", icon: "🌙" },
-    { value: "system", label: "System", icon: "💻" },
+  const options: { value: ThemeOption; label: string; icon: React.ReactNode }[] = [
+    { value: "light", label: "Light", icon: <Sun size={16} /> },
+    { value: "dark", label: "Dark", icon: <Moon size={16} /> },
+    { value: "system", label: "System", icon: <Monitor size={16} /> },
   ];
 
   return (
