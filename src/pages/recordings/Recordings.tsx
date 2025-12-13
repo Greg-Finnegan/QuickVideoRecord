@@ -1,31 +1,25 @@
-import React, { useState } from "react";
+import React from "react";
 import "../../index.css";
-import Button from "../../components/Button";
 import VideoPlayerModal from "../../components/VideoPlayerModal";
 import MainApplicationHeader from "../../components/MainApplicationHeader";
 import RecordingCard from "./RecordingCard";
+import EmptyRecordingsState from "./EmptyRecordingsState";
 import ToastContainer from "../../components/ToastContainer";
-import Icon from "../../components/Icon";
 import { useRecordings } from "./hooks/useRecordings";
 import { useRecordingRename } from "./hooks/useRecordingRename";
 import { useVideoPlayer } from "./hooks/useVideoPlayer";
 import { useTranscription } from "./hooks/useTranscription";
 import { useRecordingTranscriptionUpdates } from "./hooks/useRecordingTranscriptionUpdates";
+import { useJiraIssueManagement } from "./hooks/useJiraIssueManagement";
 import { useJiraConnection } from "../settings/hooks/useJiraConnection";
 import { useJiraProjects } from "../settings/hooks/useJiraProjects";
 import { useToast } from "../../hooks/useToast";
 import { formatDate, formatSize, formatDuration } from "./utils/formatters";
-import type { Recording } from "../../types";
 import CreateJiraIssueModal from "@src/components/jira/CreateJiraIssueModal";
 
 const Recordings: React.FC = () => {
-  const {
-    recordings,
-    loading,
-    setRecordings,
-    deleteRecording,
-    clearAllRecordings,
-  } = useRecordings();
+  const { recordings, loading, setRecordings, deleteRecording } =
+    useRecordings();
 
   const {
     renamingId,
@@ -55,12 +49,19 @@ const Recordings: React.FC = () => {
   // Jira integration
   const { isJiraConnected } = useJiraConnection();
   const { defaultProject } = useJiraProjects(isJiraConnected);
-  const { toasts, removeToast, success, warning } = useToast();
+  const { toasts, removeToast, success } = useToast();
 
-  // Jira issue creation modal state
-  const [showCreateIssueModal, setShowCreateIssueModal] = useState(false);
-  const [selectedRecordingForJira, setSelectedRecordingForJira] =
-    useState<Recording | null>(null);
+  const {
+    showCreateIssueModal,
+    selectedRecordingForJira,
+    handleOpenCreateIssue,
+    handleCloseCreateIssue,
+    handleIssueCreated,
+    handleUnlinkJiraIssue,
+  } = useJiraIssueManagement({
+    setRecordings,
+    onSuccess: success,
+  });
 
   const handleDeleteRecording = async (id: string) => {
     const confirmed = confirm(
@@ -71,83 +72,6 @@ const Recordings: React.FC = () => {
     await deleteRecording(id);
     if (selectedRecording?.id === id) {
       closePlayer();
-    }
-  };
-
-  const handleClearAll = async () => {
-    const cleared = await clearAllRecordings();
-    if (cleared) {
-      closePlayer();
-    }
-  };
-
-  const handleOpenCreateIssue = (recording: Recording) => {
-    setSelectedRecordingForJira(recording);
-    setShowCreateIssueModal(true);
-  };
-
-  const handleCloseCreateIssue = () => {
-    setShowCreateIssueModal(false);
-    setSelectedRecordingForJira(null);
-  };
-
-  const handleIssueCreated = (issueKey: string, issueUrl: string) => {
-    // Update the recording in local state with the Jira issue information
-    if (selectedRecordingForJira) {
-      setRecordings((prevRecordings) =>
-        prevRecordings.map((r) =>
-          r.id === selectedRecordingForJira.id
-            ? { ...r, jiraIssueKey: issueKey, jiraIssueUrl: issueUrl }
-            : r
-        )
-      );
-    }
-
-    success(`Jira issue ${issueKey} created successfully!`, {
-      text: "Open in Jira",
-      url: issueUrl,
-    });
-    handleCloseCreateIssue();
-  };
-
-  const handleUnlinkJiraIssue = async (recordingId: string) => {
-    // Confirm before unlinking
-    const confirmed = confirm(
-      "Are you sure you want to unlink this Jira issue? This won't delete the issue in Jira."
-    );
-    if (!confirmed) return;
-
-    try {
-      // Get recordings from storage
-      const result = await chrome.storage.local.get("recordings");
-      const recordings = (result.recordings as Recording[]) || [];
-
-      // Find and update the recording
-      const updatedRecordings = recordings.map((r: Recording) =>
-        r.id === recordingId
-          ? {
-              ...r,
-              jiraIssueKey: undefined,
-              jiraIssueUrl: undefined,
-            }
-          : r
-      );
-
-      // Save back to storage
-      await chrome.storage.local.set({ recordings: updatedRecordings });
-
-      // Update local state
-      setRecordings((prevRecordings) =>
-        prevRecordings.map((r) =>
-          r.id === recordingId
-            ? { ...r, jiraIssueKey: undefined, jiraIssueUrl: undefined }
-            : r
-        )
-      );
-
-      success("Jira issue unlinked successfully");
-    } catch (error) {
-      console.error("Failed to unlink Jira issue:", error);
     }
   };
 
@@ -164,29 +88,9 @@ const Recordings: React.FC = () => {
             <p>Loading recordings...</p>
           </div>
         ) : recordings.length === 0 ? (
-          <div className="text-center py-20 px-5">
-            <div className="text-slate-600 dark:text-slate-400 mb-4 flex justify-center">
-              <Icon name="video" size={64} />
-            </div>
-            <h2 className="m-0 mb-2 text-xl font-medium text-slate-900 dark:text-slate-100">
-              No recordings yet
-            </h2>
-            <p className="m-0 text-sm text-slate-600 dark:text-slate-400">
-              Your recording history will appear here after you create your
-              first recording.
-            </p>
-          </div>
+          <EmptyRecordingsState />
         ) : (
           <>
-            <div className="flex justify-end mb-4">
-              <Button
-                variant="secondary"
-                rounded="full"
-                onClick={handleClearAll}
-              >
-                Clear All History
-              </Button>
-            </div>
             <div className="flex flex-col gap-3">
               {recordings.map((recording) => (
                 <RecordingCard

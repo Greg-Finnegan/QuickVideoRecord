@@ -10,6 +10,7 @@ import ThemeSlider from "../../components/ThemeSlider";
 import { useTheme } from "../../hooks/useTheme";
 import { useJiraConnection } from "./hooks/useJiraConnection";
 import { useJiraProjects } from "./hooks/useJiraProjects";
+import { useRecordings } from "../recordings/hooks/useRecordings";
 import type { JiraProjectOption } from "../../types";
 
 const Settings: React.FC = () => {
@@ -22,6 +23,7 @@ const Settings: React.FC = () => {
     loadingProjects,
     handleDefaultProjectChange,
   } = useJiraProjects(isJiraConnected);
+  const { clearAllRecordings } = useRecordings();
 
   return (
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans">
@@ -66,7 +68,11 @@ const Settings: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <JiraProfile clickable={false} />
-                  <Button variant="error" onClick={handleDisconnect}>
+                  <Button
+                    variant="error"
+                    rounded={"full"}
+                    onClick={handleDisconnect}
+                  >
                     Disconnect
                   </Button>
                 </div>
@@ -123,11 +129,35 @@ const Settings: React.FC = () => {
             )}
           </SettingsCard>
 
-          {/* Future Settings Sections */}
+          {/* Recording Settings Section */}
           <SettingsCard
             title="Recording Settings"
-            description="Recording preferences coming soon..."
-          />
+            description="Manage your recording history and preferences"
+          >
+            <div className="space-y-4">
+              {/* Clear All History */}
+              <div>
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-2">
+                  Clear Recording History
+                </label>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Permanently delete all recordings and their associated data.
+                  This action cannot be undone.
+                </p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                  Files will remain on computer but will no longer be seen by
+                  extension.
+                </p>
+                <Button
+                  variant="error"
+                  rounded="full"
+                  onClick={clearAllRecordings}
+                >
+                  Clear All Recording History
+                </Button>
+              </div>
+            </div>
+          </SettingsCard>
         </div>
       </div>
     </div>

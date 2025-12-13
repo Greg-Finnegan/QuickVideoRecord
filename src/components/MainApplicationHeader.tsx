@@ -39,7 +39,7 @@ const MainApplicationHeader: React.FC<MainApplicationHeaderProps> = ({
   };
 
   return (
-    <div className="sticky top-0 z-50 bg-white dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700 px-10 py-8">
+    <div className="sticky top-0 z-50 bg-white dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700 px-5 py-4">
       <div className="flex justify-between items-center max-w-[1250px] mx-auto">
         <div className="flex flex-col">
           <h1 className="m-0 text-2xl font-medium text-slate-900 dark:text-slate-100">
