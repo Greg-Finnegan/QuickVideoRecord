@@ -4,6 +4,8 @@ import Button from "../../components/Button";
 import CopyButton from "../../components/CopyButton";
 import JiraConnect from "../../components/JiraConnect";
 import ContextMenu from "../../components/ContextMenu";
+import EditableFilename from "../../components/EditableFilename";
+import VideoPlayerModal from "../../components/VideoPlayerModal";
 import { Recording, RecordingStorage } from "../../types/recording";
 import { videoStorage } from "../../utils/videoStorage";
 import { transcriptionService } from "../../utils/transcription";
@@ -20,21 +22,20 @@ const Recordings: React.FC = () => {
     useState<string>("");
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [newFilename, setNewFilename] = useState<string>("");
-  const [showRawData, setShowRawData] = useState(false);
 
   useEffect(() => {
     loadRecordings();
 
     // Listen for transcription updates
     const messageListener = (message: any) => {
-      if (message.action === 'transcriptionStarted') {
+      if (message.action === "transcriptionStarted") {
         // Update the recording to show it's transcribing
         setRecordings((prevRecordings) =>
           prevRecordings.map((r) =>
             r.id === message.recordingId ? { ...r, transcribing: true } : r
           )
         );
-      } else if (message.action === 'transcriptionComplete') {
+      } else if (message.action === "transcriptionComplete") {
         // Update the recording with the transcript
         setRecordings((prevRecordings) =>
           prevRecordings.map((r) =>
@@ -44,14 +45,14 @@ const Recordings: React.FC = () => {
           )
         );
         // Update selected recording if it's the one being transcribed
-        if (selectedRecording?.id === message.recordingId) {
+        if (selectedRecording && selectedRecording.id === message.recordingId) {
           setSelectedRecording({
             ...selectedRecording,
             transcript: message.transcript,
             transcribing: false,
           });
         }
-      } else if (message.action === 'transcriptionFailed') {
+      } else if (message.action === "transcriptionFailed") {
         // Update the recording to show transcription failed
         setRecordings((prevRecordings) =>
           prevRecordings.map((r) =>
@@ -154,7 +155,6 @@ const Recordings: React.FC = () => {
     setSelectedRecording(null);
     setTranscribing(false);
     setTranscriptionProgress("");
-    setShowRawData(false);
   };
 
   const transcribeRecording = async (recording: Recording) => {
@@ -432,99 +432,22 @@ const Recordings: React.FC = () => {
 
       {/* Video Player Modal */}
       {selectedRecording && videoUrl && (
-        <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-          onClick={closePlayer}
-        >
-          <div
-            className="bg-white dark:bg-slate-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-              <h2 className="text-lg font-medium text-slate-900 dark:text-slate-100 truncate flex-1">
-                {selectedRecording.filename}
-              </h2>
-              {!selectedRecording.transcript && !transcribing && (
-                <Button
-                  variant="primary"
-                  rounded="full"
-                  className="mr-2 px-4 py-2 text-sm"
-                  onClick={() => transcribeRecording(selectedRecording)}
-                >
-                  🎤 Transcribe
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                className="text-2xl p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
-                onClick={closePlayer}
-              >
-                ✕
-              </Button>
-            </div>
-            <div className="p-4">
-              <video
-                src={videoUrl}
-                controls
-                autoPlay
-                className="w-full rounded mb-4"
-                style={{ maxHeight: "calc(60vh - 120px)" }}
-              />
-
-              {transcribing && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded p-4 mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="animate-spin text-2xl">⚙️</div>
-                    <div className="flex-1">
-                      <div className="font-medium text-slate-900 dark:text-slate-100">
-                        Transcribing...
-                      </div>
-                      <div className="text-sm text-slate-600 dark:text-slate-400">
-                        {transcriptionProgress}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {selectedRecording.transcript && (
-                <div className="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded p-4 mb-4">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
-                    📝 Transcript
-                    <CopyButton textToCopy={selectedRecording.transcript} />
-                  </h3>
-                  <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
-                    {selectedRecording.transcript}
-                  </p>
-                </div>
-              )}
-
-              {/* Raw Data Section for Dev */}
-              <div className="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded">
-                <button
-                  onClick={() => setShowRawData(!showRawData)}
-                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-600/50 transition-colors rounded"
-                >
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    🔧 Raw Data (Dev)
-                  </h3>
-                  <span className="text-lg text-slate-600 dark:text-slate-400">
-                    {showRawData ? "▼" : "▶"}
-                  </span>
-                </button>
-                {showRawData && (
-                  <div className="px-4 pb-4">
-                    <div className="bg-slate-900 dark:bg-black rounded p-3 overflow-auto max-h-96">
-                      <pre className="text-xs text-green-400 font-mono">
-                        {JSON.stringify(selectedRecording, null, 2)}
-                      </pre>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <VideoPlayerModal
+          recording={selectedRecording}
+          videoUrl={videoUrl}
+          transcribing={transcribing}
+          transcriptionProgress={transcriptionProgress}
+          onClose={closePlayer}
+          onTranscribe={transcribeRecording}
+          onUpdateRecording={(updatedRecording) => {
+            setSelectedRecording(updatedRecording);
+            setRecordings((prevRecordings) =>
+              prevRecordings.map((r) =>
+                r.id === updatedRecording.id ? updatedRecording : r
+              )
+            );
+          }}
+        />
       )}
     </div>
   );
