@@ -1,5 +1,6 @@
 import React from "react";
 import type { Recording } from "../../types";
+import Icon from "../../components/Icon";
 
 interface RecordingMetadataProps {
   recording: Recording;
@@ -30,26 +31,26 @@ const RecordingMetadata: React.FC<RecordingMetadataProps> = ({
       </h3>
       <div className="flex flex-wrap gap-4">
         <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
-          📅 {formatDate(recording.timestamp)}
+          <Icon name="calendar" size={14} /> {formatDate(recording.timestamp)}
         </span>
         {recording.duration && (
           <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
-            ⏱️ {formatDuration(recording.duration)}
+            <Icon name="timer" size={14} /> {formatDuration(recording.duration)}
           </span>
         )}
         {recording.size && (
           <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
-            💾 {formatSize(recording.size)}
+            <Icon name="save" size={14} /> {formatSize(recording.size)}
           </span>
         )}
         {recording.transcribing && (
           <span className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
-            🎤 Transcribing...
+            <Icon name="mic" size={14} /> Transcribing...
           </span>
         )}
         {recording.transcript && !recording.transcribing && (
           <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-            ✓ Transcribed
+            <Icon name="check" size={14} /> Transcribed
           </span>
         )}
       </div>

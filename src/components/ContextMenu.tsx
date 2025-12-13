@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
+import Icon from "./Icon";
 
 interface ContextMenuItem {
   label: string;
   onClick: () => void;
   className?: string;
-  icon?: string;
+  icon?: React.ReactNode;
 }
 
 interface ContextMenuProps {
@@ -42,7 +43,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({ items, triggerButton }) => {
       <div onClick={() => setIsOpen(!isOpen)}>
         {triggerButton || (
           <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
-            <span className="text-lg">⋮</span>
+            <Icon name="menu" size={18} />
           </button>
         )}
       </div>
@@ -57,7 +58,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({ items, triggerButton }) => {
                 item.className || ""
               }`}
             >
-              {item.icon && <span>{item.icon}</span>}
+              {item.icon && <span className="flex-shrink-0">{item.icon}</span>}
               <span className="text-sm">{item.label}</span>
             </button>
           ))}

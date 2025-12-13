@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Icon from "../Icon";
 import { jiraService } from "../../utils/jiraService";
 import { jiraAuth } from "../../utils/jiraAuth";
 import type { Version3Models } from "jira.js";
@@ -90,7 +91,7 @@ const JiraProfile: React.FC<JiraProfileProps> = ({
           className="ml-1 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
           title="Disconnect from Jira"
         >
-          ✕
+          <Icon name="close" size={16} />
         </button>
       )}
     </div>

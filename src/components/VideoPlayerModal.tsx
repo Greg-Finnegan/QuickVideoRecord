@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import CopyButton from "./CopyButton";
 import EditableFilename from "./EditableFilename";
+import Icon from "./Icon";
 import { Recording, RecordingStorage } from "../types/recording";
 
 interface VideoPlayerModalProps {
@@ -84,10 +85,10 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
             <Button
               variant="primary"
               rounded="full"
-              className="mr-2 px-4 py-2 text-sm"
+              className="mr-2 px-4 py-2 text-sm flex items-center gap-2"
               onClick={() => onTranscribe(recording)}
             >
-              🎤 Transcribe
+              <Icon name="mic" size={16} /> Transcribe
             </Button>
           )}
           {recording.transcript && (
@@ -100,10 +101,10 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           )}
           <Button
             variant="ghost"
-            className="text-2xl p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
             onClick={onClose}
           >
-            ✕
+            <Icon name="close" size={24} />
           </Button>
         </div>
         <div className="p-4 overflow-y-auto flex-1">
@@ -117,7 +118,9 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           {transcribing && (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded p-4 mb-4">
               <div className="flex items-center gap-3">
-                <div className="animate-spin text-2xl">⚙️</div>
+                <div className="animate-spin text-blue-600 dark:text-blue-400">
+                  <Icon name="settings" size={24} />
+                </div>
                 <div className="flex-1">
                   <div className="font-medium text-slate-900 dark:text-slate-100">
                     Transcribing...
@@ -137,7 +140,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                 className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-600/50 transition-colors rounded"
               >
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                  📝 Transcript
+                  <Icon name="file-text" size={16} /> Transcript
                 </h3>
                 <span className="text-lg text-slate-600 dark:text-slate-400">
                   {showTranscript ? "▼" : "▶"}
@@ -163,7 +166,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
               className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-600/50 transition-colors rounded"
             >
               <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                🔧 Raw Data (Dev)
+                <Icon name="wrench" size={16} /> Raw Data (Dev)
               </h3>
               <span className="text-lg text-slate-600 dark:text-slate-400">
                 {showRawData ? "▼" : "▶"}

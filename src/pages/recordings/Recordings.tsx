@@ -5,6 +5,7 @@ import VideoPlayerModal from "../../components/VideoPlayerModal";
 import MainApplicationHeader from "../../components/MainApplicationHeader";
 import RecordingCard from "./RecordingCard";
 import ToastContainer from "../../components/ToastContainer";
+import Icon from "../../components/Icon";
 import { useRecordings } from "./hooks/useRecordings";
 import { useRecordingRename } from "./hooks/useRecordingRename";
 import { useVideoPlayer } from "./hooks/useVideoPlayer";
@@ -164,7 +165,9 @@ const Recordings: React.FC = () => {
           </div>
         ) : recordings.length === 0 ? (
           <div className="text-center py-20 px-5">
-            <div className="text-6xl mb-4">📹</div>
+            <div className="text-slate-600 dark:text-slate-400 mb-4 flex justify-center">
+              <Icon name="video" size={64} />
+            </div>
             <h2 className="m-0 mb-2 text-xl font-medium text-slate-900 dark:text-slate-100">
               No recordings yet
             </h2>

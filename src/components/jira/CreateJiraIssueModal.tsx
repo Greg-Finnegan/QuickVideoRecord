@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Button from "../Button";
+import Icon from "../Icon";
 import JiraDropdown from "./JiraDropdown";
 import { useJiraConnection } from "../../pages/settings/hooks/useJiraConnection";
 import { useJiraProjects } from "../../pages/settings/hooks/useJiraProjects";
@@ -146,11 +147,11 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
           </div>
           <Button
             variant="ghost"
-            className="text-2xl p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
             onClick={onClose}
             disabled={creating}
           >
-            ✕
+            <Icon name="close" size={24} />
           </Button>
         </div>
 

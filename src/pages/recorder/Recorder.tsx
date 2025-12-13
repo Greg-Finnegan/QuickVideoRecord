@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import '../../index.css';
 import Button from '../../components/Button';
+import Icon from '../../components/Icon';
 import { Recording, RecordingStorage } from '../../types/recording';
 import { videoStorage } from '../../utils/videoStorage';
 
@@ -259,10 +260,10 @@ const Recorder: React.FC = () => {
           </div>
           <Button
             variant="warning"
-            className="px-10 py-4 text-base font-semibold rounded-lg shadow-[0_4px_12px_rgba(222,53,11,0.3)] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,53,11,0.4)] active:translate-y-0"
+            className="px-10 py-4 text-base font-semibold rounded-lg shadow-[0_4px_12px_rgba(222,53,11,0.3)] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,53,11,0.4)] active:translate-y-0 flex items-center gap-2"
             onClick={stopRecording}
           >
-            <span className="text-lg leading-none">⏹</span>
+            <Icon name="stop" size={18} />
             Stop & Download
           </Button>
           <p className="m-0 text-slate-400 dark:text-slate-500 text-[13px] max-w-[300px]">

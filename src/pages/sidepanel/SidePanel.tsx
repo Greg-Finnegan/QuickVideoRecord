@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../../index.css";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
+import Icon from "../../components/Icon";
 import CopyButton from "@src/components/CopyButton";
 
 const SidePanel: React.FC = () => {
@@ -172,11 +173,11 @@ const SidePanel: React.FC = () => {
           variant="warning"
           rounded="full"
           fullWidth
-          className={`mb-2 px-4 py-2.5 ${!isRecording ? "hidden" : ""}`}
+          className={`mb-2 px-4 py-2.5 flex items-center justify-center gap-2 ${!isRecording ? "hidden" : ""}`}
           onClick={handleStopRecording}
           disabled={!isRecording}
         >
-          <span className="text-base leading-none">⏹</span>
+          <Icon name="stop" size={16} />
           Stop & Download
         </Button>
 
@@ -190,16 +191,13 @@ const SidePanel: React.FC = () => {
           }
           rounded="full"
           fullWidth
-          className={`mb-2 px-4 py-2.5 ${isRecording ? "hidden" : ""}`}
+          className={`mb-2 px-4 py-2.5 flex items-center justify-center gap-2 ${isRecording ? "hidden" : ""}`}
           onClick={handleTestMicrophone}
           disabled={isRecording}
         >
-          <span className="text-base leading-none">
-            {micStatus === "idle"}
-            {micStatus === "testing" && "🔴"}
-            {micStatus === "success" && "✅"}
-            {micStatus === "error" && "❌"}
-          </span>
+          {micStatus === "testing" && <Icon name="record" size={16} />}
+          {micStatus === "success" && <Icon name="check-circle" size={16} />}
+          {micStatus === "error" && <Icon name="x-circle" size={16} />}
           {micStatus === "idle" && "Test Microphone"}
           {micStatus === "testing" && "Testing... (3s)"}
           {micStatus === "success" && "Microphone OK!"}
@@ -209,10 +207,10 @@ const SidePanel: React.FC = () => {
           variant="secondary"
           fullWidth
           rounded="full"
-          className="mb-4 px-4 py-2.5 border border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600"
+          className="mb-4 px-4 py-2.5 border border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600 flex items-center justify-center gap-2"
           onClick={handleManageRecordings}
         >
-          <span className="text-base leading-none">📁</span>
+          <Icon name="folder" size={16} />
           Manage Recordings
         </Button>
 
@@ -232,7 +230,7 @@ const SidePanel: React.FC = () => {
 
       <div className="p-4 bg-white dark:bg-slate-800 border-t-2 border-slate-200 dark:border-slate-700 mt-auto">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
-          🧠 Grok Prompt
+          <Icon name="brain" size={16} /> Grok Prompt
           <CopyButton
             textToCopy={
               "short hand cliff notes and make name for this dev ticket - below is the transcript describing the bug/ticket"

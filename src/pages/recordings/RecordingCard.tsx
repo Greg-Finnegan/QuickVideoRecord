@@ -2,6 +2,7 @@ import React from "react";
 import Button from "../../components/Button";
 import ContextMenu from "../../components/ContextMenu";
 import RecordingMetadata from "./RecordingMetadata";
+import Icon from "../../components/Icon";
 import { Recording } from "../../types/recording";
 
 interface RecordingCardProps {
@@ -40,10 +41,10 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
   formatDuration,
 }) => {
   return (
-    <div
-      className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-4 flex items-center gap-4 transition-all hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-[0_1px_3px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
-    >
-      <div className="text-[32px] flex-shrink-0">🎥</div>
+    <div className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-4 flex items-center gap-4 transition-all hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-[0_1px_3px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
+      <div className="text-slate-600 dark:text-slate-400 flex-shrink-0">
+        <Icon name="video" size={32} />
+      </div>
       {renamingId === recording.id ? (
         <>
           <div className="flex-1 min-w-0 flex items-center gap-2">
@@ -108,8 +109,8 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
           >
             Rename
           </Button>
-          {isJiraConnected && (
-            recording.jiraIssueKey ? (
+          {isJiraConnected &&
+            (recording.jiraIssueKey ? (
               <a
                 href={recording.jiraIssueUrl}
                 target="_blank"
@@ -133,8 +134,7 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
               >
                 Create Jira Ticket
               </Button>
-            ) : null
-          )}
+            ) : null)}
           <div onClick={(e) => e.stopPropagation()}>
             <ContextMenu
               items={[
@@ -143,7 +143,7 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
                   ? [
                       {
                         label: "Unlink Jira Issue",
-                        icon: "🔗",
+                        icon: <Icon name="link" size={16} />,
                         onClick: () => onUnlinkJiraIssue(recording.id),
                         className:
                           "text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20",
@@ -152,17 +152,12 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
                   : []),
                 {
                   label: "Delete",
-                  icon: "🗑️",
+                  icon: <Icon name="trash" size={16} />,
                   onClick: () => onDelete(recording.id),
                   className:
                     "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20",
                 },
               ]}
-              triggerButton={
-                <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
-                  <span className="text-lg">⋮</span>
-                </button>
-              }
             />
           </div>
         </>
