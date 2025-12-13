@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../../index.css";
 import MainApplicationHeader from "../../components/MainApplicationHeader";
 import Breadcrumb from "../../components/Breadcrumb";
-import JiraProfile from "../../components/JiraProfile";
+import JiraProfile from "../../components/jira/JiraProfile";
 import Button from "../../components/Button";
 import ThemeSlider from "../../components/ThemeSlider";
 import { jiraAuth } from "../../utils/jiraAuth";

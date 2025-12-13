@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import Button from "./Button";
-import { jiraAuth } from "../utils/jiraAuth";
+import Button from "../Button";
+import { jiraAuth } from "../../utils/jiraAuth";
 
 const JiraConnect: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);

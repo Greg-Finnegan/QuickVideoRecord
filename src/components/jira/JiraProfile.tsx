@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { jiraService } from "../utils/jiraService";
-import { jiraAuth } from "../utils/jiraAuth";
+import { jiraService } from "../../utils/jiraService";
+import { jiraAuth } from "../../utils/jiraAuth";
 import type { Version3Models } from "jira.js";
 
 interface JiraProfileProps {

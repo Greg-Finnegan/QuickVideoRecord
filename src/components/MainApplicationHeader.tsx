@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import JiraConnect from "./JiraConnect";
-import JiraProfile from "./JiraProfile";
+import JiraConnect from "./jira/JiraConnect";
+import JiraProfile from "./jira/JiraProfile";
 import { jiraAuth } from "../utils/jiraAuth";
 
 interface MainApplicationHeaderProps {
