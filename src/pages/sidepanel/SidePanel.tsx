@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../../index.css";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
+import CopyButton from "@src/components/CopyButton";
 
 const SidePanel: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -204,6 +205,16 @@ const SidePanel: React.FC = () => {
           {micStatus === "success" && "Microphone OK!"}
           {micStatus === "error" && "Microphone Error"}
         </Button>
+        <Button
+          variant="secondary"
+          fullWidth
+          rounded="full"
+          className="mb-4 px-4 py-2.5 border border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600"
+          onClick={handleManageRecordings}
+        >
+          <span className="text-base leading-none">📁</span>
+          Manage Recordings
+        </Button>
 
         {status && (
           <div className="mt-3 px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded flex items-center gap-2 text-xs text-left text-slate-600 dark:text-slate-300">
@@ -220,16 +231,14 @@ const SidePanel: React.FC = () => {
       </div>
 
       <div className="p-4 bg-white dark:bg-slate-800 border-t-2 border-slate-200 dark:border-slate-700 mt-auto">
-        <Button
-          variant="secondary"
-          fullWidth
-          rounded="full"
-          className="mb-4 px-4 py-2.5 border border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600"
-          onClick={handleManageRecordings}
-        >
-          <span className="text-base leading-none">📁</span>
-          Manage Recordings
-        </Button>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
+          🧠 Grok Prompt
+          <CopyButton
+            textToCopy={
+              "short hand cliff notes and make name for this dev ticket - below is the transcript describing the bug/ticket"
+            }
+          />
+        </h3>
 
         <div className="mb-4">
           <h3 className="m-0 mb-2 text-xs font-semibold text-slate-900 dark:text-slate-100 uppercase tracking-wide">

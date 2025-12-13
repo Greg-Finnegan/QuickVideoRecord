@@ -1,6 +1,6 @@
 // Background service worker for Chrome Window Recorder
 
-console.log('Background service worker loaded');
+console.log("Background service worker loaded");
 
 // Open side panel when extension icon is clicked
 chrome.action.onClicked.addListener((tab) => {
@@ -10,28 +10,28 @@ chrome.action.onClicked.addListener((tab) => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'startCapture') {
+  if (message.action === "startCapture") {
     const recorderTabId = message.recorderTabId;
 
     if (!recorderTabId) {
-      console.error('No recorderTabId provided');
+      console.error("No recorderTabId provided");
       sendResponse({ streamId: null });
       return true;
     }
 
-    console.log('Requesting desktopCapture for recorder tab:', recorderTabId);
+    console.log("Requesting desktopCapture for recorder tab:", recorderTabId);
 
     // The second parameter should be undefined or omitted for side panels/popups
     // chooseDesktopMedia will show the picker in the current window
     chrome.desktopCapture.chooseDesktopMedia(
-      ['screen', 'window', 'tab'],
+      ["screen", "window", "tab"],
       (streamId) => {
-        console.log('DesktopCapture returned streamId:', streamId);
+        console.log("DesktopCapture returned streamId:", streamId);
         if (streamId && streamId.length > 0) {
-          console.log('Success! Sending streamId back to popup');
+          console.log("Success! Sending streamId back to popup");
           sendResponse({ streamId: streamId, recorderTabId: recorderTabId });
         } else {
-          console.log('User cancelled or error occurred');
+          console.log("User cancelled or error occurred");
           sendResponse({ streamId: null });
         }
       }
@@ -40,7 +40,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // Keep message channel open for async response
   }
 
-  if (message.action === 'downloadVideo') {
+  if (message.action === "downloadVideo") {
     chrome.downloads.download(
       {
         url: message.url,
@@ -48,19 +48,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         saveAs: true,
       },
       () => {
-        chrome.runtime.sendMessage({ action: 'downloadReady' });
+        chrome.runtime.sendMessage({ action: "downloadReady" });
       }
     );
   }
 
-  if (message.action === 'jiraAuth') {
+  if (message.action === "jiraAuth") {
     handleJiraAuth(message, sendResponse);
     return true; // Keep message channel open for async response
   }
 });
 
 // Jira Authentication Handler
-async function handleJiraAuth(message: any, sendResponse: (response: any) => void) {
+async function handleJiraAuth(
+  message: any,
+  sendResponse: (response: any) => void
+) {
   try {
     const config = {
       clientId: message.config.clientId,
@@ -68,7 +71,7 @@ async function handleJiraAuth(message: any, sendResponse: (response: any) => voi
       redirectUri: chrome.identity.getRedirectURL("oauth2"),
       authUrl: "https://auth.atlassian.com/authorize",
       tokenUrl: "https://auth.atlassian.com/oauth/token",
-      scope: "read:jira-user read:jira-work write:jira-work offline_access"
+      scope: "read:jira-user read:jira-work write:jira-work offline_access",
     };
 
     // Build OAuth URL
@@ -119,7 +122,9 @@ async function handleJiraAuth(message: any, sendResponse: (response: any) => voi
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
       console.error("Token exchange failed:", tokenResponse.status, errorText);
-      throw new Error(`Failed to exchange code for tokens: ${tokenResponse.status}`);
+      throw new Error(
+        `Failed to exchange code for tokens: ${tokenResponse.status}`
+      );
     }
 
     const tokens = await tokenResponse.json();

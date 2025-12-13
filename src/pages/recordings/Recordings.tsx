@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import "../../index.css";
 import Button from "../../components/Button";
+import CopyButton from "../../components/CopyButton";
 import JiraConnect from "../../components/JiraConnect";
+import ContextMenu from "../../components/ContextMenu";
 import { Recording, RecordingStorage } from "../../types/recording";
 import { videoStorage } from "../../utils/videoStorage";
 import { transcriptionService } from "../../utils/transcription";
@@ -16,6 +18,8 @@ const Recordings: React.FC = () => {
   const [transcribing, setTranscribing] = useState(false);
   const [transcriptionProgress, setTranscriptionProgress] =
     useState<string>("");
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [newFilename, setNewFilename] = useState<string>("");
 
   useEffect(() => {
     loadRecordings();
@@ -151,6 +155,45 @@ const Recordings: React.FC = () => {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const renameRecording = async (id: string) => {
+    if (!newFilename.trim()) {
+      alert("Please enter a valid filename");
+      return;
+    }
+
+    const result = (await chrome.storage.local.get(
+      "recordings"
+    )) as RecordingStorage;
+    const allRecordings: Recording[] = result.recordings || [];
+    const updatedRecordings = allRecordings.map((r) =>
+      r.id === id ? { ...r, filename: newFilename.trim() } : r
+    );
+
+    await chrome.storage.local.set({ recordings: updatedRecordings });
+    setRecordings(updatedRecordings);
+
+    // Update selected recording if it's the one being renamed
+    if (selectedRecording?.id === id) {
+      setSelectedRecording({
+        ...selectedRecording,
+        filename: newFilename.trim(),
+      });
+    }
+
+    setRenamingId(null);
+    setNewFilename("");
+  };
+
+  const startRename = (recording: Recording) => {
+    setRenamingId(recording.id);
+    setNewFilename(recording.filename);
+  };
+
+  const cancelRename = () => {
+    setRenamingId(null);
+    setNewFilename("");
+  };
+
   return (
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans">
       <div className="bg-white dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700 px-10 py-8">
@@ -203,40 +246,106 @@ const Recordings: React.FC = () => {
                   className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-4 flex items-center gap-4 transition-all hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-[0_1px_3px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
                 >
                   <div className="text-[32px] flex-shrink-0">🎥</div>
-                  <div
-                    className="flex-1 min-w-0 cursor-pointer"
-                    onClick={() => playRecording(recording)}
-                  >
-                    <h3 className="m-0 mb-2 text-sm font-medium text-slate-900 dark:text-slate-100 break-words hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                      {recording.filename}
-                    </h3>
-                    <div className="flex flex-wrap gap-4">
-                      <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                        📅 {formatDate(recording.timestamp)}
-                      </span>
-                      {recording.duration && (
-                        <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                          ⏱️ {formatDuration(recording.duration)}
-                        </span>
-                      )}
-                      {recording.size && (
-                        <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                          💾 {formatSize(recording.size)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <Button
-                    variant="secondary"
-                    className="bg-transparent px-3 py-2 text-lg hover:bg-red-600 dark:hover:bg-red-500 hover:border-red-600 dark:hover:border-red-500 hover:text-white flex-shrink-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteRecording(recording.id);
-                    }}
-                    title="Remove from history"
-                  >
-                    🗑️
-                  </Button>
+                  {renamingId === recording.id ? (
+                    <>
+                      <div className="flex-1 min-w-0 flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={newFilename}
+                          onChange={(e) => setNewFilename(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              renameRecording(recording.id);
+                            } else if (e.key === "Escape") {
+                              cancelRename();
+                            }
+                          }}
+                          className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          autoFocus
+                        />
+                      </div>
+                      <Button
+                        variant="primary"
+                        rounded="full"
+                        className="px-3 py-2 text-sm flex-shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          renameRecording(recording.id);
+                        }}
+                        title="Save new name"
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        rounded="full"
+                        className="bg-transparent px-3 py-2 text-sm flex-shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          cancelRename();
+                        }}
+                        title="Cancel rename"
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <div
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={() => playRecording(recording)}
+                      >
+                        <h3 className="m-0 mb-2 text-sm font-medium text-slate-900 dark:text-slate-100 break-words hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                          {recording.filename}
+                        </h3>
+                        <div className="flex flex-wrap gap-4">
+                          <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                            📅 {formatDate(recording.timestamp)}
+                          </span>
+                          {recording.duration && (
+                            <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                              ⏱️ {formatDuration(recording.duration)}
+                            </span>
+                          )}
+                          {recording.size && (
+                            <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                              💾 {formatSize(recording.size)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        rounded="full"
+                        className="bg-transparent px-3 py-2 text-lg hover:text-white flex-shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startRename(recording);
+                        }}
+                        title="Rename video"
+                      >
+                        Rename
+                      </Button>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <ContextMenu
+                          items={[
+                            {
+                              label: "Delete",
+                              icon: "🗑️",
+                              onClick: () => deleteRecording(recording.id),
+                              className:
+                                "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20",
+                            },
+                          ]}
+                          triggerButton={
+                            <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
+                              <span className="text-lg">⋮</span>
+                            </button>
+                          }
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -305,6 +414,7 @@ const Recordings: React.FC = () => {
                 <div className="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded p-4">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
                     📝 Transcript
+                    <CopyButton textToCopy={selectedRecording.transcript} />
                   </h3>
                   <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
                     {selectedRecording.transcript}

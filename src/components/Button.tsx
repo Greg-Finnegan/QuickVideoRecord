@@ -25,7 +25,7 @@ const Button: React.FC<ButtonProps> = ({
     secondary: 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600 active:bg-slate-200 dark:active:bg-slate-500',
     success: 'bg-green-600 dark:bg-green-500 text-white border-green-600 dark:border-green-500 hover:bg-green-700 dark:hover:bg-green-600',
     error: 'bg-red-600 dark:bg-red-500 text-white border-red-600 dark:border-red-500 hover:bg-red-700 dark:hover:bg-red-600',
-    ghost: 'bg-transparent border-none text-blue-600 dark:text-blue-400 underline hover:text-blue-700 dark:hover:text-blue-300 active:text-blue-800 dark:active:text-blue-200 p-0'
+    ghost: 'bg-transparent border-none dark:active:text-blue-200 p-0'
   };
 
   const roundedStyles = rounded === 'full' ? 'rounded-full' : 'rounded-md';
