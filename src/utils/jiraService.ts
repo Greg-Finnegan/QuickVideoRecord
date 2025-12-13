@@ -112,10 +112,11 @@ class JiraService {
 
   /**
    * Add an attachment to a Jira issue
+   * Accepts File or Blob objects - File objects with proper MIME type are recommended
    */
   async addAttachment(
     issueKey: string,
-    file: Blob,
+    file: File | Blob,
     filename: string
   ): Promise<void> {
     const client = await this.getClient();
@@ -124,12 +125,14 @@ class JiraService {
     }
 
     try {
-      const formData = new FormData();
-      formData.append("file", file, filename);
-
+      // jira.js expects an attachment object with file and filename properties
+      // The library will handle creating the FormData internally
       await client.issueAttachments.addAttachment({
         issueIdOrKey: issueKey,
-        attachment: formData as any,
+        attachment: {
+          file: file,
+          filename: filename,
+        },
       });
     } catch (error) {
       console.error("Failed to add attachment to Jira issue:", error);

@@ -106,7 +106,12 @@ export const useJiraIssueCreation = () => {
             );
             const filename = recording?.filename || "recording.webm";
 
-            await jiraService.addAttachment(issue.key, videoBlob, filename);
+            // Convert Blob to File with proper MIME type for Jira API
+            const videoFile = new File([videoBlob], filename, {
+              type: "video/webm",
+            });
+
+            await jiraService.addAttachment(issue.key, videoFile, filename);
           } else {
             console.warn("Video blob not found for recording:", formData.recordingId);
             attachmentFailed = true;
