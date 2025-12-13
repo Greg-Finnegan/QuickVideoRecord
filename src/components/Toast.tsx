@@ -59,7 +59,7 @@ const Toast: React.FC<ToastProps> = ({ toast, onDismiss }) => {
         border-l-4 rounded-r-md p-4 shadow-lg
         min-w-[300px] max-w-[500px]
         transition-all duration-300 ease-in-out
-        ${isVisible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}
+        ${isVisible ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"}
       `}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}

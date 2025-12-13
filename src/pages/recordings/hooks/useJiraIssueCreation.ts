@@ -91,20 +91,20 @@ export const useJiraIssueCreation = () => {
 
       let attachmentFailed = false;
 
+      // Get the recording data (we'll need it for attachment and updating)
+      const result = await chrome.storage.local.get("recordings");
+      const recordings = result.recordings || [];
+      const recordingIndex = recordings.findIndex(
+        (r: { id: string }) => r.id === formData.recordingId
+      );
+
       // Attach video if requested
       if (formData.attachVideo) {
         try {
           const videoBlob = await videoStorage.getVideo(formData.recordingId);
 
-          if (videoBlob) {
-            // Get the recording to extract the filename
-            const result = await chrome.storage.local.get("recordings");
-            const recordings = result.recordings || [];
-            const recording = recordings.find(
-              (r: { id: string; filename: string }) =>
-                r.id === formData.recordingId
-            );
-            const filename = recording?.filename || "recording.webm";
+          if (videoBlob && recordingIndex !== -1) {
+            const filename = recordings[recordingIndex].filename || "recording.webm";
 
             // Convert Blob to File with proper MIME type for Jira API
             const videoFile = new File([videoBlob], filename, {
@@ -120,6 +120,17 @@ export const useJiraIssueCreation = () => {
           console.error("Failed to attach video:", attachErr);
           attachmentFailed = true;
         }
+      }
+
+      // Update the recording with Jira issue information
+      if (recordingIndex !== -1) {
+        recordings[recordingIndex] = {
+          ...recordings[recordingIndex],
+          jiraIssueKey: issue.key,
+          jiraIssueUrl: issueUrl,
+        };
+
+        await chrome.storage.local.set({ recordings });
       }
 
       setCreating(false);

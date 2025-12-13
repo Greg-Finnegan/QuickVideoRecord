@@ -14,6 +14,7 @@ interface RecordingCardProps {
   onPlay: (recording: Recording) => void;
   onDelete: (id: string) => void;
   onCreateJiraIssue?: (recording: Recording) => void;
+  onUnlinkJiraIssue?: (recordingId: string) => void;
   isJiraConnected?: boolean;
   formatDate: (timestamp: number) => string;
   formatSize: (bytes?: number) => string;
@@ -31,6 +32,7 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
   onPlay,
   onDelete,
   onCreateJiraIssue,
+  onUnlinkJiraIssue,
   isJiraConnected,
   formatDate,
   formatSize,
@@ -131,23 +133,48 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
           >
             Rename
           </Button>
-          {isJiraConnected && onCreateJiraIssue && (
-            <Button
-              variant="primary"
-              rounded="full"
-              className="px-3 py-2 text-sm flex-shrink-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                onCreateJiraIssue(recording);
-              }}
-              title="Create Jira Issue"
-            >
-              Jira
-            </Button>
+          {isJiraConnected && (
+            recording.jiraIssueKey ? (
+              <a
+                href={recording.jiraIssueUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="px-3 py-2 text-sm font-medium flex-shrink-0 bg-blue-600 dark:bg-blue-500 text-white rounded-full hover:bg-blue-700 dark:hover:bg-blue-600 transition-all flex items-center gap-2"
+                title={`View Jira Issue ${recording.jiraIssueKey}`}
+              >
+                {recording.jiraIssueKey}
+              </a>
+            ) : onCreateJiraIssue ? (
+              <Button
+                variant="primary"
+                rounded="full"
+                className="px-3 py-2 text-sm flex-shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreateJiraIssue(recording);
+                }}
+                title="Create Jira Issue"
+              >
+                Create Jira Ticket
+              </Button>
+            ) : null
           )}
           <div onClick={(e) => e.stopPropagation()}>
             <ContextMenu
               items={[
+                // Conditionally add Unlink Jira Issue if linked
+                ...(recording.jiraIssueKey && onUnlinkJiraIssue
+                  ? [
+                      {
+                        label: "Unlink Jira Issue",
+                        icon: "🔗",
+                        onClick: () => onUnlinkJiraIssue(recording.id),
+                        className:
+                          "text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20",
+                      },
+                    ]
+                  : []),
                 {
                   label: "Delete",
                   icon: "🗑️",

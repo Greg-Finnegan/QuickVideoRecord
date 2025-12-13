@@ -48,12 +48,12 @@ const ContextMenu: React.FC<ContextMenuProps> = ({ items, triggerButton }) => {
       </div>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-lg z-50 min-w-[150px] overflow-hidden">
+        <div className="absolute right-0 top-full mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-lg z-50 min-w-[160px] overflow-hidden">
           {items.map((item, index) => (
             <button
               key={index}
               onClick={() => handleItemClick(item)}
-              className={`w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 ${
+              className={`w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 whitespace-nowrap ${
                 item.className || ""
               }`}
             >

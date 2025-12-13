@@ -9,7 +9,7 @@ interface ToastContainerProps {
 
 /**
  * Container for toast notifications
- * Positioned at top-right corner, stacks toasts vertically
+ * Positioned at bottom-left corner, stacks toasts vertically
  */
 const ToastContainer: React.FC<ToastContainerProps> = ({
   toasts,
@@ -19,7 +19,7 @@ const ToastContainer: React.FC<ToastContainerProps> = ({
 
   return (
     <div
-      className="fixed top-4 right-4 z-[60] flex flex-col gap-3 pointer-events-none"
+      className="fixed bottom-4 left-4 z-[60] flex flex-col gap-3 pointer-events-none"
       aria-live="polite"
       aria-atomic="false"
     >

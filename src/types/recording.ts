@@ -6,6 +6,8 @@ export interface Recording {
   size?: number;
   transcript?: string;
   transcribing?: boolean;
+  jiraIssueKey?: string;
+  jiraIssueUrl?: string;
 }
 
 export interface RecordingStorage {
