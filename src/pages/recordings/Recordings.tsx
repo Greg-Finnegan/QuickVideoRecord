@@ -20,6 +20,7 @@ const Recordings: React.FC = () => {
     useState<string>("");
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [newFilename, setNewFilename] = useState<string>("");
+  const [showRawData, setShowRawData] = useState(false);
 
   useEffect(() => {
     loadRecordings();
@@ -153,6 +154,7 @@ const Recordings: React.FC = () => {
     setSelectedRecording(null);
     setTranscribing(false);
     setTranscriptionProgress("");
+    setShowRawData(false);
   };
 
   const transcribeRecording = async (recording: Recording) => {
@@ -486,7 +488,7 @@ const Recordings: React.FC = () => {
               )}
 
               {selectedRecording.transcript && (
-                <div className="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded p-4">
+                <div className="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded p-4 mb-4">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
                     📝 Transcript
                     <CopyButton textToCopy={selectedRecording.transcript} />
@@ -496,6 +498,30 @@ const Recordings: React.FC = () => {
                   </p>
                 </div>
               )}
+
+              {/* Raw Data Section for Dev */}
+              <div className="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded">
+                <button
+                  onClick={() => setShowRawData(!showRawData)}
+                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-600/50 transition-colors rounded"
+                >
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    🔧 Raw Data (Dev)
+                  </h3>
+                  <span className="text-lg text-slate-600 dark:text-slate-400">
+                    {showRawData ? "▼" : "▶"}
+                  </span>
+                </button>
+                {showRawData && (
+                  <div className="px-4 pb-4">
+                    <div className="bg-slate-900 dark:bg-black rounded p-3 overflow-auto max-h-96">
+                      <pre className="text-xs text-green-400 font-mono">
+                        {JSON.stringify(selectedRecording, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

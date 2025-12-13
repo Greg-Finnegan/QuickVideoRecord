@@ -11,7 +11,7 @@ chrome.action.onClicked.addListener((tab) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Forward transcription progress messages to all tabs
-  if (message.action === 'transcriptionProgress') {
+  if (message.action === "transcriptionProgress") {
     // Just forward the message - don't need to do anything else
     return false;
   }
@@ -78,15 +78,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Auto-transcription Handler
 async function handleAutoTranscription(recordingId: string) {
   try {
-    console.log('Starting auto-transcription for recording:', recordingId);
+    console.log("Starting auto-transcription for recording:", recordingId);
 
     // Mark recording as transcribing in storage
-    const result = (await chrome.storage.local.get('recordings')) as any;
+    const result = (await chrome.storage.local.get("recordings")) as any;
     const recordings = result.recordings || [];
-    const recordingIndex = recordings.findIndex((r: any) => r.id === recordingId);
+    const recordingIndex = recordings.findIndex(
+      (r: any) => r.id === recordingId
+    );
 
     if (recordingIndex === -1) {
-      throw new Error('Recording not found');
+      throw new Error("Recording not found");
     }
 
     recordings[recordingIndex].transcribing = true;
@@ -94,7 +96,7 @@ async function handleAutoTranscription(recordingId: string) {
 
     // Notify UI that transcription started
     chrome.runtime.sendMessage({
-      action: 'transcriptionStarted',
+      action: "transcriptionStarted",
       recordingId: recordingId,
     });
 
@@ -105,13 +107,16 @@ async function handleAutoTranscription(recordingId: string) {
     const response = await new Promise<any>((resolve) => {
       chrome.runtime.sendMessage(
         {
-          action: 'transcribeVideo',
+          action: "transcribeVideo",
           recordingId: recordingId,
         },
         (response) => {
           if (chrome.runtime.lastError) {
-            console.error('Runtime error:', chrome.runtime.lastError);
-            resolve({ success: false, error: chrome.runtime.lastError.message });
+            console.error("Runtime error:", chrome.runtime.lastError);
+            resolve({
+              success: false,
+              error: chrome.runtime.lastError.message,
+            });
           } else {
             resolve(response);
           }
@@ -121,9 +126,13 @@ async function handleAutoTranscription(recordingId: string) {
 
     if (response && response.success) {
       // Update recording with transcript
-      const updatedResult = (await chrome.storage.local.get('recordings')) as any;
+      const updatedResult = (await chrome.storage.local.get(
+        "recordings"
+      )) as any;
       const updatedRecordings = updatedResult.recordings || [];
-      const updatedIndex = updatedRecordings.findIndex((r: any) => r.id === recordingId);
+      const updatedIndex = updatedRecordings.findIndex(
+        (r: any) => r.id === recordingId
+      );
 
       if (updatedIndex !== -1) {
         updatedRecordings[updatedIndex].transcript = response.transcript;
@@ -133,39 +142,44 @@ async function handleAutoTranscription(recordingId: string) {
 
       // Notify UI that transcription is complete
       chrome.runtime.sendMessage({
-        action: 'transcriptionComplete',
+        action: "transcriptionComplete",
         recordingId: recordingId,
         transcript: response.transcript,
       });
 
-      console.log('Auto-transcription completed successfully');
+      console.log("Auto-transcription completed successfully");
     } else {
-      throw new Error(response?.error || 'Transcription failed');
+      throw new Error(response?.error || "Transcription failed");
     }
   } catch (error: any) {
-    console.error('Auto-transcription handler failed:', error);
+    console.error("Auto-transcription handler failed:", error);
     await markTranscriptionFailed(recordingId, error.message);
   }
 }
 
 // Helper to mark transcription as failed
-async function markTranscriptionFailed(recordingId: string, errorMessage: string) {
+async function markTranscriptionFailed(
+  recordingId: string,
+  errorMessage: string
+) {
   try {
-    const result = (await chrome.storage.local.get('recordings')) as any;
+    const result = (await chrome.storage.local.get("recordings")) as any;
     const recordings = result.recordings || [];
-    const recordingIndex = recordings.findIndex((r: any) => r.id === recordingId);
+    const recordingIndex = recordings.findIndex(
+      (r: any) => r.id === recordingId
+    );
 
     if (recordingIndex !== -1) {
       recordings[recordingIndex].transcribing = false;
       await chrome.storage.local.set({ recordings });
     }
   } catch (storageError) {
-    console.error('Failed to update recording status:', storageError);
+    console.error("Failed to update recording status:", storageError);
   }
 
   // Notify UI that transcription failed
   chrome.runtime.sendMessage({
-    action: 'transcriptionFailed',
+    action: "transcriptionFailed",
     recordingId: recordingId,
     error: errorMessage,
   });
@@ -175,9 +189,11 @@ async function markTranscriptionFailed(recordingId: string, errorMessage: string
 let offscreenCreating: Promise<void> | null = null;
 
 async function setupOffscreenDocument() {
-  const offscreenUrl = chrome.runtime.getURL('src/pages/offscreen/offscreen.html');
+  const offscreenUrl = chrome.runtime.getURL(
+    "src/pages/offscreen/offscreen.html"
+  );
   const existingContexts = await chrome.runtime.getContexts({
-    contextTypes: ['OFFSCREEN_DOCUMENT' as chrome.runtime.ContextType],
+    contextTypes: ["OFFSCREEN_DOCUMENT" as chrome.runtime.ContextType],
     documentUrls: [offscreenUrl],
   });
 
@@ -190,8 +206,9 @@ async function setupOffscreenDocument() {
   } else {
     offscreenCreating = chrome.offscreen.createDocument({
       url: offscreenUrl,
-      reasons: ['AUDIO_PLAYBACK' as chrome.offscreen.Reason],
-      justification: 'Transcription requires audio processing with Web Audio API',
+      reasons: ["AUDIO_PLAYBACK" as chrome.offscreen.Reason],
+      justification:
+        "Transcription requires audio processing with Web Audio API",
     });
 
     await offscreenCreating;
