@@ -50,7 +50,11 @@ const MainApplicationHeader: React.FC<MainApplicationHeaderProps> = ({
           </p>
         </div>
         <div className="mt-2 flex items-center gap-3">
-          {isJiraConnected ? <JiraProfile /> : <JiraConnect />}
+          {isJiraConnected ? (
+            <JiraProfile showDisconnect={false} />
+          ) : (
+            <JiraConnect />
+          )}
         </div>
       </div>
     </div>

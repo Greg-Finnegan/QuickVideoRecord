@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:is(.dark *));
+
 /* Global styles */
 * {
   box-sizing: border-box;

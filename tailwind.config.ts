@@ -4,5 +4,5 @@ export default {
   content: [
     './src/**/*.{js,jsx,ts,tsx,html}',
   ],
-  darkMode: 'media', // Automatically use system preference
+  darkMode: 'class', // Use class-based dark mode
 } satisfies Config;
