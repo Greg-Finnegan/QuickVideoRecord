@@ -1,6 +1,10 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import Popup from './Popup';
+import { themeManager } from '../../utils/themeManager';
+
+// Initialize theme manager
+themeManager.initialize();
 
 const container = document.getElementById('root');
 if (container) {

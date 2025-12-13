@@ -1,8 +1,12 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import SidePanel from './SidePanel';
+import { themeManager } from '../../utils/themeManager';
 
 console.log('SidePanel index.tsx loading...');
+
+// Initialize theme manager
+themeManager.initialize();
 
 const container = document.getElementById('root');
 console.log('Container element:', container);

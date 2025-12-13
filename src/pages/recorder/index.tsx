@@ -1,8 +1,12 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import Recorder from './Recorder';
+import { themeManager } from '../../utils/themeManager';
 
 console.log('Recorder index.tsx loading...');
+
+// Initialize theme manager
+themeManager.initialize();
 
 const container = document.getElementById('root');
 console.log('Container element:', container);
