@@ -27,6 +27,12 @@
   "host_permissions": [
     "<all_urls>"
   ],
+  "oauth2": {
+    "client_id": "296744532572-nhujf37d1kgukngdr5affj0u9920egod.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/generative-language.retriever"
+    ]
+  },
   "background": {
     "service_worker": "src/pages/background/index.ts",
     "type": "module"

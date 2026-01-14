@@ -3,9 +3,11 @@ import Button from "../Button";
 import Icon from "../Icon";
 import JiraDropdown from "./JiraDropdown";
 import { useJiraConnection } from "../../pages/settings/hooks/useJiraConnection";
+import { useGeminiConnection } from "../../pages/settings/hooks/useGeminiConnection";
 import { useJiraProjects } from "../../pages/settings/hooks/useJiraProjects";
 import { useJiraIssueTypes } from "../../pages/recordings/hooks/useJiraIssueTypes";
 import { useJiraIssueCreation } from "../../pages/recordings/hooks/useJiraIssueCreation";
+import { useGeminiGeneration } from "../../pages/recordings/hooks/useGeminiGeneration";
 import { jiraService } from "../../utils/jiraService";
 import type { Recording, CreateIssueFormData, JiraSprint } from "../../types";
 import type { Version3Models } from "jira.js";
@@ -55,6 +57,8 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
   const { issueTypes, loading: loadingIssueTypes } =
     useJiraIssueTypes(projectKey);
   const { creating, error, createIssue } = useJiraIssueCreation();
+  const { isGeminiConnected } = useGeminiConnection();
+  const { generating, generateDescription } = useGeminiGeneration();
 
   // Update issue type when issue types load
   useEffect(() => {
@@ -221,6 +225,32 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
       .split(",")
       .map((label) => label.trim())
       .filter((label) => label.length > 0);
+  };
+
+  // Handle AI generation with Gemini
+  const handleGenerateWithAI = async () => {
+    if (!isGeminiConnected) {
+      alert("Please connect to Gemini in Settings to use AI generation.");
+      return;
+    }
+
+    if (!recording.transcript) {
+      alert("Transcript is required for AI generation. Please transcribe the recording first.");
+      return;
+    }
+
+    try {
+      const generatedDesc = await generateDescription({
+        recordingTitle: recording.filename,
+        transcript: recording.transcript,
+        additionalContext: summary,
+      });
+
+      setDescription(generatedDesc);
+    } catch (err) {
+      // Error already handled by hook
+      alert("Failed to generate description. Please try again.");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -429,6 +459,26 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
             <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
               Additional details about the issue
             </p>
+            {/* AI Generation Button */}
+            {isGeminiConnected && (
+              <div className="mt-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleGenerateWithAI}
+                  disabled={creating || generating || !recording.transcript}
+                  className="flex items-center gap-2 text-sm px-3 py-1.5"
+                >
+                  <span className="text-lg">✨</span>
+                  {generating ? "Generating..." : "Generate with AI"}
+                </Button>
+                {!recording.transcript && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    Transcript required for AI generation
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Priority */}

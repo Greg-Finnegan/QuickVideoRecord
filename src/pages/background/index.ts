@@ -72,6 +72,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // Keep message channel open for async response
   }
 
+  if (message.action === "geminiAuth") {
+    handleGeminiAuth(message, sendResponse);
+    return true; // Keep message channel open for async response
+  }
+
+  if (message.action === "geminiRefreshToken") {
+    handleGeminiRefresh(sendResponse);
+    return true;
+  }
+
+  if (message.action === "geminiRevoke") {
+    handleGeminiRevoke(message, sendResponse);
+    return true;
+  }
+
   return false;
 });
 
@@ -325,6 +340,140 @@ async function handleJiraAuth(
     sendResponse({ success: true, tokens: jiraTokens });
   } catch (error: any) {
     console.error("Jira authentication failed:", error);
+    sendResponse({ success: false, error: error.message });
+  }
+}
+
+// Gemini Authentication Handlers
+
+/**
+ * Handle Gemini authentication using chrome.identity API
+ */
+async function handleGeminiAuth(
+  message: any,
+  sendResponse: (response: any) => void
+) {
+  try {
+    console.log("Starting Gemini OAuth flow...");
+
+    // Use chrome.identity.getAuthToken for Google OAuth
+    // This is simpler than Jira's launchWebAuthFlow
+    const token = await chrome.identity.getAuthToken({
+      interactive: true, // Show UI popup if needed
+    });
+
+    if (!token) {
+      throw new Error("No token received from Google");
+    }
+
+    console.log("Access token received");
+
+    // Get user info from Google
+    const userInfoResponse = await fetch(
+      "https://www.googleapis.com/oauth2/v2/userinfo",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    let email = undefined;
+    if (userInfoResponse.ok) {
+      const userInfo = await userInfoResponse.json();
+      email = userInfo.email;
+    }
+
+    // Store tokens
+    const geminiTokens = {
+      accessToken: token,
+      // Chrome doesn't provide expiry info, estimate 1 hour
+      expiresAt: Date.now() + 3600 * 1000,
+      email: email,
+      scopes: message.config.scopes,
+    };
+
+    await chrome.storage.local.set({ geminiTokens });
+
+    console.log("Gemini authentication successful!");
+    if (email) {
+      console.log("Connected as:", email);
+    }
+
+    sendResponse({ success: true, tokens: geminiTokens });
+  } catch (error: any) {
+    console.error("Gemini authentication failed:", error);
+    sendResponse({ success: false, error: error.message });
+  }
+}
+
+/**
+ * Refresh Gemini token using chrome.identity
+ */
+async function handleGeminiRefresh(sendResponse: (response: any) => void) {
+  try {
+    // Remove cached token to force refresh
+    const result = await chrome.storage.local.get("geminiTokens");
+    const oldTokens = result.geminiTokens;
+
+    if (oldTokens?.accessToken) {
+      await chrome.identity.removeCachedAuthToken({
+        token: oldTokens.accessToken,
+      });
+    }
+
+    // Get new token (non-interactive, use cached credentials)
+    const token = await chrome.identity.getAuthToken({
+      interactive: false,
+    });
+
+    if (!token) {
+      throw new Error("Failed to refresh token");
+    }
+
+    const geminiTokens = {
+      accessToken: token,
+      expiresAt: Date.now() + 3600 * 1000,
+      email: oldTokens?.email,
+      scopes: oldTokens?.scopes || [],
+    };
+
+    await chrome.storage.local.set({ geminiTokens });
+
+    sendResponse({ success: true });
+  } catch (error: any) {
+    console.error("Token refresh failed:", error);
+    sendResponse({ success: false, error: error.message });
+  }
+}
+
+/**
+ * Revoke Gemini token
+ */
+async function handleGeminiRevoke(
+  message: any,
+  sendResponse: (response: any) => void
+) {
+  try {
+    // Remove from Chrome's cache
+    await chrome.identity.removeCachedAuthToken({
+      token: message.token,
+    });
+
+    // Optionally revoke on Google's side
+    try {
+      await fetch(
+        `https://accounts.google.com/o/oauth2/revoke?token=${message.token}`,
+        { method: "POST" }
+      );
+    } catch (revokeError) {
+      console.warn("Failed to revoke token on Google side:", revokeError);
+      // Continue anyway - local removal is more important
+    }
+
+    sendResponse({ success: true });
+  } catch (error: any) {
+    console.error("Token revocation failed:", error);
     sendResponse({ success: false, error: error.message });
   }
 }
