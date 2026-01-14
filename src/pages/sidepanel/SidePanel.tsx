@@ -230,7 +230,7 @@ const SidePanel: React.FC = () => {
 
       <div className="p-4 bg-white dark:bg-slate-800 border-t-2 border-slate-200 dark:border-slate-700 mt-auto">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
-          <Icon name="brain" size={16} /> Grok Prompt
+          <Icon name="brain" size={16} /> ChatGPT Prompt
           <CopyButton
             textToCopy={
               "short hand cliff notes and make name for this dev ticket - below is the transcript describing the bug/ticket"

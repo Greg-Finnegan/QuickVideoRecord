@@ -92,9 +92,9 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
             </Button>
           )}
           {recording.transcript && (
-            <div className="mr-2 flex items-center gap-2">
+            <div className="mr-2 flex items-center">
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Copy Transcript
+                Copy Script
               </span>
               <CopyButton textToCopy={recording.transcript} />
             </div>

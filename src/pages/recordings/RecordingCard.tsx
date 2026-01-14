@@ -17,6 +17,8 @@ interface RecordingCardProps {
   onDelete: (id: string) => void;
   onCreateJiraIssue?: (recording: Recording) => void;
   onUnlinkJiraIssue?: (recordingId: string) => void;
+  onCopyTranscript?: (transcript: string) => void;
+  onOpenInChatGPT?: (transcript: string) => void;
   isJiraConnected?: boolean;
   formatDate: (timestamp: number) => string;
   formatSize: (bytes?: number) => string;
@@ -35,6 +37,8 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
   onDelete,
   onCreateJiraIssue,
   onUnlinkJiraIssue,
+  onCopyTranscript,
+  onOpenInChatGPT,
   isJiraConnected,
   formatDate,
   formatSize,
@@ -46,6 +50,7 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
         <Icon name="video" size={32} />
       </div>
       {renamingId === recording.id ? (
+        // modal
         <>
           <div className="flex-1 min-w-0 flex items-center gap-2">
             <input
@@ -89,6 +94,7 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
           </Button>
         </>
       ) : (
+        // list
         <>
           <RecordingMetadata
             recording={recording}
@@ -100,14 +106,42 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
           <Button
             variant="ghost"
             rounded="full"
-            className="bg-transparent px-3 py-2 text-lg flex-shrink-0"
+            className="bg-transparent !px-2 !py-2 text-lg flex-shrink-0"
             onClick={(e) => {
               e.stopPropagation();
-              onStartRename(recording);
+              if (recording.transcript && onCopyTranscript) {
+                onCopyTranscript(recording.transcript);
+              }
             }}
-            title="Rename video"
+            disabled={!recording.transcript}
+            title={
+              recording.transcript
+                ? "Copy transcript to clipboard"
+                : "No transcript available"
+            }
           >
-            Rename
+            Copy Script
+             <Icon name="copy" size={14} />
+          </Button>
+          <Button
+            variant="ghost"
+            rounded="full"
+            className="bg-transparent !px-2 !py-2 text-lg flex-shrink-0 !gap-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (recording.transcript && onOpenInChatGPT) {
+                onOpenInChatGPT(recording.transcript);
+              }
+            }}
+            disabled={!recording.transcript}
+            title={
+              recording.transcript
+                ? "Open in ChatGPT with transcript"
+                : "No transcript available"
+            }
+          >
+            Open in ChatGPT
+            <Icon name="external-link" size={14} />
           </Button>
           {isJiraConnected &&
             (recording.jiraIssueKey ? (
@@ -138,6 +172,13 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
           <div onClick={(e) => e.stopPropagation()}>
             <ContextMenu
               items={[
+                // Add Rename as first item
+                {
+                  label: "Rename",
+                  icon: <Icon name="edit" size={16} />,
+                  onClick: () => onStartRename(recording),
+                  className: "",
+                },
                 // Conditionally add Unlink Jira Issue if linked
                 ...(recording.jiraIssueKey && onUnlinkJiraIssue
                   ? [

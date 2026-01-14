@@ -91,6 +91,28 @@ const Recordings: React.FC = () => {
     }
   };
 
+  const handleCopyTranscript = async (transcript: string) => {
+    try {
+      await navigator.clipboard.writeText(transcript);
+      success("Transcript copied to clipboard!");
+    } catch (error) {
+      console.error('Failed to copy transcript:', error);
+    }
+  };
+
+  const handleOpenInChatGPT = async (transcript: string) => {
+    const prompt = "short hand cliff notes and make name for this dev ticket - below is the transcript describing the bug/ticket";
+    const fullMessage = `${prompt}\n\n${transcript}`;
+
+    try {
+      await navigator.clipboard.writeText(fullMessage);
+      window.open('https://chatgpt.com/?q=' + fullMessage, '_blank');
+      success("Prompt copied to clipboard! Paste it into ChatGPT.");
+    } catch (error) {
+      console.error('Failed to copy prompt or open ChatGPT:', error);
+    }
+  };
+
   return (
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans">
       <MainApplicationHeader
@@ -122,6 +144,8 @@ const Recordings: React.FC = () => {
                   onDelete={handleDeleteRecording}
                   onCreateJiraIssue={handleOpenCreateIssue}
                   onUnlinkJiraIssue={handleUnlinkJiraIssue}
+                  onCopyTranscript={handleCopyTranscript}
+                  onOpenInChatGPT={handleOpenInChatGPT}
                   isJiraConnected={isJiraConnected}
                   formatDate={formatDate}
                   formatSize={formatSize}

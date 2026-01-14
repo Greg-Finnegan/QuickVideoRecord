@@ -22,6 +22,9 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Edit,
+  Copy,
+  ExternalLink,
   type LucideProps,
 } from "lucide-react";
 
@@ -50,7 +53,10 @@ export type IconName =
   | "save"
   | "check"
   | "chevron-left"
-  | "chevron-right";
+  | "chevron-right"
+  | "edit"
+  | "copy"
+  | "external-link";
 
 /**
  * Icon component props
@@ -86,6 +92,9 @@ const iconMap: Record<IconName, React.ComponentType<LucideProps>> = {
   check: Check,
   "chevron-left": ChevronLeft,
   "chevron-right": ChevronRight,
+  edit: Edit,
+  copy: Copy,
+  "external-link": ExternalLink,
 };
 
 /**
