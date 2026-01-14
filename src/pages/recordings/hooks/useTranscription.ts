@@ -1,7 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
 import { Recording, RecordingStorage } from "../../../types/recording";
-import { videoStorage } from "../../../utils/videoStorage";
-import { transcriptionService } from "../../../utils/transcription";
 
 interface UseTranscriptionProps {
   selectedRecording: Recording | null;
@@ -23,58 +21,63 @@ export const useTranscription = ({
       setTranscriptionProgress("Starting transcription...");
 
       try {
-        const blob = await videoStorage.getVideo(recording.id);
-        if (!blob) {
-          alert("Video not found");
-          return;
-        }
+        // Send message to background script to start transcription via offscreen + worker
+        chrome.runtime.sendMessage({
+          action: "transcribeVideoManual",
+          recordingId: recording.id,
+        });
 
-        const transcript = await transcriptionService.transcribeVideo(
-          blob,
-          (status, progress) => {
-            setTranscriptionProgress(`${status} (${progress}%)`);
-          }
-        );
-
-        // Update recording with transcript
-        const result = (await chrome.storage.local.get(
-          "recordings"
-        )) as RecordingStorage;
-        const allRecordings: Recording[] = result.recordings || [];
-        const updatedRecordings = allRecordings.map((r) =>
-          r.id === recording.id ? { ...r, transcript } : r
-        );
-
-        await chrome.storage.local.set({ recordings: updatedRecordings });
-
-        // Update selected recording
-        if (selectedRecording?.id === recording.id) {
-          onRecordingUpdate({ ...selectedRecording, transcript });
-        }
-
-        setTranscriptionProgress("Transcription complete!");
-        setTimeout(() => setTranscriptionProgress(""), 3000);
+        // Progress updates and completion will come through the message listener below
       } catch (error) {
         console.error("Transcription error:", error);
         alert("Transcription failed. Please try again.");
         setTranscriptionProgress("");
-      } finally {
         setTranscribing(false);
       }
     },
-    [selectedRecording, onRecordingUpdate]
+    []
   );
 
   // Listen for transcription updates from background script
   useEffect(() => {
     const messageListener = (message: any) => {
-      if (message.action === "transcriptionComplete" && selectedRecording) {
+      if (!selectedRecording) return;
+
+      // Handle progress updates
+      if (message.action === "transcriptionProgress") {
+        if (message.recordingId === selectedRecording.id) {
+          setTranscriptionProgress(`${message.status} (${message.progress}%)`);
+        }
+      }
+
+      // Handle completion
+      if (message.action === "transcriptionComplete") {
         if (message.recordingId === selectedRecording.id) {
           onRecordingUpdate({
             ...selectedRecording,
             transcript: message.transcript,
             transcribing: false,
           });
+          setTranscriptionProgress("Transcription complete!");
+          setTranscribing(false);
+          setTimeout(() => setTranscriptionProgress(""), 3000);
+        }
+      }
+
+      // Handle failure
+      if (message.action === "transcriptionFailed") {
+        if (message.recordingId === selectedRecording.id) {
+          setTranscriptionProgress("");
+          setTranscribing(false);
+          alert(`Transcription failed: ${message.error}`);
+        }
+      }
+
+      // Handle started
+      if (message.action === "transcriptionStarted") {
+        if (message.recordingId === selectedRecording.id) {
+          setTranscribing(true);
+          setTranscriptionProgress("Starting transcription...");
         }
       }
     };

@@ -67,6 +67,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
 
+  if (message.action === "transcribeVideoManual") {
+    handleManualTranscription(message.recordingId);
+    // Don't wait for response - transcription happens in background
+    sendResponse({ success: true, started: true });
+    return false;
+  }
+
   if (message.action === "jiraAuth") {
     handleJiraAuth(message, sendResponse);
     return true; // Keep message channel open for async response
@@ -89,6 +96,88 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   return false;
 });
+
+// Manual transcription Handler (triggered from UI)
+async function handleManualTranscription(recordingId: string) {
+  try {
+    console.log("Starting manual transcription for recording:", recordingId);
+
+    // Mark recording as transcribing in storage
+    const result = (await chrome.storage.local.get("recordings")) as any;
+    const recordings = result.recordings || [];
+    const recordingIndex = recordings.findIndex(
+      (r: any) => r.id === recordingId
+    );
+
+    if (recordingIndex === -1) {
+      throw new Error("Recording not found");
+    }
+
+    recordings[recordingIndex].transcribing = true;
+    await chrome.storage.local.set({ recordings });
+
+    // Notify UI that transcription started
+    chrome.runtime.sendMessage({
+      action: "transcriptionStarted",
+      recordingId: recordingId,
+    });
+
+    // Create offscreen document if it doesn't exist
+    await setupOffscreenDocument();
+
+    // Send transcription request to offscreen document and wait for response
+    const response = await new Promise<any>((resolve) => {
+      chrome.runtime.sendMessage(
+        {
+          action: "transcribeVideo",
+          recordingId: recordingId,
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            console.error("Runtime error:", chrome.runtime.lastError);
+            resolve({
+              success: false,
+              error: chrome.runtime.lastError.message,
+            });
+          } else {
+            resolve(response);
+          }
+        }
+      );
+    });
+
+    if (response && response.success) {
+      // Update recording with transcript
+      const updatedResult = (await chrome.storage.local.get(
+        "recordings"
+      )) as any;
+      const updatedRecordings = updatedResult.recordings || [];
+      const updatedIndex = updatedRecordings.findIndex(
+        (r: any) => r.id === recordingId
+      );
+
+      if (updatedIndex !== -1) {
+        updatedRecordings[updatedIndex].transcript = response.transcript;
+        updatedRecordings[updatedIndex].transcribing = false;
+        await chrome.storage.local.set({ recordings: updatedRecordings });
+      }
+
+      // Notify UI that transcription is complete
+      chrome.runtime.sendMessage({
+        action: "transcriptionComplete",
+        recordingId: recordingId,
+        transcript: response.transcript,
+      });
+
+      console.log("Manual transcription completed successfully");
+    } else {
+      throw new Error(response?.error || "Transcription failed");
+    }
+  } catch (error: any) {
+    console.error("Manual transcription handler failed:", error);
+    await markTranscriptionFailed(recordingId, error.message);
+  }
+}
 
 // Auto-transcription Handler
 async function handleAutoTranscription(recordingId: string) {
@@ -259,13 +348,13 @@ async function handleJiraAuth(
     console.log("Redirect URI:", config.redirectUri);
 
     // Launch OAuth flow
-    const responseUrl = await chrome.identity.launchWebAuthFlow({
+    const responseUrl : string | undefined = await chrome.identity.launchWebAuthFlow({
       url: authUrl.toString(),
       interactive: true,
     });
 
     // Extract authorization code from response
-    const url = new URL(responseUrl);
+    const url = new URL(responseUrl!);
     const code = url.searchParams.get("code");
 
     if (!code) {
@@ -416,8 +505,10 @@ async function handleGeminiRefresh(sendResponse: (response: any) => void) {
     const result = await chrome.storage.local.get("geminiTokens");
     const oldTokens = result.geminiTokens;
 
+    // @ts-ignore
     if (oldTokens?.accessToken) {
       await chrome.identity.removeCachedAuthToken({
+        // @ts-ignore
         token: oldTokens.accessToken,
       });
     }
@@ -434,7 +525,9 @@ async function handleGeminiRefresh(sendResponse: (response: any) => void) {
     const geminiTokens = {
       accessToken: token,
       expiresAt: Date.now() + 3600 * 1000,
+      // @ts-ignore
       email: oldTokens?.email,
+      // @ts-ignore
       scopes: oldTokens?.scopes || [],
     };
 

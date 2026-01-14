@@ -1,4 +1,4 @@
-import { transcriptionService } from '../../utils/transcription';
+import { transcriptionWorkerService } from '../../utils/transcriptionWorkerService';
 import { videoStorage } from '../../utils/videoStorage';
 
 console.log('Offscreen document loaded for transcription');
@@ -37,8 +37,8 @@ async function handleTranscribe(recordingId: string): Promise<string> {
       progress: 0,
     });
 
-    // Perform transcription
-    const transcript = await transcriptionService.transcribeVideo(
+    // Perform transcription using Web Worker
+    const transcript = await transcriptionWorkerService.transcribeVideo(
       videoBlob,
       (status, progress) => {
         console.log(`Transcription progress: ${status} (${progress}%)`);
