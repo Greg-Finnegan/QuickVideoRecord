@@ -66,13 +66,6 @@ Then load the `dist_chrome` directory as an unpacked extension.
 4. Set default project and preferences
 5. Create Jira issues from recordings with one click
 
-### 5. Enable Gemini AI (Optional)
-
-1. Navigate to Settings
-2. Follow Gemini setup instructions
-3. Authorize with Google account
-4. Use AI to generate professional issue descriptions
-
 
 ## Jira Integration Setup
 
@@ -115,7 +108,7 @@ Then load the `dist_chrome` directory as an unpacked extension.
 **Chrome Extension APIs**:
 - `chrome.desktopCapture`: Screen recording
 - `chrome.storage.local`: Settings and metadata persistence
-- `chrome.identity`: OAuth flows for Jira and Gemini
+- `chrome.identity`: OAuth flows for Jira and Gemini // Gemini coming soon maybe
 - `chrome.offscreen`: Background transcription processing
 - `chrome.downloads`: Video file downloads
 - `chrome.tabs`: Tab management for recorder
