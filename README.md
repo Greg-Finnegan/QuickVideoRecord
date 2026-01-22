@@ -1,4 +1,4 @@
-# QuickVideoRecord
+# JiraQuickVideoRecord
 
 **Screen recording with local AI transcription and Jira integration**
 
