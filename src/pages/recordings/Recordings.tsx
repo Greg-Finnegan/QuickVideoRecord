@@ -18,6 +18,7 @@ import { useJiraProjects } from "../settings/hooks/useJiraProjects";
 import { useToast } from "../../hooks/useToast";
 import { formatDate, formatSize, formatDuration } from "./utils/formatters";
 import CreateJiraIssueModal from "@src/components/jira/CreateJiraIssueModal";
+import { videoStorage } from "../../utils/videoStorage";
 
 const Recordings: React.FC = () => {
   const { recordings, loading, setRecordings, deleteRecording } =
@@ -113,6 +114,55 @@ const Recordings: React.FC = () => {
     }
   };
 
+  const handleDownloadAndOpenFileLocally = async (recordingId: string, filename: string) => {
+    try {
+      // Get the video blob from IndexedDB using the recordingId
+      const blob = await videoStorage.getVideo(recordingId);
+
+      if (!blob) {
+        success("Video not found in storage");
+        return;
+      }
+
+      // Create a blob URL
+      const url = URL.createObjectURL(blob);
+
+      // Download the file and get the download ID
+      chrome.downloads.download(
+        {
+          url: url,
+          filename: filename,
+          saveAs: false, // Don't prompt, use default download location
+        },
+        (downloadId) => {
+          // Clean up the blob URL
+          URL.revokeObjectURL(url);
+
+          if (chrome.runtime.lastError) {
+            console.error('Download failed:', chrome.runtime.lastError);
+            success("Failed to download file");
+            return;
+          }
+
+          // Wait a bit for download to register, then show in Finder
+          setTimeout(() => {
+            try {
+              chrome.downloads.show(downloadId);
+              success("Opening file...");
+            } catch (err) {
+              console.error('Failed to show download:', err);
+              success("File downloaded but couldn't open.");
+            }
+          }, 500);
+        }
+      );
+
+    } catch (error) {
+      console.error('Failed to open file:', error);
+      success("Failed to open file locally");
+    }
+  };
+
   return (
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans">
       <MainApplicationHeader
@@ -146,6 +196,7 @@ const Recordings: React.FC = () => {
                   onUnlinkJiraIssue={handleUnlinkJiraIssue}
                   onCopyTranscript={handleCopyTranscript}
                   onOpenInChatGPT={handleOpenInChatGPT}
+                  onOpenFileLocally={handleDownloadAndOpenFileLocally}
                   isJiraConnected={isJiraConnected}
                   formatDate={formatDate}
                   formatSize={formatSize}

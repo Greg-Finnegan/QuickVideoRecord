@@ -19,6 +19,7 @@ interface RecordingCardProps {
   onUnlinkJiraIssue?: (recordingId: string) => void;
   onCopyTranscript?: (transcript: string) => void;
   onOpenInChatGPT?: (transcript: string) => void;
+  onOpenFileLocally?: (recordingId: string, filename: string) => void;
   isJiraConnected?: boolean;
   formatDate: (timestamp: number) => string;
   formatSize: (bytes?: number) => string;
@@ -39,6 +40,7 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
   onUnlinkJiraIssue,
   onCopyTranscript,
   onOpenInChatGPT,
+  onOpenFileLocally,
   isJiraConnected,
   formatDate,
   formatSize,
@@ -179,6 +181,17 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
                   onClick: () => onStartRename(recording),
                   className: "",
                 },
+                // Add Open file locally option
+                ...(onOpenFileLocally
+                  ? [
+                      {
+                        label: "Download",
+                        icon: <Icon name="folder" size={16} />,
+                        onClick: () => onOpenFileLocally(recording.id, recording.filename),
+                        className: "",
+                      },
+                    ]
+                  : []),
                 // Conditionally add Unlink Jira Issue if linked
                 ...(recording.jiraIssueKey && onUnlinkJiraIssue
                   ? [
