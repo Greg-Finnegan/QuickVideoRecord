@@ -2,7 +2,7 @@
 
 **Screen recording with AI transcription and Jira integration**
 
-A powerful Chrome extension that transforms screen recording into a complete workflow tool. Record your screen, automatically transcribe with AI, and create Jira issues with smart descriptions—all in one place.
+Chrome extension that can record your screen, automatically transcribe with AI (on device - no API), and create Jira issues with smart descriptions—all in one place.
 
 [![Chrome Version](https://img.shields.io/badge/chrome-116%2B-blue)](https://www.google.com/chrome/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -12,9 +12,8 @@ A powerful Chrome extension that transforms screen recording into a complete wor
 
 Unlike basic screen recorders, QuickVideoRecord is built for professional workflows:
 
-- **AI-Powered Transcription**: Automatic speech-to-text using Whisper AI model
+- **AI-Powered Transcription**: Automatic speech-to-text using Whisper AI model (locally)
 - **Native Jira Integration**: Create issues directly from recordings with OAuth authentication
-- **Gemini AI Enhancement**: Generate professional issue descriptions from your transcripts
 - **Built-in Management**: Organize, search, and review all your recordings in one place
 
 Perfect for bug reports, feature demos, sprint reviews, and documentation.
