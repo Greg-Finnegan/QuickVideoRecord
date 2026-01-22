@@ -34,7 +34,7 @@ const Recorder: React.FC = () => {
     // Listen for stop messages
     const messageListener = (
       message: any,
-      sender: chrome.runtime.MessageSender,
+      _sender: chrome.runtime.MessageSender,
       sendResponse: (response?: any) => void
     ) => {
       console.log('Recorder received message:', message);
@@ -155,55 +155,63 @@ const Recorder: React.FC = () => {
         const filename = `recording_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
         const recordingId = Date.now().toString();
 
-        console.log('Sending download request...');
-        chrome.runtime.sendMessage({
-          action: 'downloadVideo',
-          url: url,
-          filename: filename,
-        });
-
         // Save recording metadata and video to IndexedDB
         try {
           // Save video blob to IndexedDB
           await videoStorage.saveVideo(recordingId, blob);
           console.log('Video blob saved to IndexedDB');
 
-          // Save recording metadata
-          const result = await chrome.storage.local.get('recordings') as RecordingStorage;
-          const recordings: Recording[] = result.recordings || [];
+          // Start download and get downloadId immediately
+          console.log('Starting download...');
+          chrome.downloads.download(
+            {
+              url: url,
+              filename: filename,
+              saveAs: true,
+            },
+            async (downloadId) => {
+              // Save recording metadata with downloadId
+              const result = await chrome.storage.local.get('recordings') as RecordingStorage;
+              const recordings: Recording[] = result.recordings || [];
 
-          const newRecording: Recording = {
-            id: recordingId,
-            filename: filename,
-            timestamp: Date.now(),
-            size: blob.size,
-          };
+              const newRecording: Recording = {
+                id: recordingId,
+                filename: filename,
+                timestamp: Date.now(),
+                size: blob.size,
+                downloadId: downloadId,
+              };
 
-          recordings.unshift(newRecording);
+              recordings.unshift(newRecording);
 
-          // Keep only last 50 recordings
-          if (recordings.length > 50) {
-            const oldRecordings = recordings.splice(50);
-            // Clean up old videos from IndexedDB
-            for (const oldRec of oldRecordings) {
-              await videoStorage.deleteVideo(oldRec.id);
+              // Keep only last 120 recordings
+              if (recordings.length > 150) {
+                const oldRecordings = recordings.splice(120);
+                // Clean up old videos from IndexedDB
+                for (const oldRec of oldRecordings) {
+                  await videoStorage.deleteVideo(oldRec.id);
+                }
+              }
+
+              await chrome.storage.local.set({ recordings });
+              console.log('Recording metadata saved with downloadId:', downloadId);
+
+              // Clean up blob URL
+              URL.revokeObjectURL(url);
+
+              // Trigger automatic transcription
+              chrome.runtime.sendMessage({
+                action: 'startAutoTranscription',
+                recordingId: recordingId,
+              });
+
+              // Close tab after download starts
+              setTimeout(() => chrome.tabs.getCurrent((tab) => tab && tab.id && chrome.tabs.remove(tab.id)), 1000);
             }
-          }
-
-          await chrome.storage.local.set({ recordings });
-          console.log('Recording metadata saved');
-
-          // Trigger automatic transcription
-          chrome.runtime.sendMessage({
-            action: 'startAutoTranscription',
-            recordingId: recordingId,
-          });
+          );
         } catch (error) {
           console.error('Failed to save recording:', error);
         }
-
-        // Close tab after download
-        setTimeout(() => chrome.tabs.getCurrent((tab) => tab && tab.id && chrome.tabs.remove(tab.id)), 1000);
       };
 
       recorder.start(1000); // Collect data every second

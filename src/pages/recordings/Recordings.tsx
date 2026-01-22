@@ -19,6 +19,7 @@ import { useToast } from "../../hooks/useToast";
 import { formatDate, formatSize, formatDuration } from "./utils/formatters";
 import CreateJiraIssueModal from "@src/components/jira/CreateJiraIssueModal";
 import { videoStorage } from "../../utils/videoStorage";
+import type { Recording } from "../../types";
 
 const Recordings: React.FC = () => {
   const { recordings, loading, setRecordings, deleteRecording } =
@@ -114,6 +115,16 @@ const Recordings: React.FC = () => {
     }
   };
 
+  const handleShowInFinder = (downloadId: number) => {
+    try {
+      chrome.downloads.show(downloadId);
+      success("Opening file...");
+    } catch (error) {
+      console.error('Failed to show:', error);
+      success("File may have been deleted. Use 'Download' instead.");
+    }
+  };
+
   const handleDownloadAndOpenFileLocally = async (recordingId: string, filename: string) => {
     try {
       // Get the video blob from IndexedDB using the recordingId
@@ -134,7 +145,7 @@ const Recordings: React.FC = () => {
           filename: filename,
           saveAs: false, // Don't prompt, use default download location
         },
-        (downloadId) => {
+        async (downloadId) => {
           // Clean up the blob URL
           URL.revokeObjectURL(url);
 
@@ -142,6 +153,28 @@ const Recordings: React.FC = () => {
             console.error('Download failed:', chrome.runtime.lastError);
             success("Failed to download file");
             return;
+          }
+
+          // Update recording with new downloadId
+          try {
+            const result = await chrome.storage.local.get('recordings') as { recordings?: Recording[] };
+            const recordings = result.recordings || [];
+            const recordingIndex = recordings.findIndex((r) => r.id === recordingId);
+
+            if (recordingIndex !== -1) {
+              recordings[recordingIndex].downloadId = downloadId;
+              await chrome.storage.local.set({ recordings });
+              console.log('Updated recording with new downloadId:', downloadId);
+
+              // Update local state so UI reflects the change immediately
+              setRecordings((prevRecordings) =>
+                prevRecordings.map((r) =>
+                  r.id === recordingId ? { ...r, downloadId } : r
+                )
+              );
+            }
+          } catch (error) {
+            console.error('Failed to update recording with downloadId:', error);
           }
 
           // Wait a bit for download to register, then show in Finder
@@ -196,6 +229,7 @@ const Recordings: React.FC = () => {
                   onUnlinkJiraIssue={handleUnlinkJiraIssue}
                   onCopyTranscript={handleCopyTranscript}
                   onOpenInChatGPT={handleOpenInChatGPT}
+                  onShowInFinder={handleShowInFinder}
                   onOpenFileLocally={handleDownloadAndOpenFileLocally}
                   isJiraConnected={isJiraConnected}
                   formatDate={formatDate}

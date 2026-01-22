@@ -9,7 +9,7 @@ chrome.action.onClicked.addListener((tab) => {
   }
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   // Forward transcription progress messages to all tabs
   if (message.action === "transcriptionProgress") {
     // Just forward the message - don't need to do anything else

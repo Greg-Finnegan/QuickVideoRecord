@@ -1,6 +1,7 @@
 import React from "react";
 import Button from "../../components/Button";
 import Icon from "../../components/Icon";
+import { useNavigate } from "react-router-dom";
 
 interface PaginationProps {
   currentPage: number;
@@ -28,6 +29,7 @@ const Pagination: React.FC<PaginationProps> = ({
   hasNextPage,
   hasPreviousPage,
 }) => {
+  const navigate = useNavigate();
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
@@ -68,6 +70,10 @@ const Pagination: React.FC<PaginationProps> = ({
     return pages;
   };
 
+  const handleSettingsButtonClick = () => {
+    navigate("/settings");
+  };
+
   return (
     <div className="flex items-center justify-between mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
       {/* Total count */}
@@ -77,6 +83,7 @@ const Pagination: React.FC<PaginationProps> = ({
         </span>{" "}
         recordings
       </div>
+
 
       {/* Page navigation */}
       <div className="flex items-center gap-2">
@@ -97,11 +104,10 @@ const Pagination: React.FC<PaginationProps> = ({
             <button
               key={index}
               onClick={() => onPageChange(page)}
-              className={`px-3 py-2 text-sm font-medium rounded-full transition-colors ${
-                currentPage === page
-                  ? "bg-blue-600 dark:bg-blue-500 text-white"
-                  : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-              }`}
+              className={`px-3 py-2 text-sm font-medium rounded-full transition-colors ${currentPage === page
+                ? "bg-blue-600 dark:bg-blue-500 text-white"
+                : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                }`}
             >
               {page}
             </button>
@@ -127,6 +133,13 @@ const Pagination: React.FC<PaginationProps> = ({
           <Icon name="chevron-right" size={16} />
         </Button>
       </div>
+      <Button
+        variant="ghost"
+        rounded="full"
+        onClick={handleSettingsButtonClick}
+      >
+        {"Settings Page"}
+      </Button>
     </div>
   );
 };

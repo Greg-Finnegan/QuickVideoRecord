@@ -19,6 +19,7 @@ interface RecordingCardProps {
   onUnlinkJiraIssue?: (recordingId: string) => void;
   onCopyTranscript?: (transcript: string) => void;
   onOpenInChatGPT?: (transcript: string) => void;
+  onShowInFinder?: (downloadId: number) => void;
   onOpenFileLocally?: (recordingId: string, filename: string) => void;
   isJiraConnected?: boolean;
   formatDate: (timestamp: number) => string;
@@ -40,6 +41,7 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
   onUnlinkJiraIssue,
   onCopyTranscript,
   onOpenInChatGPT,
+  onShowInFinder,
   onOpenFileLocally,
   isJiraConnected,
   formatDate,
@@ -123,7 +125,7 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
             }
           >
             Copy Script
-             <Icon name="copy" size={14} />
+            <Icon name="copy" size={14} />
           </Button>
           <Button
             variant="ghost"
@@ -181,28 +183,35 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
                   onClick: () => onStartRename(recording),
                   className: "",
                 },
-                // Add Open file locally option
+                {
+                  label: "Open Local File",
+                  icon: <Icon name="folder" size={16} />,
+                  onClick: () => onShowInFinder?.(recording.downloadId!),
+                  className: "",
+                },
+
+                // Add Open file locally option (fallback)
                 ...(onOpenFileLocally
                   ? [
-                      {
-                        label: "Download",
-                        icon: <Icon name="folder" size={16} />,
-                        onClick: () => onOpenFileLocally(recording.id, recording.filename),
-                        className: "",
-                      },
-                    ]
+                    {
+                      label: "Download",
+                      icon: <Icon name="folder" size={16} />,
+                      onClick: () => onOpenFileLocally(recording.id, recording.filename),
+                      className: "",
+                    },
+                  ]
                   : []),
                 // Conditionally add Unlink Jira Issue if linked
                 ...(recording.jiraIssueKey && onUnlinkJiraIssue
                   ? [
-                      {
-                        label: "Unlink Jira Issue",
-                        icon: <Icon name="link" size={16} />,
-                        onClick: () => onUnlinkJiraIssue(recording.id),
-                        className:
-                          "text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20",
-                      },
-                    ]
+                    {
+                      label: "Unlink Jira Issue",
+                      icon: <Icon name="link" size={16} />,
+                      onClick: () => onUnlinkJiraIssue(recording.id),
+                      className:
+                        "text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20",
+                    },
+                  ]
                   : []),
                 {
                   label: "Delete",
