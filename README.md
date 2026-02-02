@@ -2,6 +2,9 @@
 
 **Screen recording with local AI transcription and Jira integration**
 
+[![Chrome Version](https://img.shields.io/badge/chrome-116%2B-blue)](https://www.google.com/chrome/)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue)](package.json)
+
 Chrome extension that can record your screen, automatically transcribe with AI (on device - no API), and create Jira issues with smart descriptions—all in one place.
 
 The primary goal is to **radically reduce friction** when reporting bugs, describing UI issues, explaining customer requests, or documenting small improvements — especially from Customer Success, Support, and Sales teams.
