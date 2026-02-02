@@ -70,12 +70,13 @@ Many users also:
 
 ## Installation
 
-1. Clone or download this repository OR Run the build script (`build-chrome-extension.sh`)
-3. Create your own Atlassian Developer app → get Client ID & Secret
+1. Clone or download this repository OR Run the build (bash) script (`build-chrome-extension.sh`)
+3. Create your own Atlassian Developer app → get Client ID & Secret and set redirect url https://{your-chrome-ext-id}.chromiumapp.org/oauth2
 4. Fill `.env` file with your credentials & extension ID
-5. Load unpacked extension in Chrome (developer mode)
-6. Authorize with JIRA
-7. Set default project & sprint in the extension settings
+5. Rebuild extension or run build script (`build-chrome-extension.sh`)
+6. Load unpacked extension in Chrome (developer mode)
+7. Authorize with JIRA
+8. Set default project & sprint in the extension settings
 
 
 ## Development notes
