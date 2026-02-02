@@ -4,170 +4,102 @@
 
 Chrome extension that can record your screen, automatically transcribe with AI (on device - no API), and create Jira issues with smart descriptions—all in one place.
 
-[![Chrome Version](https://img.shields.io/badge/chrome-116%2B-blue)](https://www.google.com/chrome/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.2.0-blue)](package.json)
+The primary goal is to **radically reduce friction** when reporting bugs, describing UI issues, explaining customer requests, or documenting small improvements — especially from Customer Success, Support, and Sales teams.
 
-## Why QuickVideoRecord?
+## Why this exists
 
-Unlike basic screen recorders, QuickVideoRecord is built for professional workflows:
+Writing good JIRA tickets takes time and mental energy.  
+Most people avoid it or write very short / vague descriptions.  
+Short narrated screen recordings + good transcription + structured summarization = dramatically better tickets with far less effort.
 
-- **AI-Powered Transcription**: Automatic speech-to-text using Whisper AI model (locally)
-- **Native Jira Integration**: Create issues directly from recordings with OAuth authentication
-- **Built-in Management**: Organize, search, and review all your recordings in one place
+Observed benefits so far:
 
-Perfect for bug reports, feature demos, sprint reviews, and documentation.
+- ~10–25 tickets per week created mostly via voice instead of typing
+- Much clearer reproduction steps (especially UI/layout issues)
+- Faster triage & understanding for engineers
+- Non-dev team members actually create tickets regularly
+- Videos can be downloaded & shared in Slack independently of JIRA
 
----
+## Core workflow (how people are using it)
 
-## Quick Start
+1. Click the extension icon → **Start Recording**
+2. Record screen + voice (usually 30 sec – 3 min)
+   - Most common: share current tab or specific window
+3. Click **Stop & Download**
+4. Wait a few seconds → local transcription appears
+5. Review / lightly edit the auto-generated **summary** (Cliff Notes style)
+6. Set quick metadata:
+   - Project (default: Customer Success or Engineering)
+   - Sprint (default: current / next sprint)
+   - Priority
+   - Assignee (default: lead engineer)
+7. Click **Create Ticket**
+   → JIRA issue is created with:
+      - Summary from title / cleaned-up prompt
+      - Description = transcript + AI-generated cliff notes
+      - Linked video file name reference
 
-### 1. Install the Extension
+Many users also:
 
-**From Releases** (Users):
-1. Download the latest release from the [releases page](https://github.com/yourusername/QuickVideoRecord/releases)
-2. Open Chrome and navigate to `chrome://extensions/`
-3. Enable "Developer mode" (toggle in top right)
-4. Click "Load unpacked" and select the `dist_chrome` directory
-5. The extension icon appears in your toolbar
+- Just download the video and drop it in Slack without creating a ticket
+- Use it for internal explanations / knowledge sharing
 
-**From Source** (Developers):
-```bash
-git clone https://github.com/yourusername/QuickVideoRecord.git
-cd QuickVideoRecord
-npm install --legacy-peer-deps
-npm run dev
-```
-Then load the `dist_chrome` directory as an unpacked extension.
+## Features
 
-### 2. Make Your First Recording
+- Local (offline) transcription & processing
+- One-click JIRA ticket creation
+- Sprint & project selector (pulls your recent sprints)
+- Priority & assignee defaults
+- Dark & light theme support
+- Recording history (last ~120 recordings kept in UI)
+- Download original video file anytime
+- Open raw recording file locally
+- Direct link to ChatGPT / LLM with transcript + custom prompt
+- Refreshable extension without store publication
 
-1. Click the extension icon in your toolbar
-2. Click "Start Recording"
-3. Select what to share (screen, window, or tab)
-4. Grant microphone permission when prompted
-5. Recording starts automatically
-6. Click "Stop & Download" when finished
-7. Video downloads automatically as WebM file
+## Current limitations & known realities
 
-### 3. View and Transcribe
+- Best for recordings **< 5 minutes** (longer ones often fail transcription)
+- Transcription quality depends heavily on clear speech & low background noise
+- Requires manual JIRA OAuth app setup per user/machine (Chrome extension ID → callback URL)
+- Still in active development — some rough edges exist
+- Not yet published on Chrome Web Store (side-loaded only)
 
-1. Open the extension and navigate to "Recordings"
-2. Find your recording in the list
-3. Click "Transcribe" to generate AI transcript
-4. View transcript alongside video playback
-5. Copy transcript or export to ChatGPT
+## Installation
 
-### 4. Connect Jira (Optional)
-
-1. Navigate to Settings
-2. Click "Connect to Jira"
-3. Authorize with your Jira account
-4. Set default project and preferences
-5. Create Jira issues from recordings with one click
-
-
-## Jira Integration Setup
-
-### Prerequisites
-- Jira Cloud account (jira.atlassian.com)
-- Project with create issue permissions
-- Chrome extension installed
-
-### Connection Steps
-
-1. **Open Settings**
-   - Click extension icon → Settings
-   - Navigate to "Jira Integration" section
-
-2. **Connect to Jira**
-   - Click "Connect to Jira"
-   - Browser opens Jira OAuth consent page
-   - Authorize the extension
-   - Automatically redirects back
-
-3. **Configure Defaults** (Optional but recommended)
-   - Select default project from dropdown
-   - Choose default priority (e.g., Medium)
-   - Select default assignee
-   - Pick default sprint (if using sprints)
-
-## Technical Documentation
-
-### Tech Stack
-- **Frontend**: React 19 + TypeScript
-- **Build Tool**: Vite 6 with @crxjs/vite-plugin
-- **Styling**: TailwindCSS 4
-- **Chrome APIs**: Manifest V3 (desktopCapture, storage, identity, offscreen)
-- **AI/ML**: @xenova/transformers (Whisper model)
-- **Jira API**: jira.js library
+1. Clone or download this repository OR Run the build script (`build-chrome-extension.sh`)
+3. Create your own Atlassian Developer app → get Client ID & Secret
+4. Fill `.env` file with your credentials & extension ID
+5. Load unpacked extension in Chrome (developer mode)
+6. Authorize with JIRA
+7. Set default project & sprint in the extension settings
 
 
-### API Integration Points
+## Development notes
 
-**Chrome Extension APIs**:
-- `chrome.desktopCapture`: Screen recording
-- `chrome.storage.local`: Settings and metadata persistence
-- `chrome.identity`: OAuth flows for Jira and Gemini // Gemini coming soon maybe
-- `chrome.offscreen`: Background transcription processing
-- `chrome.downloads`: Video file downloads
-- `chrome.tabs`: Tab management for recorder
+- Built with Vite + React + TypeScript + Tailwind
+- Uses Chrome `chrome.tabCapture` + `MediaRecorder` API
+- Local @xenova/transformers transcription
+- Atlassian OAuth 2.0 (Jira Software Cloud)
 
-**Jira.js Integration**:
-- Projects API: Fetch accessible projects
-- Issues API: Create, search, and link issues
-- Users API: Get assignable users
-- Sprints API: Fetch active/future sprints
-- OAuth 2.0 authentication flow
+## Future direction (rough ideas)
 
-**Whisper Transcription**:
-- Runs in Web Worker (non-blocking)
-- Uses @xenova/transformers library
-- Processes audio in offscreen document
-- Real-time progress updates via message passing
+- Editable system prompt for summary generation
+- Better handling of long recordings (chunking / resumable)
+- Chrome Web Store publication → auto-updates
+- Optional video upload to private S3 / cloud storage
+- Quick re-record / append to existing ticket
+- Priority sorting visualization in recording list
+- One-click "copy JIRA link" after creation
 
-### Development Guides
+## Contributing
 
-**Available Scripts**:
-```bash
-npm run dev              # Development mode with hot reload (Chrome)
-npm run dev:chrome       # Development mode (Chrome)
-npm run dev:firefox      # Development mode (Firefox)
-npm run build            # Production build (Chrome)
-npm run build:chrome     # Production build (Chrome)
-npm run build:firefox    # Production build (Firefox)
-```
+This started as an internal productivity hack.  
+Feel free to fork, PR, or open issues — especially around:
 
-## Permissions
+- Transcription reliability
+- UX pain points
+- OAuth & setup simplification
+- Prompt engineering for better summaries
 
-The extension requires these permissions:
-
-| Permission | Purpose |
-|------------|---------|
-| `desktopCapture` | Capture screen/window content for recording |
-| `tabCapture` | Tab-specific recording capabilities |
-| `activeTab` | Interact with current tab for recording |
-| `downloads` | Save recorded video files to disk |
-| `storage` | Store settings, recording metadata, and preferences |
-| `sidePanel` | Display side panel interface |
-| `identity` | OAuth authentication for Jira and Gemini |
-| `offscreen` | Background audio processing for transcription |
-| `host_permissions` | Inject content scripts on all pages |
-
-
-## Credits & Acknowledgments
-
-**Open Source Libraries**:
-- [React](https://react.dev/) - UI framework
-- [Vite](https://vitejs.dev/) - Build tool
-- [TailwindCSS](https://tailwindcss.com/) - Styling
-- [Jira.js](https://github.com/MrRefactoring/jira.js) - Jira API client
-- [@xenova/transformers](https://github.com/xenova/transformers.js) - Whisper AI transcription
-- [@crxjs/vite-plugin](https://github.com/crxjs/chrome-extension-tools) - Chrome extension build tool
-
-**Contributors**:
-- Your contributions welcome here!
-
----
-
-Built with Chrome Extension Manifest V3 for modern, secure browser extensions.
+Feedback from Customer Success & Support users is especially valuable.
