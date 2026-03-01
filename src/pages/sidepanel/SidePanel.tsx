@@ -4,6 +4,7 @@ import Button from "../../components/Button";
 import Badge from "../../components/Badge";
 import Icon from "../../components/Icon";
 import CopyButton from "@src/components/CopyButton";
+import { DEFAULT_CHATGPT_PROMPT } from "../../types";
 
 const SidePanel: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -13,6 +14,30 @@ const SidePanel: React.FC = () => {
     "idle" | "testing" | "success" | "error"
   >("idle");
   const [micStream, setMicStream] = useState<MediaStream | null>(null);
+  const [chatGptPrompt, setChatGptPrompt] = useState(DEFAULT_CHATGPT_PROMPT);
+
+  useEffect(() => {
+    const loadPrompt = async () => {
+      const result = await chrome.storage.local.get("chatGptPrompt");
+      if (typeof result.chatGptPrompt === "string") {
+        setChatGptPrompt(result.chatGptPrompt);
+      }
+    };
+    loadPrompt();
+
+    const storageListener = (changes: {
+      [key: string]: chrome.storage.StorageChange;
+    }) => {
+      if (changes.chatGptPrompt) {
+        const newValue = changes.chatGptPrompt.newValue;
+        setChatGptPrompt(
+          typeof newValue === "string" ? newValue : DEFAULT_CHATGPT_PROMPT
+        );
+      }
+    };
+    chrome.storage.local.onChanged.addListener(storageListener);
+    return () => chrome.storage.local.onChanged.removeListener(storageListener);
+  }, []);
 
   useEffect(() => {
     console.log("SidePanel component mounted");
@@ -231,11 +256,7 @@ const SidePanel: React.FC = () => {
       <div className="p-4 bg-white dark:bg-slate-800 border-t-2 border-slate-200 dark:border-slate-700 mt-auto">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
           <Icon name="brain" size={16} /> ChatGPT Prompt
-          <CopyButton
-            textToCopy={
-              "short hand cliff notes and make name for this dev ticket - below is the transcript describing the bug/ticket"
-            }
-          />
+          <CopyButton textToCopy={chatGptPrompt} />
         </h3>
 
         <div className="mb-4">

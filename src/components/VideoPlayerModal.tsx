@@ -26,6 +26,9 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 }) => {
   const [showTranscript, setShowTranscript] = useState(false);
   const [showRawData, setShowRawData] = useState(false);
+  const [editingRawData, setEditingRawData] = useState(false);
+  const [rawDataDraft, setRawDataDraft] = useState("");
+  const [rawDataError, setRawDataError] = useState("");
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -62,6 +65,45 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
       ...recording,
       filename: newFilename,
     });
+  };
+
+  const handleEditRawData = () => {
+    setRawDataDraft(JSON.stringify(recording, null, 2));
+    setRawDataError("");
+    setEditingRawData(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRawData(false);
+    setRawDataError("");
+  };
+
+  const handleSaveRawData = async () => {
+    try {
+      const parsed = JSON.parse(rawDataDraft) as Recording;
+
+      // Ensure the id hasn't changed
+      if (parsed.id !== recording.id) {
+        setRawDataError("Cannot change recording id");
+        return;
+      }
+
+      // Update in chrome storage
+      const result = (await chrome.storage.local.get(
+        "recordings"
+      )) as RecordingStorage;
+      const allRecordings: Recording[] = result.recordings || [];
+      const updatedRecordings = allRecordings.map((r) =>
+        r.id === recording.id ? parsed : r
+      );
+
+      await chrome.storage.local.set({ recordings: updatedRecordings });
+      onUpdateRecording(parsed);
+      setEditingRawData(false);
+      setRawDataError("");
+    } catch (e: any) {
+      setRawDataError(e.message || "Invalid JSON");
+    }
   };
 
   return (
@@ -174,11 +216,55 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
             </button>
             {showRawData && (
               <div className="px-4 pb-4">
-                <div className="bg-slate-900 dark:bg-black rounded p-3 overflow-auto max-h-96">
-                  <pre className="text-xs text-green-400 font-mono">
-                    {JSON.stringify(recording, null, 2)}
-                  </pre>
+                <div className="flex items-center justify-end mb-2 gap-2">
+                  {editingRawData ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        className="px-3 py-1 text-xs"
+                        onClick={handleCancelEdit}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="primary"
+                        className="px-3 py-1 text-xs"
+                        onClick={handleSaveRawData}
+                      >
+                        Save
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      className="px-3 py-1 text-xs"
+                      onClick={handleEditRawData}
+                    >
+                      <Icon name="edit" size={14} />
+                      <span className="ml-1">Edit</span>
+                    </Button>
+                  )}
                 </div>
+                {rawDataError && (
+                  <div className="text-xs text-red-400 bg-red-900/30 border border-red-700 rounded px-3 py-2 mb-2 font-mono">
+                    {rawDataError}
+                  </div>
+                )}
+                {editingRawData ? (
+                  <textarea
+                    value={rawDataDraft}
+                    onChange={(e) => setRawDataDraft(e.target.value)}
+                    spellCheck={false}
+                    className="w-full bg-slate-900 dark:bg-black rounded p-3 text-xs text-green-400 font-mono resize-y min-h-48 max-h-96 focus:outline-none focus:ring-2 focus:ring-blue-500 border-none"
+                    rows={20}
+                  />
+                ) : (
+                  <div className="bg-slate-900 dark:bg-black rounded p-3 overflow-auto max-h-96">
+                    <pre className="text-xs text-green-400 font-mono">
+                      {JSON.stringify(recording, null, 2)}
+                    </pre>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -20,6 +20,7 @@ import { formatDate, formatSize, formatDuration } from "./utils/formatters";
 import CreateJiraIssueModal from "@src/components/jira/CreateJiraIssueModal";
 import { videoStorage } from "../../utils/videoStorage";
 import type { Recording } from "../../types";
+import { DEFAULT_CHATGPT_PROMPT } from "../../types";
 
 const Recordings: React.FC = () => {
   const { recordings, loading, setRecordings, deleteRecording } =
@@ -103,7 +104,11 @@ const Recordings: React.FC = () => {
   };
 
   const handleOpenInChatGPT = async (transcript: string) => {
-    const prompt = "short hand cliff notes and make name for this dev ticket - below is the transcript describing the bug/ticket";
+    const result = await chrome.storage.local.get("chatGptPrompt");
+    const prompt =
+      typeof result.chatGptPrompt === "string"
+        ? result.chatGptPrompt
+        : DEFAULT_CHATGPT_PROMPT;
     const fullMessage = `${prompt}\n\n${transcript}`;
 
     try {

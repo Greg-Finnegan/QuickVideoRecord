@@ -1,6 +1,26 @@
 // Background service worker for Chrome Window Recorder
+import type { TranscriptionJob, TranscriptionJobsStorage } from "../../types";
 
 console.log("Background service worker loaded");
+
+// Check for orphaned/stale transcription jobs on startup
+checkTranscriptionJobs();
+
+// Set up periodic cleanup alarm (runs every 1 hour) - only if alarms API is available
+if (chrome.alarms) {
+  chrome.alarms.create('cleanupTranscriptionJobs', { periodInMinutes: 60 });
+
+  // Listen for cleanup alarm
+  chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === 'cleanupTranscriptionJobs') {
+      cleanupOldTranscriptionJobs();
+    }
+  });
+
+  console.log('[Background] Periodic cleanup alarm configured');
+} else {
+  console.warn('[Background] chrome.alarms API not available - periodic cleanup disabled');
+}
 
 // Open side panel when extension icon is clicked
 chrome.action.onClicked.addListener((tab) => {
@@ -9,10 +29,18 @@ chrome.action.onClicked.addListener((tab) => {
   }
 });
 
+// Listen for transcription job status transitions in storage
+chrome.storage.onChanged.addListener((changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
+  if (areaName === 'local' && changes.transcriptionJobs) {
+    const oldJobs = (changes.transcriptionJobs.oldValue || {}) as { [recordingId: string]: TranscriptionJob };
+    const newJobs = (changes.transcriptionJobs.newValue || {}) as { [recordingId: string]: TranscriptionJob };
+    handleTranscriptionJobUpdate(oldJobs, newJobs);
+  }
+});
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  // Forward transcription progress messages to all tabs
+  // Forward transcription progress messages (best-effort from offscreen)
   if (message.action === "transcriptionProgress") {
-    // Just forward the message - don't need to do anything else
     return false;
   }
 
@@ -100,7 +128,23 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 // Manual transcription Handler (triggered from UI)
 async function handleManualTranscription(recordingId: string) {
   try {
-    console.log("Starting manual transcription for recording:", recordingId);
+    console.log("[Background] Starting manual transcription for recording:", recordingId);
+
+    // Check if transcription is already in progress
+    const jobsResult = (await chrome.storage.local.get('transcriptionJobs')) as TranscriptionJobsStorage;
+    const existingJob = jobsResult.transcriptionJobs?.[recordingId];
+
+    if (existingJob && existingJob.status === 'processing') {
+      console.log('[Background] Transcription already in progress for recording:', recordingId);
+      // Notify UI
+      chrome.runtime.sendMessage({
+        action: "transcriptionProgress",
+        recordingId: recordingId,
+        status: existingJob.statusMessage,
+        progress: existingJob.progress,
+      });
+      return;
+    }
 
     // Mark recording as transcribing in storage
     const result = (await chrome.storage.local.get("recordings")) as any;
@@ -125,56 +169,28 @@ async function handleManualTranscription(recordingId: string) {
     // Create offscreen document if it doesn't exist
     await setupOffscreenDocument();
 
-    // Send transcription request to offscreen document and wait for response
-    const response = await new Promise<any>((resolve) => {
-      chrome.runtime.sendMessage(
-        {
-          action: "transcribeVideo",
-          recordingId: recordingId,
-        },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            console.error("Runtime error:", chrome.runtime.lastError);
-            resolve({
-              success: false,
-              error: chrome.runtime.lastError.message,
-            });
-          } else {
-            resolve(response);
-          }
-        }
-      );
-    });
-
-    if (response && response.success) {
-      // Update recording with transcript
-      const updatedResult = (await chrome.storage.local.get(
-        "recordings"
-      )) as any;
-      const updatedRecordings = updatedResult.recordings || [];
-      const updatedIndex = updatedRecordings.findIndex(
-        (r: any) => r.id === recordingId
-      );
-
-      if (updatedIndex !== -1) {
-        updatedRecordings[updatedIndex].transcript = response.transcript;
-        updatedRecordings[updatedIndex].transcribing = false;
-        await chrome.storage.local.set({ recordings: updatedRecordings });
-      }
-
-      // Notify UI that transcription is complete
-      chrome.runtime.sendMessage({
-        action: "transcriptionComplete",
+    // Send transcription request to offscreen document (fire-and-forget)
+    // Offscreen will immediately respond with { success: true, started: true }
+    // Then continue transcription in background using storage-based status tracking
+    chrome.runtime.sendMessage(
+      {
+        action: "transcribeVideo",
         recordingId: recordingId,
-        transcript: response.transcript,
-      });
+      },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          console.log("[Background] Optimistic channel close (expected for long transcriptions):", chrome.runtime.lastError.message);
+        } else if (response && response.started) {
+          console.log("[Background] Transcription started in offscreen document - monitoring via storage");
+        }
+      }
+    );
 
-      console.log("Manual transcription completed successfully");
-    } else {
-      throw new Error(response?.error || "Transcription failed");
-    }
+    // Note: Transcription completion/failure will be handled via storage listener
+    // (handleTranscriptionJobUpdate function)
+    console.log("[Background] Transcription request sent - status tracking via storage");
   } catch (error: any) {
-    console.error("Manual transcription handler failed:", error);
+    console.error("[Background] Manual transcription handler failed:", error);
     await markTranscriptionFailed(recordingId, error.message);
   }
 }
@@ -182,7 +198,16 @@ async function handleManualTranscription(recordingId: string) {
 // Auto-transcription Handler
 async function handleAutoTranscription(recordingId: string) {
   try {
-    console.log("Starting auto-transcription for recording:", recordingId);
+    console.log("[Background] Starting auto-transcription for recording:", recordingId);
+
+    // Check if transcription is already in progress
+    const jobsResult = (await chrome.storage.local.get('transcriptionJobs')) as TranscriptionJobsStorage;
+    const existingJob = jobsResult.transcriptionJobs?.[recordingId];
+
+    if (existingJob && existingJob.status === 'processing') {
+      console.log('[Background] Transcription already in progress for recording:', recordingId);
+      return;
+    }
 
     // Mark recording as transcribing in storage
     const result = (await chrome.storage.local.get("recordings")) as any;
@@ -207,56 +232,28 @@ async function handleAutoTranscription(recordingId: string) {
     // Create offscreen document if it doesn't exist
     await setupOffscreenDocument();
 
-    // Send transcription request to offscreen document and wait for response
-    const response = await new Promise<any>((resolve) => {
-      chrome.runtime.sendMessage(
-        {
-          action: "transcribeVideo",
-          recordingId: recordingId,
-        },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            console.error("Runtime error:", chrome.runtime.lastError);
-            resolve({
-              success: false,
-              error: chrome.runtime.lastError.message,
-            });
-          } else {
-            resolve(response);
-          }
-        }
-      );
-    });
-
-    if (response && response.success) {
-      // Update recording with transcript
-      const updatedResult = (await chrome.storage.local.get(
-        "recordings"
-      )) as any;
-      const updatedRecordings = updatedResult.recordings || [];
-      const updatedIndex = updatedRecordings.findIndex(
-        (r: any) => r.id === recordingId
-      );
-
-      if (updatedIndex !== -1) {
-        updatedRecordings[updatedIndex].transcript = response.transcript;
-        updatedRecordings[updatedIndex].transcribing = false;
-        await chrome.storage.local.set({ recordings: updatedRecordings });
-      }
-
-      // Notify UI that transcription is complete
-      chrome.runtime.sendMessage({
-        action: "transcriptionComplete",
+    // Send transcription request to offscreen document (fire-and-forget)
+    // Offscreen will immediately respond with { success: true, started: true }
+    // Then continue transcription in background using storage-based status tracking
+    chrome.runtime.sendMessage(
+      {
+        action: "transcribeVideo",
         recordingId: recordingId,
-        transcript: response.transcript,
-      });
+      },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          console.log("[Background] Optimistic channel close (expected for long transcriptions):", chrome.runtime.lastError.message);
+        } else if (response && response.started) {
+          console.log("[Background] Transcription started in offscreen document - monitoring via storage");
+        }
+      }
+    );
 
-      console.log("Auto-transcription completed successfully");
-    } else {
-      throw new Error(response?.error || "Transcription failed");
-    }
+    // Note: Transcription completion/failure will be handled via storage listener
+    // (handleTranscriptionJobUpdate function)
+    console.log("[Background] Transcription request sent - status tracking via storage");
   } catch (error: any) {
-    console.error("Auto-transcription handler failed:", error);
+    console.error("[Background] Auto-transcription handler failed:", error);
     await markTranscriptionFailed(recordingId, error.message);
   }
 }
@@ -287,6 +284,156 @@ async function markTranscriptionFailed(
     recordingId: recordingId,
     error: errorMessage,
   });
+}
+
+// Handle transcription job status transitions from storage changes.
+// Only acts when a job's status actually changes (e.g. processing → completed),
+// preventing duplicate processing on every progress update.
+async function handleTranscriptionJobUpdate(
+  oldJobs: { [recordingId: string]: TranscriptionJob },
+  newJobs: { [recordingId: string]: TranscriptionJob }
+) {
+  for (const [recordingId, job] of Object.entries(newJobs)) {
+    const oldStatus = oldJobs[recordingId]?.status;
+    // Skip if status hasn't changed
+    if (oldStatus === job.status) continue;
+
+    if (job.status === 'completed' && job.transcript) {
+      await finalizeCompletedJob(recordingId, job.transcript);
+    } else if (job.status === 'failed') {
+      await finalizeFailedJob(recordingId, job.error || 'Unknown error');
+    }
+  }
+}
+
+// Persist transcript to the recording and clean up the job
+async function finalizeCompletedJob(recordingId: string, transcript: string) {
+  console.log('[Background] Transcription completed for recording:', recordingId);
+
+  const result = (await chrome.storage.local.get("recordings")) as any;
+  const recordings = result.recordings || [];
+  const recordingIndex = recordings.findIndex((r: any) => r.id === recordingId);
+
+  if (recordingIndex !== -1) {
+    recordings[recordingIndex].transcript = transcript;
+    recordings[recordingIndex].transcribing = false;
+    await chrome.storage.local.set({ recordings });
+
+    chrome.runtime.sendMessage({
+      action: "transcriptionComplete",
+      recordingId,
+      transcript,
+    });
+  }
+
+  // Remove job from storage
+  await removeTranscriptionJob(recordingId);
+}
+
+// Mark recording as not-transcribing and clean up the job
+async function finalizeFailedJob(recordingId: string, error: string) {
+  console.error('[Background] Transcription failed for recording:', recordingId, error);
+
+  const result = (await chrome.storage.local.get("recordings")) as any;
+  const recordings = result.recordings || [];
+  const recordingIndex = recordings.findIndex((r: any) => r.id === recordingId);
+
+  if (recordingIndex !== -1) {
+    recordings[recordingIndex].transcribing = false;
+    await chrome.storage.local.set({ recordings });
+
+    chrome.runtime.sendMessage({
+      action: "transcriptionFailed",
+      recordingId,
+      error,
+    });
+  }
+
+  // Remove job from storage
+  await removeTranscriptionJob(recordingId);
+}
+
+async function removeTranscriptionJob(recordingId: string) {
+  const result = (await chrome.storage.local.get('transcriptionJobs')) as TranscriptionJobsStorage;
+  const jobs = result.transcriptionJobs || {};
+  delete jobs[recordingId];
+  await chrome.storage.local.set({ transcriptionJobs: jobs });
+  console.log('[Background] Cleaned up transcription job:', recordingId);
+}
+
+// Check for orphaned/stale transcription jobs on startup (worker revival recovery).
+// Also finalizes any completed/failed jobs the background missed while terminated.
+async function checkTranscriptionJobs() {
+  try {
+    const result = (await chrome.storage.local.get('transcriptionJobs')) as TranscriptionJobsStorage;
+    const jobs = result.transcriptionJobs || {};
+
+    console.log('[Background] Checking transcription jobs on startup...');
+
+    for (const [recordingId, job] of Object.entries(jobs)) {
+      if (job.status === 'completed' && job.transcript) {
+        // Background was terminated before it could finalize this job
+        console.log('[Background] Finalizing completed job missed during termination:', recordingId);
+        await finalizeCompletedJob(recordingId, job.transcript);
+      } else if (job.status === 'failed') {
+        console.log('[Background] Finalizing failed job missed during termination:', recordingId);
+        await finalizeFailedJob(recordingId, job.error || 'Unknown error');
+      } else if (job.status === 'processing') {
+        const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
+        if (job.updatedAt < thirtyMinutesAgo) {
+          console.warn('[Background] Found stale transcription job:', recordingId);
+          await finalizeFailedJob(recordingId, 'Transcription timed out - service worker may have terminated');
+          // Also clean up the stale job entry
+          await removeTranscriptionJob(recordingId);
+        } else {
+          console.log('[Background] Resuming monitoring for in-progress job:', recordingId, `(${job.progress}%)`);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('[Background] Failed to check transcription jobs:', error);
+  }
+}
+
+// Periodic cleanup of old completed/failed transcription jobs
+async function cleanupOldTranscriptionJobs() {
+  try {
+    const result = (await chrome.storage.local.get('transcriptionJobs')) as TranscriptionJobsStorage;
+    const jobs = result.transcriptionJobs || {};
+
+    console.log('[Background] Running periodic cleanup of transcription jobs...');
+
+    let cleanedCount = 0;
+    const updatedJobs = { ...jobs };
+
+    for (const [recordingId, job] of Object.entries(jobs)) {
+      const oneHourAgo = Date.now() - (60 * 60 * 1000);
+      const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+
+      // Remove completed jobs older than 1 hour
+      if (job.status === 'completed' && job.updatedAt < oneHourAgo) {
+        delete updatedJobs[recordingId];
+        cleanedCount++;
+        console.log('[Background] Cleaned up old completed job:', recordingId);
+      }
+
+      // Remove failed jobs older than 24 hours
+      if (job.status === 'failed' && job.updatedAt < oneDayAgo) {
+        delete updatedJobs[recordingId];
+        cleanedCount++;
+        console.log('[Background] Cleaned up old failed job:', recordingId);
+      }
+    }
+
+    if (cleanedCount > 0) {
+      await chrome.storage.local.set({ transcriptionJobs: updatedJobs });
+      console.log(`[Background] Cleaned up ${cleanedCount} old transcription job(s)`);
+    } else {
+      console.log('[Background] No old jobs to clean up');
+    }
+  } catch (error) {
+    console.error('[Background] Failed to cleanup transcription jobs:', error);
+  }
 }
 
 // Offscreen document management

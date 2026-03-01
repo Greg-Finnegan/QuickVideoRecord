@@ -73,7 +73,14 @@ export interface ExtensionSettingsStorage {
   recordingSettings?: RecordingSettings;
   transcriptionSettings?: TranscriptionSettings;
   notificationSettings?: NotificationSettings;
+  chatGptPrompt?: string;
 }
+
+/**
+ * Default ChatGPT prompt prepended to transcripts
+ */
+export const DEFAULT_CHATGPT_PROMPT =
+  "short hand cliff notes and make name for this dev ticket - below is the transcript describing the bug/ticket";
 
 /**
  * Default extension settings

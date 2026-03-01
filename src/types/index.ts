@@ -7,6 +7,9 @@
 export type {
   Recording,
   RecordingStorage,
+  TranscriptionStatus,
+  TranscriptionJob,
+  TranscriptionJobsStorage,
 } from "./recording";
 
 // Jira settings types
@@ -63,4 +66,7 @@ export type {
 } from "./extensionSettings";
 
 // Re-export default settings
-export { DEFAULT_EXTENSION_SETTINGS } from "./extensionSettings";
+export {
+  DEFAULT_EXTENSION_SETTINGS,
+  DEFAULT_CHATGPT_PROMPT,
+} from "./extensionSettings";
