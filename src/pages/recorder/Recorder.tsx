@@ -79,39 +79,48 @@ const Recorder: React.FC = () => {
       console.log('Video tracks:', displayStream.getVideoTracks());
       console.log('Audio tracks:', displayStream.getAudioTracks());
 
-      // Get microphone audio
-      console.log('Requesting microphone access...');
-      const micStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: false,
-      });
-      console.log('Got microphone stream:', micStream);
-
-      // Mix audio streams
-      const audioContext = new AudioContext();
-      const dest = audioContext.createMediaStreamDestination();
-
-      // Add system audio if present
-      const systemAudioTracks = displayStream.getAudioTracks();
-      if (systemAudioTracks.length > 0) {
-        console.log('Mixing system audio with microphone');
-        const systemSource = audioContext.createMediaStreamSource(
-          new MediaStream(systemAudioTracks)
-        );
-        systemSource.connect(dest);
-      } else {
-        console.log('No system audio captured');
+      // Try to get microphone audio (gracefully handle if unavailable)
+      let micStream: MediaStream | null = null;
+      try {
+        console.log('Requesting microphone access...');
+        micStream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: false,
+        });
+        console.log('Got microphone stream:', micStream);
+      } catch (micErr) {
+        console.warn('Microphone not available, recording without mic:', micErr);
       }
 
-      // Add microphone audio
-      const micSource = audioContext.createMediaStreamSource(micStream);
-      micSource.connect(dest);
+      // Build the final stream
+      let finalStream: MediaStream;
+      const systemAudioTracks = displayStream.getAudioTracks();
 
-      // Combine video with mixed audio
-      const finalStream = new MediaStream([
-        ...displayStream.getVideoTracks(),
-        ...dest.stream.getAudioTracks(),
-      ]);
+      if (micStream) {
+        // Mix system audio + microphone audio
+        const audioContext = new AudioContext();
+        const dest = audioContext.createMediaStreamDestination();
+
+        if (systemAudioTracks.length > 0) {
+          console.log('Mixing system audio with microphone');
+          const systemSource = audioContext.createMediaStreamSource(
+            new MediaStream(systemAudioTracks)
+          );
+          systemSource.connect(dest);
+        }
+
+        const micSource = audioContext.createMediaStreamSource(micStream);
+        micSource.connect(dest);
+
+        finalStream = new MediaStream([
+          ...displayStream.getVideoTracks(),
+          ...dest.stream.getAudioTracks(),
+        ]);
+      } else {
+        // No mic — use display stream as-is (video + system audio if present)
+        console.log('Recording without microphone');
+        finalStream = displayStream;
+      }
 
       console.log('Final stream created');
       finalStream.getTracks().forEach((track) => {

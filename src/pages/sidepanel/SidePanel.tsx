@@ -132,6 +132,32 @@ const SidePanel: React.FC = () => {
     console.log("Testing microphone...");
 
     try {
+      // Check if any microphone devices exist
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const audioInputs = devices.filter((d) => d.kind === "audioinput");
+
+      if (audioInputs.length === 0) {
+        console.warn("No microphone devices found");
+        setStatus("No microphone found. Please connect a microphone and try again.");
+        setMicStatus("error");
+        setTimeout(() => setMicStatus("idle"), 5000);
+        return;
+      }
+
+      // Check permission status
+      const permissionStatus = await navigator.permissions.query({
+        name: "microphone" as PermissionName,
+      });
+
+      if (permissionStatus.state === "denied") {
+        console.warn("Microphone permission denied");
+        setStatus("Microphone permission denied. Please allow access in your browser site settings.");
+        setMicStatus("error");
+        setTimeout(() => setMicStatus("idle"), 5000);
+        return;
+      }
+
+      // This will trigger the permission prompt if state is "prompt"
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: false,
@@ -164,10 +190,18 @@ const SidePanel: React.FC = () => {
       console.error("Microphone test failed:", err);
       setMicStatus("error");
 
-      // Reset after 3 seconds
+      if (err.name === "NotFoundError") {
+        setStatus("No microphone found. Please connect a microphone and try again.");
+      } else if (err.name === "NotAllowedError") {
+        setStatus("Microphone permission denied. Please allow access in your browser site settings.");
+      } else {
+        setStatus("Microphone test failed: " + err.message);
+      }
+
+      // Reset after 5 seconds
       setTimeout(() => {
         setMicStatus("idle");
-      }, 3000);
+      }, 5000);
     }
   };
 
