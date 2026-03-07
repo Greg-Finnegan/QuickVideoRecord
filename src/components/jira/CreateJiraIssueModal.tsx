@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Button from "../Button";
 import Icon from "../Icon";
 import JiraDropdown from "./JiraDropdown";
+import MarkdownEditor from "../MarkdownEditor";
 import { useJiraConnection } from "../../pages/settings/hooks/useJiraConnection";
 import { useJiraProjects } from "../../pages/settings/hooks/useJiraProjects";
 import { useJiraIssueTypes } from "../../pages/recordings/hooks/useJiraIssueTypes";
@@ -435,16 +436,15 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
             <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-2">
               Description
             </label>
-            <textarea
+            <MarkdownEditor
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Detailed description (optional)"
-              rows={4}
+              onChange={setDescription}
               disabled={creating}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y disabled:opacity-50"
+              rows={6}
+              placeholder="Detailed description — supports **bold**, *italic*, # headings, and lists"
             />
             <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-              Additional details about the issue
+              Supports markdown: **bold**, *italic*, # headings, - lists
             </p>
           </div>
 
