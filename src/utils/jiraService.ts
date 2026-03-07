@@ -2,6 +2,150 @@ import { jiraAuth } from "./jiraAuth";
 import type { Version3Client } from "jira.js";
 import type { Version3Models } from "jira.js";
 
+// ── ADF helpers ──────────────────────────────────────────────────────────────
+
+interface AdfMark {
+  type: "strong" | "em";
+}
+
+interface AdfTextNode {
+  type: "text";
+  text: string;
+  marks?: AdfMark[];
+}
+
+interface AdfNode {
+  type: string;
+  content?: AdfNode[];
+  text?: string;
+  marks?: AdfMark[];
+  attrs?: Record<string, unknown>;
+}
+
+interface AdfDocument {
+  type: "doc";
+  version: 1;
+  content: AdfNode[];
+}
+
+/** Parse inline **bold** and *italic* markers into ADF text nodes. */
+function parseInlineMarks(text: string): AdfTextNode[] {
+  const nodes: AdfTextNode[] = [];
+  // Regex matches **bold** / __bold__ and *italic* / _italic_
+  const pattern = /(\*\*|__)(.+?)\1|(\*|_)(.+?)\3/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text)) !== null) {
+    // Text before the match
+    if (match.index > lastIndex) {
+      nodes.push({ type: "text", text: text.slice(lastIndex, match.index) });
+    }
+
+    if (match[2]) {
+      // Bold
+      nodes.push({ type: "text", text: match[2], marks: [{ type: "strong" }] });
+    } else if (match[4]) {
+      // Italic
+      nodes.push({ type: "text", text: match[4], marks: [{ type: "em" }] });
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Remaining text
+  if (lastIndex < text.length) {
+    nodes.push({ type: "text", text: text.slice(lastIndex) });
+  }
+
+  // If nothing was parsed, return a single text node
+  if (nodes.length === 0) {
+    nodes.push({ type: "text", text });
+  }
+
+  return nodes;
+}
+
+/** Build a paragraph node from a line of text. */
+function paragraphNode(text: string): AdfNode {
+  return { type: "paragraph", content: parseInlineMarks(text) };
+}
+
+/** Convert plain text (with basic markdown) to a Jira ADF document. */
+function textToAdf(text: string): AdfDocument {
+  const content: AdfNode[] = [];
+
+  // Split on blank lines to get blocks
+  const blocks = text.split(/\n{2,}/);
+
+  for (const block of blocks) {
+    const trimmed = block.trim();
+    if (!trimmed) continue;
+
+    const lines = trimmed.split("\n");
+
+    // Check if the block is a bullet list (all lines start with - or * )
+    const isBulletList = lines.every((l) => /^\s*[-*]\s/.test(l));
+    if (isBulletList) {
+      content.push({
+        type: "bulletList",
+        content: lines.map((line) => ({
+          type: "listItem",
+          content: [paragraphNode(line.replace(/^\s*[-*]\s+/, ""))],
+        })),
+      });
+      continue;
+    }
+
+    // Check if the block is an ordered list (all lines start with digits.)
+    const isOrderedList = lines.every((l) => /^\s*\d+\.\s/.test(l));
+    if (isOrderedList) {
+      content.push({
+        type: "orderedList",
+        content: lines.map((line) => ({
+          type: "listItem",
+          content: [paragraphNode(line.replace(/^\s*\d+\.\s+/, ""))],
+        })),
+      });
+      continue;
+    }
+
+    // Process individual lines
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+
+      // Horizontal rule
+      if (/^[-*_]{3,}$/.test(trimmedLine)) {
+        content.push({ type: "rule" });
+        continue;
+      }
+
+      // Heading (# - ###)
+      const headingMatch = trimmedLine.match(/^(#{1,3})\s+(.+)$/);
+      if (headingMatch) {
+        content.push({
+          type: "heading",
+          attrs: { level: headingMatch[1].length },
+          content: parseInlineMarks(headingMatch[2]),
+        });
+        continue;
+      }
+
+      // Regular paragraph
+      content.push(paragraphNode(trimmedLine));
+    }
+  }
+
+  // ADF requires at least one content node
+  if (content.length === 0) {
+    content.push(paragraphNode(text || " "));
+  }
+
+  return { type: "doc", version: 1, content };
+}
+
+// ── Jira Service ─────────────────────────────────────────────────────────────
+
 class JiraService {
   private async getClient(): Promise<Version3Client | null> {
     return await jiraAuth.getClient();
@@ -79,21 +223,7 @@ class JiraService {
       };
 
       if (params.description) {
-        issueData.fields.description = {
-          type: "doc",
-          version: 1,
-          content: [
-            {
-              type: "paragraph",
-              content: [
-                {
-                  type: "text",
-                  text: params.description,
-                },
-              ],
-            },
-          ],
-        };
+        issueData.fields.description = textToAdf(params.description);
       }
 
       if (params.priority) {
@@ -181,21 +311,7 @@ class JiraService {
     try {
       await client.issueComments.addComment({
         issueIdOrKey: issueKey,
-        comment: {
-          type: "doc",
-          version: 1,
-          content: [
-            {
-              type: "paragraph",
-              content: [
-                {
-                  type: "text",
-                  text: comment,
-                },
-              ],
-            },
-          ],
-        },
+        comment: textToAdf(comment),
       });
     } catch (error) {
       console.error("Failed to add comment to Jira issue:", error);

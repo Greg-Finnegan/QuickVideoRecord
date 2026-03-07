@@ -442,7 +442,7 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
             </p>
           </div>
 
-          {/* Description - TODO: transition to markdown */}
+          {/* Description — supports basic markdown (bold, lists, headings) via ADF conversion */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-2">
               Description
