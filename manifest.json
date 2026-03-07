@@ -22,8 +22,7 @@
     "storage",
     "sidePanel",
     "identity",
-    "offscreen",
-    "alarms"
+    "offscreen"
   ],
   "host_permissions": [
     "<all_urls>"

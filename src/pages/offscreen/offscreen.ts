@@ -1,6 +1,5 @@
 import { transcriptionWorkerService } from '../../utils/transcriptionWorkerService';
 import { videoStorage } from '../../utils/videoStorage';
-import type { TranscriptionJob, TranscriptionJobsStorage } from '../../types';
 
 console.log('Offscreen document loaded for transcription');
 
@@ -20,42 +19,25 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   return false;
 });
 
-// Write job status directly to chrome.storage.local so it survives service worker termination.
-// Also attempt to notify the background script via messaging as a best-effort fast path.
-async function sendJobUpdate(
-  recordingId: string,
-  status: 'processing' | 'completed' | 'failed',
-  progress: number,
-  statusMessage: string,
-  transcript?: string,
-  error?: string
-): Promise<void> {
-  const now = Date.now();
+// Send a message to the background script. chrome.runtime.sendMessage from the
+// offscreen document will wake the service worker if it's terminated, so the
+// background is guaranteed to be alive to handle the message.
+function sendToBackground(payload: Record<string, unknown>): Promise<any> {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage(payload, (response) => {
+      if (chrome.runtime.lastError) {
+        console.warn('[Offscreen] sendToBackground error:', chrome.runtime.lastError.message);
+        resolve(undefined);
+      } else {
+        resolve(response);
+      }
+    });
+  });
+}
 
-  // 1. Write directly to storage (durable, survives worker termination)
-  try {
-    const result = (await chrome.storage.local.get('transcriptionJobs')) as TranscriptionJobsStorage;
-    const jobs = result.transcriptionJobs || {};
-
-    const existingJob = jobs[recordingId];
-    const updatedJob: TranscriptionJob = {
-      recordingId,
-      status,
-      progress,
-      statusMessage,
-      startedAt: existingJob?.startedAt || now,
-      updatedAt: now,
-    };
-    if (transcript) updatedJob.transcript = transcript;
-    if (error) updatedJob.error = error;
-
-    jobs[recordingId] = updatedJob;
-    await chrome.storage.local.set({ transcriptionJobs: jobs });
-  } catch (storageError) {
-    console.error('[Offscreen] Failed to write job status to storage:', storageError);
-  }
-
-  // 2. Best-effort message to background for real-time UI forwarding
+// Fire-and-forget progress notification. Does not wait for a response
+// (the background handler returns false / no response for these).
+function sendProgress(recordingId: string, statusMessage: string, progress: number): void {
   try {
     chrome.runtime.sendMessage({
       action: 'transcriptionProgress',
@@ -64,18 +46,15 @@ async function sendJobUpdate(
       progress,
     });
   } catch {
-    // Expected if background is terminated
+    // Background may be terminated — harmless
   }
-
-  console.log(`[Offscreen] Job update for ${recordingId}: ${status} ${progress}%`);
 }
 
 async function handleTranscribe(recordingId: string): Promise<string> {
   console.log('[Offscreen] Starting transcription for recording:', recordingId);
 
   try {
-    // Send initial job update to background script
-    sendJobUpdate(recordingId, 'processing', 0, 'Initializing transcription');
+    sendProgress(recordingId, 'Initializing transcription', 0);
 
     // Get the video blob from IndexedDB (since we can't pass Blob via messages)
     const videoBlob = await videoStorage.getVideo(recordingId);
@@ -83,30 +62,53 @@ async function handleTranscribe(recordingId: string): Promise<string> {
       throw new Error('Video not found in storage');
     }
 
-    // Update status: video loaded
-    sendJobUpdate(recordingId, 'processing', 5, 'Loading transcription model');
+    sendProgress(recordingId, 'Loading transcription model', 5);
 
     // Perform transcription using Web Worker
     const transcript = await transcriptionWorkerService.transcribeVideo(
       videoBlob,
       (status, progress) => {
         console.log(`[Offscreen] Transcription progress: ${status} (${progress}%)`);
-
-        // Send progress update to background script
-        sendJobUpdate(recordingId, 'processing', progress, status);
+        sendProgress(recordingId, status, progress);
       }
     );
 
-    // Send completion update to background script
-    sendJobUpdate(recordingId, 'completed', 100, 'Transcription complete', transcript);
+    console.log('[Offscreen] Transcription completed, saving transcript...');
 
-    console.log('[Offscreen] Transcription completed successfully');
+    // Send transcript to background for persistence. This wakes the service
+    // worker if needed and waits for acknowledgement.
+    const saveResult = await sendToBackground({
+      action: 'saveTranscript',
+      recordingId,
+      transcript,
+    });
+
+    if (saveResult?.success) {
+      console.log('[Offscreen] Transcript saved successfully:', recordingId);
+    } else {
+      console.error('[Offscreen] Background failed to save transcript:', saveResult?.error);
+    }
+
+    // Clean up worker to prevent ONNX thread errors after transcription
+    transcriptionWorkerService.terminate();
+
+    // Ask background to close this offscreen document now that we're done
+    await sendToBackground({ action: 'closeOffscreen' });
+
     return transcript;
   } catch (error: any) {
     console.error('[Offscreen] Transcription failed:', error);
 
-    // Send failure update to background script
-    sendJobUpdate(recordingId, 'failed', 0, 'Transcription failed', undefined, error.message || 'Unknown error');
+    transcriptionWorkerService.terminate();
+
+    // Tell background to clear the transcribing flag
+    await sendToBackground({
+      action: 'transcriptionFailed',
+      recordingId,
+      error: error.message || 'Unknown error',
+    });
+
+    await sendToBackground({ action: 'closeOffscreen' });
 
     throw error;
   }

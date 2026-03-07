@@ -7,9 +7,6 @@
 export type {
   Recording,
   RecordingStorage,
-  TranscriptionStatus,
-  TranscriptionJob,
-  TranscriptionJobsStorage,
 } from "./recording";
 
 // Jira settings types
