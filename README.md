@@ -62,7 +62,7 @@ Many users also:
 
 ## Current limitations & known realities
 
-- Best for recordings **< 5 minutes** (longer ones often fail transcription)
+- Very long recordings may take a while to transcribe but should complete reliably
 - Transcription quality depends heavily on clear speech & low background noise
 - Requires manual JIRA OAuth app setup per user/machine (Chrome extension ID → callback URL)
 - Still in active development — some rough edges exist
@@ -89,7 +89,7 @@ Many users also:
 ## Future direction (rough ideas)
 
 - Editable system prompt for summary generation
-- Better handling of long recordings (chunking / resumable)
+- Chunked / resumable transcription for very long recordings
 - Chrome Web Store publication → auto-updates
 - Optional video upload to private S3 / cloud storage
 - Quick re-record / append to existing ticket
