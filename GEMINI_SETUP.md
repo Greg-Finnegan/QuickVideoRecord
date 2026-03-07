@@ -121,7 +121,7 @@ You can also find your Extension ID in the Settings page of the extension under 
 3. Wait for the build to complete
 4. Go to `chrome://extensions/` in Chrome
 5. Click the reload icon on the "Chrome Window Recorder" extension
-
+test
 ---
 
 ### 7. Test Connection
