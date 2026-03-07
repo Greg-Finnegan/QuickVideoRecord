@@ -1,6 +1,8 @@
 // Background service worker for Chrome Window Recorder
-
 console.log("Background service worker loaded");
+
+// On startup, check for any recordings stuck in transcribing state
+checkStuckTranscriptions();
 
 // Open side panel when extension icon is clicked
 chrome.action.onClicked.addListener((tab) => {
@@ -10,9 +12,28 @@ chrome.action.onClicked.addListener((tab) => {
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  // Forward transcription progress messages to all tabs
+  // Forward transcription progress messages (best-effort from offscreen)
   if (message.action === "transcriptionProgress") {
-    // Just forward the message - don't need to do anything else
+    return false;
+  }
+
+  // Save transcript from offscreen document to the recording in storage
+  if (message.action === "saveTranscript") {
+    saveTranscript(message.recordingId, message.transcript)
+      .then(() => sendResponse({ success: true }))
+      .catch((err: any) => sendResponse({ success: false, error: err.message }));
+    return true; // async response
+  }
+
+  // Handle transcription failure from offscreen document
+  if (message.action === "transcriptionFailed") {
+    clearTranscribingFlag(message.recordingId);
+    return false;
+  }
+
+  // Close offscreen document when transcription is done
+  if (message.action === "closeOffscreen") {
+    chrome.offscreen.closeDocument().catch(() => {});
     return false;
   }
 
@@ -61,15 +82,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message.action === "startAutoTranscription") {
-    handleAutoTranscription(message.recordingId);
-    // Don't wait for response - transcription happens in background
+    startTranscription(message.recordingId);
     sendResponse({ success: true, started: true });
     return false;
   }
 
   if (message.action === "transcribeVideoManual") {
-    handleManualTranscription(message.recordingId);
-    // Don't wait for response - transcription happens in background
+    startTranscription(message.recordingId);
     sendResponse({ success: true, started: true });
     return false;
   }
@@ -97,196 +116,129 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   return false;
 });
 
-// Manual transcription Handler (triggered from UI)
-async function handleManualTranscription(recordingId: string) {
-  try {
-    console.log("Starting manual transcription for recording:", recordingId);
+// Save transcript to the recording in storage (called by offscreen via message)
+async function saveTranscript(recordingId: string, transcript: string) {
+  const result = (await chrome.storage.local.get("recordings")) as any;
+  const recordings = result.recordings || [];
+  const idx = recordings.findIndex((r: any) => r.id === recordingId);
 
-    // Mark recording as transcribing in storage
-    const result = (await chrome.storage.local.get("recordings")) as any;
-    const recordings = result.recordings || [];
-    const recordingIndex = recordings.findIndex(
-      (r: any) => r.id === recordingId
-    );
-
-    if (recordingIndex === -1) {
-      throw new Error("Recording not found");
-    }
-
-    recordings[recordingIndex].transcribing = true;
-    await chrome.storage.local.set({ recordings });
-
-    // Notify UI that transcription started
-    chrome.runtime.sendMessage({
-      action: "transcriptionStarted",
-      recordingId: recordingId,
-    });
-
-    // Create offscreen document if it doesn't exist
-    await setupOffscreenDocument();
-
-    // Send transcription request to offscreen document and wait for response
-    const response = await new Promise<any>((resolve) => {
-      chrome.runtime.sendMessage(
-        {
-          action: "transcribeVideo",
-          recordingId: recordingId,
-        },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            console.error("Runtime error:", chrome.runtime.lastError);
-            resolve({
-              success: false,
-              error: chrome.runtime.lastError.message,
-            });
-          } else {
-            resolve(response);
-          }
-        }
-      );
-    });
-
-    if (response && response.success) {
-      // Update recording with transcript
-      const updatedResult = (await chrome.storage.local.get(
-        "recordings"
-      )) as any;
-      const updatedRecordings = updatedResult.recordings || [];
-      const updatedIndex = updatedRecordings.findIndex(
-        (r: any) => r.id === recordingId
-      );
-
-      if (updatedIndex !== -1) {
-        updatedRecordings[updatedIndex].transcript = response.transcript;
-        updatedRecordings[updatedIndex].transcribing = false;
-        await chrome.storage.local.set({ recordings: updatedRecordings });
-      }
-
-      // Notify UI that transcription is complete
-      chrome.runtime.sendMessage({
-        action: "transcriptionComplete",
-        recordingId: recordingId,
-        transcript: response.transcript,
-      });
-
-      console.log("Manual transcription completed successfully");
-    } else {
-      throw new Error(response?.error || "Transcription failed");
-    }
-  } catch (error: any) {
-    console.error("Manual transcription handler failed:", error);
-    await markTranscriptionFailed(recordingId, error.message);
-  }
-}
-
-// Auto-transcription Handler
-async function handleAutoTranscription(recordingId: string) {
-  try {
-    console.log("Starting auto-transcription for recording:", recordingId);
-
-    // Mark recording as transcribing in storage
-    const result = (await chrome.storage.local.get("recordings")) as any;
-    const recordings = result.recordings || [];
-    const recordingIndex = recordings.findIndex(
-      (r: any) => r.id === recordingId
-    );
-
-    if (recordingIndex === -1) {
-      throw new Error("Recording not found");
-    }
-
-    recordings[recordingIndex].transcribing = true;
-    await chrome.storage.local.set({ recordings });
-
-    // Notify UI that transcription started
-    chrome.runtime.sendMessage({
-      action: "transcriptionStarted",
-      recordingId: recordingId,
-    });
-
-    // Create offscreen document if it doesn't exist
-    await setupOffscreenDocument();
-
-    // Send transcription request to offscreen document and wait for response
-    const response = await new Promise<any>((resolve) => {
-      chrome.runtime.sendMessage(
-        {
-          action: "transcribeVideo",
-          recordingId: recordingId,
-        },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            console.error("Runtime error:", chrome.runtime.lastError);
-            resolve({
-              success: false,
-              error: chrome.runtime.lastError.message,
-            });
-          } else {
-            resolve(response);
-          }
-        }
-      );
-    });
-
-    if (response && response.success) {
-      // Update recording with transcript
-      const updatedResult = (await chrome.storage.local.get(
-        "recordings"
-      )) as any;
-      const updatedRecordings = updatedResult.recordings || [];
-      const updatedIndex = updatedRecordings.findIndex(
-        (r: any) => r.id === recordingId
-      );
-
-      if (updatedIndex !== -1) {
-        updatedRecordings[updatedIndex].transcript = response.transcript;
-        updatedRecordings[updatedIndex].transcribing = false;
-        await chrome.storage.local.set({ recordings: updatedRecordings });
-      }
-
-      // Notify UI that transcription is complete
-      chrome.runtime.sendMessage({
-        action: "transcriptionComplete",
-        recordingId: recordingId,
-        transcript: response.transcript,
-      });
-
-      console.log("Auto-transcription completed successfully");
-    } else {
-      throw new Error(response?.error || "Transcription failed");
-    }
-  } catch (error: any) {
-    console.error("Auto-transcription handler failed:", error);
-    await markTranscriptionFailed(recordingId, error.message);
-  }
-}
-
-// Helper to mark transcription as failed
-async function markTranscriptionFailed(
-  recordingId: string,
-  errorMessage: string
-) {
-  try {
-    const result = (await chrome.storage.local.get("recordings")) as any;
-    const recordings = result.recordings || [];
-    const recordingIndex = recordings.findIndex(
-      (r: any) => r.id === recordingId
-    );
-
-    if (recordingIndex !== -1) {
-      recordings[recordingIndex].transcribing = false;
-      await chrome.storage.local.set({ recordings });
-    }
-  } catch (storageError) {
-    console.error("Failed to update recording status:", storageError);
+  if (idx === -1) {
+    throw new Error("Recording not found");
   }
 
-  // Notify UI that transcription failed
+  recordings[idx].transcript = transcript;
+  recordings[idx].transcribing = false;
+  await chrome.storage.local.set({ recordings });
+  console.log("[Background] Transcript saved for recording:", recordingId);
+
+  // Notify UI
   chrome.runtime.sendMessage({
-    action: "transcriptionFailed",
-    recordingId: recordingId,
-    error: errorMessage,
+    action: "transcriptionComplete",
+    recordingId,
+    transcript,
   });
+}
+
+// Clear transcribing flag (called on failure)
+async function clearTranscribingFlag(recordingId: string) {
+  try {
+    const result = (await chrome.storage.local.get("recordings")) as any;
+    const recordings = result.recordings || [];
+    const idx = recordings.findIndex((r: any) => r.id === recordingId);
+    if (idx !== -1) {
+      recordings[idx].transcribing = false;
+      await chrome.storage.local.set({ recordings });
+      console.log("[Background] Cleared transcribing flag for:", recordingId);
+    }
+  } catch (error) {
+    console.error("[Background] Failed to clear transcribing flag:", error);
+  }
+}
+
+// Start transcription via offscreen document.
+async function startTranscription(recordingId: string) {
+  try {
+    console.log("[Background] Starting transcription for recording:", recordingId);
+
+    // Check if already transcribing
+    const result = (await chrome.storage.local.get("recordings")) as any;
+    const recordings = result.recordings || [];
+    const recording = recordings.find((r: any) => r.id === recordingId);
+
+    if (!recording) {
+      throw new Error("Recording not found");
+    }
+
+    if (recording.transcribing) {
+      console.log("[Background] Transcription already in progress for:", recordingId);
+      return;
+    }
+
+    // Mark recording as transcribing
+    recording.transcribing = true;
+    await chrome.storage.local.set({ recordings });
+
+    // Notify UI that transcription started
+    chrome.runtime.sendMessage({
+      action: "transcriptionStarted",
+      recordingId,
+    });
+
+    // Create offscreen document if it doesn't exist
+    await setupOffscreenDocument();
+
+    // Fire-and-forget: offscreen handles the rest (including persisting the transcript)
+    chrome.runtime.sendMessage(
+      { action: "transcribeVideo", recordingId },
+      () => {
+        if (chrome.runtime.lastError) {
+          // Expected — channel closes immediately
+        }
+      }
+    );
+
+    console.log("[Background] Transcription request sent to offscreen");
+  } catch (error: any) {
+    console.error("[Background] Failed to start transcription:", error);
+
+    // Clear transcribing flag so user can retry
+    try {
+      const result = (await chrome.storage.local.get("recordings")) as any;
+      const recordings = result.recordings || [];
+      const idx = recordings.findIndex((r: any) => r.id === recordingId);
+      if (idx !== -1) {
+        recordings[idx].transcribing = false;
+        await chrome.storage.local.set({ recordings });
+      }
+    } catch {
+      // best effort
+    }
+  }
+}
+
+// On startup, check for recordings stuck with transcribing=true but no active
+// offscreen document processing them (e.g. extension was reloaded mid-transcription).
+async function checkStuckTranscriptions() {
+  try {
+    const result = (await chrome.storage.local.get("recordings")) as any;
+    const recordings = result.recordings || [];
+    let changed = false;
+
+    for (const recording of recordings) {
+      if (recording.transcribing) {
+        console.warn("[Background] Found stuck transcription on startup:", recording.id);
+        recording.transcribing = false;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      await chrome.storage.local.set({ recordings });
+      console.log("[Background] Cleared stuck transcription flags");
+    }
+  } catch (error) {
+    console.error("[Background] Failed to check stuck transcriptions:", error);
+  }
 }
 
 // Offscreen document management
@@ -310,9 +262,9 @@ async function setupOffscreenDocument() {
   } else {
     offscreenCreating = chrome.offscreen.createDocument({
       url: offscreenUrl,
-      reasons: ["AUDIO_PLAYBACK" as chrome.offscreen.Reason],
+      reasons: ["WORKERS" as chrome.offscreen.Reason],
       justification:
-        "Transcription requires audio processing with Web Audio API",
+        "Transcription runs in a web worker that requires DOM context for audio extraction",
     });
 
     await offscreenCreating;
@@ -348,7 +300,7 @@ async function handleJiraAuth(
     console.log("Redirect URI:", config.redirectUri);
 
     // Launch OAuth flow
-    const responseUrl : string | undefined = await chrome.identity.launchWebAuthFlow({
+    const responseUrl: string | undefined = await chrome.identity.launchWebAuthFlow({
       url: authUrl.toString(),
       interactive: true,
     });

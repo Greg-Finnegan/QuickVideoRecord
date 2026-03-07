@@ -14,3 +14,21 @@ export interface Recording {
 export interface RecordingStorage {
   recordings?: Recording[];
 }
+
+// Transcription job tracking types (survives service worker termination)
+export type TranscriptionStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+export interface TranscriptionJob {
+  recordingId: string;
+  status: TranscriptionStatus;
+  progress: number;
+  statusMessage: string;
+  startedAt: number;
+  updatedAt: number;
+  error?: string;
+  transcript?: string;
+}
+
+export interface TranscriptionJobsStorage {
+  transcriptionJobs?: { [recordingId: string]: TranscriptionJob };
+}

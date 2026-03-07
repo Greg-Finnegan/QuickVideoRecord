@@ -11,6 +11,7 @@ import DefaultProjectSetting from "./components/DefaultProjectSetting";
 import DefaultPrioritySetting from "./components/DefaultPrioritySetting";
 import DefaultAssigneeSetting from "./components/DefaultAssigneeSetting";
 import DefaultSprintSetting from "./components/DefaultSprintSetting";
+import ChatGptPromptSetting from "./components/ChatGptPromptSetting";
 import { useTheme } from "../../hooks/useTheme";
 import { useJiraConnection } from "./hooks/useJiraConnection";
 import { useGeminiConnection } from "./hooks/useGeminiConnection";
@@ -18,6 +19,7 @@ import { useJiraProjects } from "./hooks/useJiraProjects";
 import { useJiraPriorities } from "./hooks/useJiraPriorities";
 import { useJiraUsers } from "./hooks/useJiraUsers";
 import { useJiraSprints } from "./hooks/useJiraSprints";
+import { useChatGptPrompt } from "./hooks/useChatGptPrompt";
 import { useRecordings } from "../recordings/hooks/useRecordings";
 
 const Settings: React.FC = () => {
@@ -49,6 +51,7 @@ const Settings: React.FC = () => {
     loadingSprints,
     handleDefaultSprintChange,
   } = useJiraSprints(isJiraConnected);
+  const { chatGptPrompt, handlePromptChange } = useChatGptPrompt();
   const { clearAllRecordings } = useRecordings();
 
   return (
@@ -69,7 +72,7 @@ const Settings: React.FC = () => {
             <div className="space-y-6">
               {/* Theme Setting */}
               <div>
-                <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-3">
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-1">
                   Theme
                 </label>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
@@ -83,6 +86,17 @@ const Settings: React.FC = () => {
                 )}
               </div>
             </div>
+          </SettingsCard>
+
+          {/* ChatGPT Integration Section */}
+          <SettingsCard
+            title="ChatGPT Integration"
+            description="Customize the prompt that is prepended to your transcript when opening in ChatGPT."
+          >
+            <ChatGptPromptSetting
+              prompt={chatGptPrompt}
+              onPromptChange={handlePromptChange}
+            />
           </SettingsCard>
 
           {/* Jira Integration Section */}
@@ -241,7 +255,7 @@ const Settings: React.FC = () => {
             <div className="space-y-4">
               {/* Clear All History */}
               <div>
-                <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-2">
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-1">
                   Clear Recording History
                 </label>
                 <p className="text-sm text-slate-600 dark:text-slate-400">

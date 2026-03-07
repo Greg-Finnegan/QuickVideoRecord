@@ -1,5 +1,4 @@
 # Claude Code Guide
-
 **Tech Stack:**
 - React 19 + TypeScript
 - Vite for bundling

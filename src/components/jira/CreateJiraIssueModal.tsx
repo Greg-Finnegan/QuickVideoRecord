@@ -33,8 +33,7 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
   const [issueTypeName, setIssueTypeName] = useState("Task");
   const [summary, setSummary] = useState(recording.filename);
   const [description, setDescription] = useState(
-    `Recording captured on ${new Date(recording.timestamp).toLocaleString()}${
-      recording.transcript ? `\n\nTranscript:\n${recording.transcript}` : ""
+    `Recording captured on ${new Date(recording.timestamp).toLocaleString()}${recording.transcript ? `\n\nTranscript:\n${recording.transcript}` : ""
     }`
   );
   const [priority, setPriority] = useState("");
@@ -338,15 +337,15 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
     { value: "", label: "No Sprint", description: "Not assigned to a sprint" },
     // Add default sprint first if it exists and is not in the sprints list
     ...(defaultSprintObject &&
-    defaultSprintObject.id != null &&
-    !sprints.some((s) => s.id === defaultSprintObject.id)
+      defaultSprintObject.id != null &&
+      !sprints.some((s) => s.id === defaultSprintObject.id)
       ? [
-          {
-            value: defaultSprintObject.id.toString(),
-            label: `${getSprintStateLabel(defaultSprintObject.state)} ${defaultSprintObject.name}`,
-            description: defaultSprintObject.goal || `Sprint ID: ${defaultSprintObject.id}`,
-          },
-        ]
+        {
+          value: defaultSprintObject.id.toString(),
+          label: `${getSprintStateLabel(defaultSprintObject.state)} ${defaultSprintObject.name}`,
+          description: defaultSprintObject.goal || `Sprint ID: ${defaultSprintObject.id}`,
+        },
+      ]
       : []),
     // Add all loaded sprints
     ...sprints.map((sprint) => ({
@@ -423,10 +422,10 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
             </p>
           </div>
 
-          {/* Summary */}
+          {/* Jira Ticket Name */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-2">
-              Summary <span className="text-red-500">*</span>
+              Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -443,7 +442,7 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
             </p>
           </div>
 
-          {/* Description */}
+          {/* Description - TODO: transition to markdown */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-2">
               Description

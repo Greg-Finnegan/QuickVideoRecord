@@ -129,7 +129,14 @@ class TranscriptionWorkerService {
 
     // Create audio context for decoding
     const audioContext = new AudioContext({ sampleRate: 16000 });
-    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+    let audioBuffer: AudioBuffer;
+    try {
+      audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    } catch {
+      await audioContext.close();
+      throw new Error('No audio track found in recording. Transcription requires audio.');
+    }
 
     // Get mono audio data
     const audioData = audioBuffer.getChannelData(0);
