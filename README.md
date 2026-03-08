@@ -64,9 +64,6 @@ Many users also:
 
 - Very long recordings may take a while to transcribe but should complete reliably
 - Transcription quality depends heavily on clear speech & low background noise
-- Requires manual JIRA OAuth app setup per user/machine (Chrome extension ID → callback URL)
-- Still in active development — some rough edges exist
-- Not yet published on Chrome Web Store (side-loaded only)
 
 ## Installation
 
@@ -79,31 +76,3 @@ Many users also:
 8. Set default project & sprint in the extension settings
 
 
-## Development notes
-
-- Built with Vite + React + TypeScript + Tailwind
-- Uses Chrome `chrome.tabCapture` + `MediaRecorder` API
-- Local @xenova/transformers transcription
-- Atlassian OAuth 2.0 (Jira Software Cloud)
-
-## Future direction (rough ideas)
-
-- Editable system prompt for summary generation
-- Chunked / resumable transcription for very long recordings
-- Chrome Web Store publication → auto-updates
-- Optional video upload to private S3 / cloud storage
-- Quick re-record / append to existing ticket
-- Priority sorting visualization in recording list
-- One-click "copy JIRA link" after creation
-
-## Contributing
-
-This started as an internal productivity hack.  
-Feel free to fork, PR, or open issues — especially around:
-
-- Transcription reliability
-- UX pain points
-- OAuth & setup simplification
-- Prompt engineering for better summaries
-
-Feedback from Customer Success & Support users is especially valuable.
