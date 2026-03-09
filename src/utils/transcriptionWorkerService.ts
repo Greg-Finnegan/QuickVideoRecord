@@ -106,8 +106,10 @@ class TranscriptionWorkerService {
           reject(new Error(`Worker error: ${error.message}`));
         };
 
-        // Send initialize message to worker
-        this.worker.postMessage({ action: 'initialize' });
+        // Send initialize message to worker with model path
+        // chrome.runtime.getURL is available here (offscreen document context)
+        const modelPath = chrome.runtime.getURL('models/');
+        this.worker.postMessage({ action: 'initialize', modelPath });
       } catch (error) {
         this.isInitializing = false;
         reject(error);

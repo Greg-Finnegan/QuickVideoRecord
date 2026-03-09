@@ -32,3 +32,5 @@ dist-ssr
 .env.development.local
 .env.test.local
 dist_chrome.zip
+public/models/Xenova/whisper-tiny.en/onnx/decoder_model_merged_quantized.onnx
+public/models/Xenova/whisper-tiny.en/onnx/encoder_model_quantized.onnx

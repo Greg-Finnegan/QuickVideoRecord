@@ -1,4 +1,14 @@
-import { pipeline } from '@xenova/transformers';
+import { pipeline, env } from '@xenova/transformers';
+
+// Model path will be set by the offscreen document which has chrome API access
+let modelPathConfigured = false;
+
+function configureModelPath(basePath: string) {
+  env.localModelPath = basePath;
+  env.allowRemoteModels = false;
+  env.allowLocalModels = true;
+  modelPathConfigured = true;
+}
 
 // Worker state
 let transcriber: any = null;
@@ -7,6 +17,7 @@ let isLoading: boolean = false;
 // Message types
 interface InitializeMessage {
   action: 'initialize';
+  modelPath?: string;
 }
 
 interface TranscribeMessage {
@@ -160,6 +171,10 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
   try {
     switch (action) {
       case 'initialize':
+        const { modelPath } = event.data as InitializeMessage;
+        if (modelPath) {
+          configureModelPath(modelPath);
+        }
         await initializeModel();
         break;
 

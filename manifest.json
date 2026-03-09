@@ -23,14 +23,9 @@
     "offscreen"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "https://auth.atlassian.com/*",
+    "https://api.atlassian.com/*"
   ],
-  "oauth2": {
-    "client_id": "296744532572-nhujf37d1kgukngdr5affj0u9920egod.apps.googleusercontent.com",
-    "scopes": [
-      "https://www.googleapis.com/auth/generative-language.retriever"
-    ]
-  },
   "background": {
     "service_worker": "src/pages/background/index.ts",
     "type": "module"
@@ -40,9 +35,11 @@
       "resources": [
         "src/pages/recorder/index.html",
         "models/*",
-        "scripts/*"
+        "models/**/*"
       ],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ],
   "content_security_policy": {
