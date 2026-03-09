@@ -29,17 +29,6 @@ export type {
   CreateIssueResult,
 } from "./jiraIssue";
 
-// Gemini settings types
-export type {
-  GeminiTokens,
-  GeminiOAuthConfig,
-  GeminiSettingsStorage,
-  GeminiIntegrationStatus,
-  GeminiGenerateRequest,
-  GeminiGenerateResponse,
-  GenerateDescriptionParams,
-} from "./geminiSettings";
-
 // Toast notification types
 export type {
   Toast,

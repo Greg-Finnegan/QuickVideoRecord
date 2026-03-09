@@ -33,4 +33,4 @@ This policy may be updated occasionally. Changes will be reflected in this file 
 If you have questions about this privacy policy or the extension, feel free to reach out:  
 [gafinnegan@gmail.com]  
 
-Thank you for using Jira Quick Video Record!
+Thank you for using Jira Quick Video Recorder!

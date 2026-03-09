@@ -12,7 +12,7 @@ const getJiraConfig = (): JiraOAuthConfig => ({
 });
 
 class JiraAuthService {
-  async authenticate(): Promise<boolean> {
+  async authenticate(): Promise<{ success: boolean; error: string }> {
     try {
       const config = getJiraConfig();
 
@@ -27,14 +27,21 @@ class JiraAuthService {
 
       if (response.success) {
         console.log("Jira authentication successful!");
-        return true;
+        return { success: true, error: "" };
       } else {
         console.error("Jira authentication failed:", response.error);
-        return false;
+        const error = response.error || "Authentication failed";
+        if (error.includes("Authorization page could not be loaded")) {
+          return { success: false, error: "Could not connect to Jira. Please check that your Atlassian account has access to a Jira site and that the OAuth app is properly configured." };
+        }
+        if (error.includes("User cancelled")) {
+          return { success: false, error: "Authentication was cancelled." };
+        }
+        return { success: false, error };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Jira authentication failed:", error);
-      return false;
+      return { success: false, error: error.message || "An unexpected error occurred during authentication." };
     }
   }
 

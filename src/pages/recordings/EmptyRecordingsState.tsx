@@ -1,10 +1,14 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import Icon from "../../components/Icon";
+import Button from "../../components/Button";
 
 /**
  * Empty state component displayed when there are no recordings
  */
 const EmptyRecordingsState: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="text-center py-20 px-5">
       <div className="text-slate-600 dark:text-slate-400 mb-4 flex justify-center">
@@ -17,6 +21,15 @@ const EmptyRecordingsState: React.FC = () => {
         Your recording history will appear here after you create your first
         recording.
       </p>
+      <div className="mt-4 flex justify-center">
+        <Button
+          variant="secondary"
+          rounded="full"
+          onClick={() => navigate("/settings")}
+        >
+          Go to Settings
+        </Button>
+      </div>
     </div>
   );
 };

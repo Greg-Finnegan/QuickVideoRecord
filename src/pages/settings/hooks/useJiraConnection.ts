@@ -6,6 +6,7 @@ import { jiraAuth } from "../../../utils/jiraAuth";
  */
 export const useJiraConnection = () => {
   const [isJiraConnected, setIsJiraConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   useEffect(() => {
     checkJiraConnection();
@@ -32,7 +33,11 @@ export const useJiraConnection = () => {
   };
 
   const handleConnect = async () => {
-    await jiraAuth.authenticate();
+    setConnectionError(null);
+    const result = await jiraAuth.authenticate();
+    if (!result.success) {
+      setConnectionError(result.error);
+    }
   };
 
   const handleDisconnect = async () => {
@@ -43,6 +48,7 @@ export const useJiraConnection = () => {
 
   return {
     isJiraConnected,
+    connectionError,
     handleConnect,
     handleDisconnect,
   };

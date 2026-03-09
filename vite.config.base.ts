@@ -2,14 +2,14 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { ManifestV3Export } from '@crxjs/vite-plugin';
 import tailwindcss from "@tailwindcss/vite";
-import { defineConfig, BuildOptions } from 'vite';
+import { defineConfig, BuildOptions, loadEnv } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { stripDevIcons, crxI18n } from './custom-vite-plugins';
 import manifest from './manifest.json';
 import devManifest from './manifest.dev.json';
 import pkg from './package.json';
 
-
+const env = loadEnv('', process.cwd(), '');
 const isDev = process.env.__DEV__ === 'true';
 // set this flag to true, if you want localization support
 const localize = false;
@@ -22,7 +22,8 @@ export const baseManifest = {
       name: '__MSG_extName__',
       description: '__MSG_extDescription__',
       default_locale : 'en'
-    } : {})
+    } : {}),
+    ...(env.CHROME_EXTENSION_KEY ? { key: env.CHROME_EXTENSION_KEY } : {}),
 } as ManifestV3Export
 
 export const baseBuildOptions: BuildOptions = {

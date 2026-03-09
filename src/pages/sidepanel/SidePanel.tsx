@@ -209,10 +209,10 @@ const SidePanel: React.FC = () => {
     <div className="w-full min-h-screen m-0 p-0 font-sans bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 flex flex-col">
       <div className="p-5 px-4 bg-white dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700">
         <h2 className="m-0 mb-1 text-xl font-medium text-slate-900 dark:text-slate-100">
-          Window Recorder
+          Jira Quick Video Recorder
         </h2>
         <p className="m-0 text-xs text-slate-600 dark:text-slate-400 font-normal">
-          Record your screen with audio
+          Start recording from here
         </p>
       </div>
 

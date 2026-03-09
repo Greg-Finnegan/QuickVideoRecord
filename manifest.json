@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Chrome Window Recorder with Microphone",
+  "name": "Jira Quick Video Recorder",
   "version": "1.0.0",
-  "description": "Records the current Chrome window with microphone audio in WebM format at a balanced resolution for clarity and file size.",
+  "description": "Screen recording with local AI transcription and Jira integration. Built for speed and web compatibility.",
   "icons": {
-    "16": "icon16.png",
-    "48": "icon48.png",
-    "128": "icon128.png"
+    "16": "icon-16.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
   },
   "action": {
     "default_title": "Window Recorder"
@@ -16,8 +16,6 @@
   },
   "permissions": [
     "desktopCapture",
-    "tabCapture",
-    "activeTab",
     "downloads",
     "storage",
     "sidePanel",
@@ -37,15 +35,13 @@
     "service_worker": "src/pages/background/index.ts",
     "type": "module"
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["src/pages/content/index.ts"]
-    }
-  ],
   "web_accessible_resources": [
     {
-      "resources": ["src/pages/recorder/index.html"],
+      "resources": [
+        "src/pages/recorder/index.html",
+        "models/*",
+        "scripts/*"
+      ],
       "matches": ["<all_urls>"]
     }
   ],

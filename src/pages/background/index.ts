@@ -33,7 +33,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   // Close offscreen document when transcription is done
   if (message.action === "closeOffscreen") {
-    chrome.offscreen.closeDocument().catch(() => {});
+    chrome.offscreen.closeDocument().catch(() => { });
     return false;
   }
 
@@ -96,21 +96,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === "jiraAuth") {
     handleJiraAuth(message, sendResponse);
     return true; // Keep message channel open for async response
-  }
-
-  if (message.action === "geminiAuth") {
-    handleGeminiAuth(message, sendResponse);
-    return true; // Keep message channel open for async response
-  }
-
-  if (message.action === "geminiRefreshToken") {
-    handleGeminiRefresh(sendResponse);
-    return true;
-  }
-
-  if (message.action === "geminiRevoke") {
-    handleGeminiRevoke(message, sendResponse);
-    return true;
   }
 
   return false;
@@ -298,12 +283,23 @@ async function handleJiraAuth(
 
     console.log("Starting Jira OAuth flow...");
     console.log("Redirect URI:", config.redirectUri);
+    console.log("Full auth URL:", authUrl.toString());
 
     // Launch OAuth flow
-    const responseUrl: string | undefined = await chrome.identity.launchWebAuthFlow({
-      url: authUrl.toString(),
-      interactive: true,
-    });
+    let responseUrl: string | undefined;
+    try {
+      responseUrl = await chrome.identity.launchWebAuthFlow({
+        url: authUrl.toString(),
+        interactive: true,
+      });
+    } catch (authError: any) {
+      console.error("launchWebAuthFlow failed:", authError.message);
+      // Open the auth URL in a regular tab so the user can see the actual error
+      chrome.tabs.create({ url: authUrl.toString() });
+      throw new Error(
+        "The authorization page has been opened in a new tab — please complete the setup there and try connecting again. If you experience issues then please try to logout of any existing Atlassian Account."
+      );
+    }
 
     // Extract authorization code from response
     const url = new URL(responseUrl!);
@@ -385,140 +381,3 @@ async function handleJiraAuth(
   }
 }
 
-// Gemini Authentication Handlers
-
-/**
- * Handle Gemini authentication using chrome.identity API
- */
-async function handleGeminiAuth(
-  message: any,
-  sendResponse: (response: any) => void
-) {
-  try {
-    console.log("Starting Gemini OAuth flow...");
-
-    // Use chrome.identity.getAuthToken for Google OAuth
-    // This is simpler than Jira's launchWebAuthFlow
-    const token = await chrome.identity.getAuthToken({
-      interactive: true, // Show UI popup if needed
-    });
-
-    if (!token) {
-      throw new Error("No token received from Google");
-    }
-
-    console.log("Access token received");
-
-    // Get user info from Google
-    const userInfoResponse = await fetch(
-      "https://www.googleapis.com/oauth2/v2/userinfo",
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    let email = undefined;
-    if (userInfoResponse.ok) {
-      const userInfo = await userInfoResponse.json();
-      email = userInfo.email;
-    }
-
-    // Store tokens
-    const geminiTokens = {
-      accessToken: token,
-      // Chrome doesn't provide expiry info, estimate 1 hour
-      expiresAt: Date.now() + 3600 * 1000,
-      email: email,
-      scopes: message.config.scopes,
-    };
-
-    await chrome.storage.local.set({ geminiTokens });
-
-    console.log("Gemini authentication successful!");
-    if (email) {
-      console.log("Connected as:", email);
-    }
-
-    sendResponse({ success: true, tokens: geminiTokens });
-  } catch (error: any) {
-    console.error("Gemini authentication failed:", error);
-    sendResponse({ success: false, error: error.message });
-  }
-}
-
-/**
- * Refresh Gemini token using chrome.identity
- */
-async function handleGeminiRefresh(sendResponse: (response: any) => void) {
-  try {
-    // Remove cached token to force refresh
-    const result = await chrome.storage.local.get("geminiTokens");
-    const oldTokens = result.geminiTokens;
-
-    // @ts-ignore
-    if (oldTokens?.accessToken) {
-      await chrome.identity.removeCachedAuthToken({
-        // @ts-ignore
-        token: oldTokens.accessToken,
-      });
-    }
-
-    // Get new token (non-interactive, use cached credentials)
-    const token = await chrome.identity.getAuthToken({
-      interactive: false,
-    });
-
-    if (!token) {
-      throw new Error("Failed to refresh token");
-    }
-
-    const geminiTokens = {
-      accessToken: token,
-      expiresAt: Date.now() + 3600 * 1000,
-      // @ts-ignore
-      email: oldTokens?.email,
-      // @ts-ignore
-      scopes: oldTokens?.scopes || [],
-    };
-
-    await chrome.storage.local.set({ geminiTokens });
-
-    sendResponse({ success: true });
-  } catch (error: any) {
-    console.error("Token refresh failed:", error);
-    sendResponse({ success: false, error: error.message });
-  }
-}
-
-/**
- * Revoke Gemini token
- */
-async function handleGeminiRevoke(
-  message: any,
-  sendResponse: (response: any) => void
-) {
-  try {
-    // Remove from Chrome's cache
-    await chrome.identity.removeCachedAuthToken({
-      token: message.token,
-    });
-
-    // Optionally revoke on Google's side
-    try {
-      await fetch(
-        `https://accounts.google.com/o/oauth2/revoke?token=${message.token}`,
-        { method: "POST" }
-      );
-    } catch (revokeError) {
-      console.warn("Failed to revoke token on Google side:", revokeError);
-      // Continue anyway - local removal is more important
-    }
-
-    sendResponse({ success: true });
-  } catch (error: any) {
-    console.error("Token revocation failed:", error);
-    sendResponse({ success: false, error: error.message });
-  }
-}

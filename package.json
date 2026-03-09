@@ -1,7 +1,7 @@
 {
-  "name": "quick-video-record",
+  "name": "jira-quick-video-recorder",
   "version": "1.2.0",
-  "description": "Chrome Window Recorder with Microphone - Fast screen recording with audio into WebM format",
+  "description": "Jira Quick Video Recorder - Screen recording with local AI transcription and Jira integration.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -10,6 +10,7 @@
   "scripts": {
     "build": "vite build --config vite.config.chrome.ts",
     "build:chrome": "vite build --config vite.config.chrome.ts",
+    "build:chromeWithZip": "vite build --config vite.config.chrome.ts && cd dist_chrome && zip -r ../dist_chrome.zip . && cd ..",
     "build:firefox": "vite build --config vite.config.firefox.ts",
     "dev": "nodemon --config nodemon.chrome.json",
     "dev:chrome": "nodemon --config nodemon.chrome.json",
