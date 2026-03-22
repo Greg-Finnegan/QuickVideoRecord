@@ -117,6 +117,12 @@ const SidePanel: React.FC = () => {
     });
   };
 
+  const handleViewSettings = () => {
+    chrome.tabs.create({
+      url: chrome.runtime.getURL("src/pages/recordings/index.html#/settings"),
+    });
+  };
+
   const handleTestMicrophone = async () => {
     if (micStatus === "testing") {
       // Stop testing
@@ -266,11 +272,21 @@ const SidePanel: React.FC = () => {
           variant="secondary"
           fullWidth
           rounded="full"
-          className="mb-4 px-4 py-2.5 border border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600 flex items-center justify-center gap-2"
+          className="mb-2 px-4 py-2.5 border border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600 flex items-center justify-center gap-2"
           onClick={handleManageRecordings}
         >
           <Icon name="folder" size={16} />
           Manage Recordings
+        </Button>
+        <Button
+          variant="secondary"
+          fullWidth
+          rounded="full"
+          className="mb-4 px-4 py-2.5 border border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600 flex items-center justify-center gap-2"
+          onClick={handleViewSettings}
+        >
+          <Icon name="settings" size={16} />
+          View Settings
         </Button>
 
         {status && (
