@@ -34,3 +34,6 @@ dist-ssr
 dist_chrome.zip
 public/models/Xenova/whisper-tiny.en/onnx/decoder_model_merged_quantized.onnx
 public/models/Xenova/whisper-tiny.en/onnx/encoder_model_quantized.onnx
+scripts/chrome-webstore-auth.ts
+scripts/chrome-webstore-publish.ts
+scripts/chrome-webstore-types.ts

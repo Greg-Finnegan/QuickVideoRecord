@@ -14,7 +14,11 @@
     "build:firefox": "vite build --config vite.config.firefox.ts",
     "dev": "nodemon --config nodemon.chrome.json",
     "dev:chrome": "nodemon --config nodemon.chrome.json",
-    "dev:firefox": "nodemon --config nodemon.firefox.json"
+    "dev:firefox": "nodemon --config nodemon.firefox.json",
+    "cws:auth": "tsx --env-file=.env scripts/chrome-webstore-auth.ts",
+    "cws:upload": "tsx --env-file=.env scripts/chrome-webstore-publish.ts --upload-only",
+    "cws:publish": "tsx --env-file=.env scripts/chrome-webstore-publish.ts --publish",
+    "cws:status": "tsx --env-file=.env scripts/chrome-webstore-publish.ts --status"
   },
   "type": "module",
   "dependencies": {
@@ -48,6 +52,7 @@
     "nodemon": "^3.1.10",
     "tailwindcss": "^4.1.16",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
     "vite-tsconfig-paths": "^5.1.4"
