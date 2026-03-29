@@ -68,7 +68,7 @@ export interface ExtensionSettings {
 /**
  * AI provider options
  */
-export type AiProvider = "chatgpt" | "claude" | "gemini";
+export type AiProvider = "chatgpt" | "claude" | "gemini" | "deepseek" | "perplexity";
 
 export interface AiProviderConfig {
   label: string;
@@ -87,6 +87,14 @@ export const AI_PROVIDER_CONFIG: Record<AiProvider, AiProviderConfig> = {
   gemini: {
     label: "Gemini",
     urlPrefix: "https://gemini.google.com/app?q=",
+  },
+  deepseek: {
+    label: "DeepSeek",
+    urlPrefix: "https://chat.deepseek.com/?q=",
+  },
+  perplexity: {
+    label: "Perplexity",
+    urlPrefix: "https://www.perplexity.ai/search/new?q=",
   },
 };
 
