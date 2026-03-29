@@ -65,12 +65,12 @@ const EditableFilename: React.FC<EditableFilenameProps> = ({
       onClick={handleClick}
     >
       <h3
-        className={`m-0 mb-2 ${textSizeClass} font-medium text-slate-900 dark:text-slate-100 break-words hover:text-blue-600 dark:hover:text-blue-400 transition-colors`}
+        className={`m-0 mb-2 ${textSizeClass} font-medium text-slate-900 dark:text-slate-100 break-words group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors`}
       >
         {filename}
       </h3>
       <SquarePen
-        className="mb-1 size-4 shrink-0 text-slate-400 dark:text-slate-500 opacity-40 group-hover:opacity-100 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-all"
+        className="mb-1 size-4 shrink-0 text-slate-400 dark:text-slate-500 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors"
       />
     </div>
   );
