@@ -17,6 +17,7 @@ interface RecordingCardProps {
   onDelete: (id: string) => void;
   onCreateJiraIssue?: (recording: Recording) => void;
   onUnlinkJiraIssue?: (recordingId: string) => void;
+  onCopyJiraLink?: (url: string) => void;
   onCopyTranscript?: (transcript: string) => void;
   onOpenInChatGPT?: (transcript: string) => void;
   onShowInFinder?: (downloadId: number) => void;
@@ -39,6 +40,7 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
   onDelete,
   onCreateJiraIssue,
   onUnlinkJiraIssue,
+  onCopyJiraLink,
   onCopyTranscript,
   onOpenInChatGPT,
   onShowInFinder,
@@ -200,6 +202,15 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
                       className: "",
                     },
                   ]
+                  : []),
+                // Conditionally add Copy Jira Link if linked
+                ...(recording.jiraIssueKey && recording.jiraIssueUrl && onCopyJiraLink
+                  ? [{
+                      label: "Copy Jira Link",
+                      icon: <Icon name="copy" size={16} />,
+                      onClick: () => onCopyJiraLink(recording.jiraIssueUrl!),
+                      className: "",
+                    }]
                   : []),
                 // Conditionally add Unlink Jira Issue if linked
                 ...(recording.jiraIssueKey && onUnlinkJiraIssue

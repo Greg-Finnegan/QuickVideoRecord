@@ -94,6 +94,15 @@ const Recordings: React.FC = () => {
     }
   };
 
+  const handleCopyJiraLink = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      success("Jira link copied to clipboard!");
+    } catch (error) {
+      console.error('Failed to copy Jira link:', error);
+    }
+  };
+
   const handleCopyTranscript = async (transcript: string) => {
     try {
       await navigator.clipboard.writeText(transcript);
@@ -232,6 +241,7 @@ const Recordings: React.FC = () => {
                   onDelete={handleDeleteRecording}
                   onCreateJiraIssue={handleOpenCreateIssue}
                   onUnlinkJiraIssue={handleUnlinkJiraIssue}
+                  onCopyJiraLink={handleCopyJiraLink}
                   onCopyTranscript={handleCopyTranscript}
                   onOpenInChatGPT={handleOpenInChatGPT}
                   onShowInFinder={handleShowInFinder}
