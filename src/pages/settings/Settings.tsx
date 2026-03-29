@@ -24,7 +24,7 @@ import { useRecordings } from "../recordings/hooks/useRecordings";
 
 const Settings: React.FC = () => {
   const { theme, setTheme, loading: themeLoading } = useTheme();
-  const { isJiraConnected, connectionError, handleConnect, handleDisconnect } =
+  const { isJiraConnected, isStartProtoUser, connectionError, handleConnect, handleDisconnect } =
     useJiraConnection();
   const {
     jiraProjects,
@@ -175,27 +175,29 @@ const Settings: React.FC = () => {
               </div>
 
               {/* Discord Community */}
-              <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
-                <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-1">
-                  Join the Community
-                </label>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                  Have a feature idea or need help? Join our Discord community to
-                  request features, report bugs, and get support from the team.
-                </p>
-                <Button
-                  variant="secondary"
-                  rounded="full"
-                  onClick={() =>
-                    window.open("https://discord.gg/MmAk8BScWg", "_blank")
-                  }
-                >
-                  <span className="flex items-center gap-2">
-                    <Icon name="external-link" size={16} />
-                    Join our Discord
-                  </span>
-                </Button>
-              </div>
+              {!isStartProtoUser && (
+                <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
+                  <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-1">
+                    Join the Community
+                  </label>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                    Have a feature idea or need help? Join our Discord community to
+                    request features, report bugs, and get support from the team.
+                  </p>
+                  <Button
+                    variant="secondary"
+                    rounded="full"
+                    onClick={() =>
+                      window.open("https://discord.gg/MmAk8BScWg", "_blank")
+                    }
+                  >
+                    <span className="flex items-center gap-2">
+                      <Icon name="external-link" size={16} />
+                      Join our Discord
+                    </span>
+                  </Button>
+                </div>
+              )}
             </div>
           </SettingsCard>
           {/* Recording Settings Section */}

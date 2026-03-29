@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { jiraAuth } from "../../../utils/jiraAuth";
+import { jiraService } from "../../../utils/jiraService";
 
 /**
  * Hook to manage Jira connection status and authentication
@@ -7,6 +8,7 @@ import { jiraAuth } from "../../../utils/jiraAuth";
 export const useJiraConnection = () => {
   const [isJiraConnected, setIsJiraConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isStartProtoUser, setIsStartProtoUser] = useState(true);
 
   useEffect(() => {
     checkJiraConnection();
@@ -30,6 +32,17 @@ export const useJiraConnection = () => {
   const checkJiraConnection = async () => {
     const connected = await jiraAuth.isAuthenticated();
     setIsJiraConnected(connected);
+    if (connected) {
+      try {
+        const user = await jiraService.getCurrentUser();
+        const email = user.emailAddress || "";
+        setIsStartProtoUser(email.endsWith("@startproto.com"));
+      } catch {
+        setIsStartProtoUser(false);
+      }
+    } else {
+      setIsStartProtoUser(false);
+    }
   };
 
   const handleConnect = async () => {
@@ -48,6 +61,7 @@ export const useJiraConnection = () => {
 
   return {
     isJiraConnected,
+    isStartProtoUser,
     connectionError,
     handleConnect,
     handleDisconnect,
