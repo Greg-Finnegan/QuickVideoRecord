@@ -12,7 +12,6 @@ const EditableFilename: React.FC<EditableFilenameProps> = ({
   variant = "default",
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const [editedFilename, setEditedFilename] = useState(filename);
 
   const handleClick = (e: React.MouseEvent) => {
@@ -62,8 +61,6 @@ const EditableFilename: React.FC<EditableFilenameProps> = ({
   return (
     <div
       className="relative inline-flex items-center gap-2 cursor-pointer group"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
     >
       <h3
@@ -71,13 +68,11 @@ const EditableFilename: React.FC<EditableFilenameProps> = ({
       >
         {filename}
       </h3>
-      {isHovered && (
-        <span
-          className={`absolute -right-6 top-0 text-slate-400 dark:text-slate-500 ${textSizeClass}`}
-        >
-          ✎
-        </span>
-      )}
+      <span
+        className={`absolute -right-6 top-0 ${textSizeClass} text-slate-400 dark:text-slate-500 opacity-40 group-hover:opacity-100 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-all`}
+      >
+        ✎
+      </span>
     </div>
   );
 };
