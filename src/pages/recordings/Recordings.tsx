@@ -278,6 +278,7 @@ const Recordings: React.FC = () => {
           transcriptionProgress={transcriptionProgress}
           onClose={closePlayer}
           onTranscribe={transcribeRecording}
+          onCopyTranscript={handleCopyTranscript}
           onUpdateRecording={(updatedRecording) => {
             updateSelectedRecording(updatedRecording);
             setRecordings((prevRecordings) =>

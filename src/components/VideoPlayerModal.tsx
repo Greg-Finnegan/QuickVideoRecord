@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import Button from "./Button";
-import CopyButton from "./CopyButton";
 import EditableFilename from "./EditableFilename";
 import Icon from "./Icon";
 import { Recording, RecordingStorage } from "../types/recording";
@@ -13,6 +12,7 @@ interface VideoPlayerModalProps {
   onClose: () => void;
   onTranscribe: (recording: Recording) => void;
   onUpdateRecording: (updatedRecording: Recording) => void;
+  onCopyTranscript?: (transcript: string) => void;
 }
 
 const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
@@ -23,6 +23,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   onClose,
   onTranscribe,
   onUpdateRecording,
+  onCopyTranscript,
 }) => {
   const [showTranscript, setShowTranscript] = useState(false);
   const [showRawData, setShowRawData] = useState(false);
@@ -134,12 +135,15 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
             </Button>
           )}
           {recording.transcript && (
-            <div className="mr-2 flex items-center">
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Copy Script
-              </span>
-              <CopyButton textToCopy={recording.transcript} />
-            </div>
+            <Button
+              variant="ghost"
+              rounded="full"
+              className="bg-transparent !px-2 !py-2 text-lg flex-shrink-0 mr-2"
+              onClick={() => recording.transcript && onCopyTranscript?.(recording.transcript)}
+            >
+              Copy Script
+              <Icon name="copy" size={14} />
+            </Button>
           )}
           <Button
             variant="ghost"
@@ -191,7 +195,15 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
               {showTranscript && (
                 <div className="px-4 pb-4">
                   <div className="flex items-center justify-end mb-2">
-                    <CopyButton textToCopy={recording.transcript} />
+                    <Button
+                      variant="ghost"
+                      rounded="full"
+                      className="bg-transparent !px-2 !py-2 text-sm flex-shrink-0"
+                      onClick={() => recording.transcript && onCopyTranscript?.(recording.transcript)}
+                    >
+                      Copy Script
+                      <Icon name="copy" size={14} />
+                    </Button>
                   </div>
                   <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
                     {recording.transcript}
