@@ -37,3 +37,4 @@ public/models/Xenova/whisper-tiny.en/onnx/encoder_model_quantized.onnx
 scripts/chrome-webstore-auth.ts
 scripts/chrome-webstore-publish.ts
 scripts/chrome-webstore-types.ts
+.claude/worktrees/
