@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "../../index.css";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
@@ -11,6 +11,7 @@ const SidePanel: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [status, setStatus] = useState("");
   const [recorderTabId, setRecorderTabId] = useState<number | null>(null);
+  const recorderTabIdRef = useRef<number | null>(null);
   const [micStatus, setMicStatus] = useState<
     "idle" | "testing" | "success" | "error"
   >("idle");
@@ -26,6 +27,7 @@ const SidePanel: React.FC = () => {
           await chrome.tabs.get(data.recorderTabId);
           setIsRecording(true);
           setRecorderTabId(data.recorderTabId);
+          recorderTabIdRef.current = data.recorderTabId;
           setStatus("Recording in progress...");
         } catch {
           chrome.storage.session.set({ isRecording: false, recorderTabId: null } satisfies RecordingSessionState);
@@ -40,10 +42,19 @@ const SidePanel: React.FC = () => {
     }) => {
       if (changes.isRecording) {
         const newVal = changes.isRecording.newValue;
-        if (!newVal) {
+        if (newVal) {
+          setIsRecording(true);
+          setStatus("Recording in progress...");
+        } else {
           setIsRecording(false);
           setRecorderTabId(null);
+          recorderTabIdRef.current = null;
         }
+      }
+      if (changes.recorderTabId) {
+        const newTabId = (changes.recorderTabId.newValue as RecordingSessionState["recorderTabId"]) ?? null;
+        setRecorderTabId(newTabId);
+        recorderTabIdRef.current = newTabId;
       }
     };
     chrome.storage.session.onChanged.addListener(sessionStorageListener);
@@ -63,8 +74,9 @@ const SidePanel: React.FC = () => {
       } else if (msg.action === "recordingError") {
         setStatus("Error: " + msg.error);
         setIsRecording(false);
-        if (recorderTabId) {
-          chrome.tabs.remove(recorderTabId);
+        if (recorderTabIdRef.current) {
+          chrome.tabs.remove(recorderTabIdRef.current);
+          recorderTabIdRef.current = null;
           setRecorderTabId(null);
         }
       } else if (msg.action === "downloadReady") {
@@ -73,19 +85,24 @@ const SidePanel: React.FC = () => {
           setStatus("");
           setIsRecording(false);
         }, 2000);
+        recorderTabIdRef.current = null;
         setRecorderTabId(null);
       }
     };
 
     chrome.runtime.onMessage.addListener(messageListener);
-
     return () => {
       chrome.runtime.onMessage.removeListener(messageListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
       if (micStream) {
         micStream.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [recorderTabId, micStream]);
+  }, [micStream]);
 
   const handleStartRecording = () => {
     setStatus("Opening recorder...");
@@ -102,6 +119,7 @@ const SidePanel: React.FC = () => {
       (createdTab) => {
         if (createdTab.id) {
           setRecorderTabId(createdTab.id);
+          recorderTabIdRef.current = createdTab.id;
           chrome.storage.session.set({ isRecording: false, recorderTabId: createdTab.id } satisfies RecordingSessionState);
           console.log("Created recorder tab:", createdTab.id);
           setStatus("Select your screen in the new tab...");
