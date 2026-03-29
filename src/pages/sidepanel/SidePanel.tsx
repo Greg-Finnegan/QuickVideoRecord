@@ -5,6 +5,7 @@ import Badge from "../../components/Badge";
 import Icon from "../../components/Icon";
 import CopyButton from "@src/components/CopyButton";
 import { DEFAULT_CHATGPT_PROMPT } from "../../types";
+import type { RecordingSessionState } from "../../types";
 
 const SidePanel: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -39,10 +40,43 @@ const SidePanel: React.FC = () => {
     return () => chrome.storage.local.onChanged.removeListener(storageListener);
   }, []);
 
+  // Restore recording state from session storage on mount (handles reopen mid-recording)
   useEffect(() => {
-    console.log("SidePanel component mounted");
+    const restoreState = async () => {
+      const data = await chrome.storage.session.get(["isRecording", "recorderTabId"]) as Partial<RecordingSessionState>;
+      if (data.isRecording && data.recorderTabId) {
+        try {
+          await chrome.tabs.get(data.recorderTabId);
+          setIsRecording(true);
+          setRecorderTabId(data.recorderTabId);
+          setStatus("Recording in progress...");
+        } catch {
+          chrome.storage.session.set({ isRecording: false, recorderTabId: null } satisfies RecordingSessionState);
+        }
+      }
+    };
+    restoreState();
 
-    // Listen for messages from recorder and background
+    // Stay in sync with background-driven state changes (e.g., tab closed)
+    const sessionStorageListener = (changes: {
+      [key: string]: chrome.storage.StorageChange;
+    }) => {
+      if (changes.isRecording) {
+        const newVal = changes.isRecording.newValue;
+        if (!newVal) {
+          setIsRecording(false);
+          setRecorderTabId(null);
+        }
+      }
+    };
+    chrome.storage.session.onChanged.addListener(sessionStorageListener);
+
+    return () => {
+      chrome.storage.session.onChanged.removeListener(sessionStorageListener);
+    };
+  }, []);
+
+  useEffect(() => {
     const messageListener = (msg: any) => {
       console.log("SidePanel received message:", JSON.stringify(msg));
 
@@ -70,7 +104,6 @@ const SidePanel: React.FC = () => {
 
     return () => {
       chrome.runtime.onMessage.removeListener(messageListener);
-      // Clean up mic stream on unmount
       if (micStream) {
         micStream.getTracks().forEach((track) => track.stop());
       }
@@ -92,6 +125,7 @@ const SidePanel: React.FC = () => {
       (createdTab) => {
         if (createdTab.id) {
           setRecorderTabId(createdTab.id);
+          chrome.storage.session.set({ isRecording: false, recorderTabId: createdTab.id } satisfies RecordingSessionState);
           console.log("Created recorder tab:", createdTab.id);
           setStatus("Select your screen in the new tab...");
         }

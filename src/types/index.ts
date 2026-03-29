@@ -7,6 +7,7 @@
 export type {
   Recording,
   RecordingStorage,
+  RecordingSessionState,
 } from "./recording";
 
 // Jira settings types

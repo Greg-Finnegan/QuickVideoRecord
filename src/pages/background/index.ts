@@ -1,8 +1,32 @@
 // Background service worker for Chrome Window Recorder
+import type { RecordingSessionState } from "../../types";
+
 console.log("Background service worker loaded");
 
 // On startup, check for any recordings stuck in transcribing state
 checkStuckTranscriptions();
+
+clearStaleRecordingState();
+
+const CLEARED_RECORDING_STATE = { isRecording: false, recorderTabId: null } as const satisfies RecordingSessionState;
+
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  const data = await chrome.storage.session.get("recorderTabId") as Partial<RecordingSessionState>;
+  if (data.recorderTabId === tabId) {
+    chrome.storage.session.set(CLEARED_RECORDING_STATE);
+  }
+});
+
+async function clearStaleRecordingState() {
+  const data = await chrome.storage.session.get(["isRecording", "recorderTabId"]) as Partial<RecordingSessionState>;
+  if (data.isRecording && data.recorderTabId) {
+    try {
+      await chrome.tabs.get(data.recorderTabId);
+    } catch {
+      await chrome.storage.session.set(CLEARED_RECORDING_STATE);
+    }
+  }
+}
 
 // Open side panel when extension icon is clicked
 chrome.action.onClicked.addListener((tab) => {
@@ -11,9 +35,20 @@ chrome.action.onClicked.addListener((tab) => {
   }
 });
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Forward transcription progress messages (best-effort from offscreen)
   if (message.action === "transcriptionProgress") {
+    return false;
+  }
+
+  if (message.action === "recordingStarted") {
+    const recorderTabId = sender.tab?.id ?? null;
+    chrome.storage.session.set({ isRecording: true, recorderTabId } satisfies RecordingSessionState);
+    return false;
+  }
+
+  if (message.action === "recordingError") {
+    chrome.storage.session.set(CLEARED_RECORDING_STATE);
     return false;
   }
 
@@ -75,6 +110,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         saveAs: true,
       },
       () => {
+        chrome.storage.session.set(CLEARED_RECORDING_STATE);
         chrome.runtime.sendMessage({ action: "downloadReady" });
       }
     );
