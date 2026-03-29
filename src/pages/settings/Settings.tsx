@@ -20,6 +20,7 @@ import { useJiraUsers } from "./hooks/useJiraUsers";
 import { useJiraSprints } from "./hooks/useJiraSprints";
 import { useChatGptPrompt } from "./hooks/useChatGptPrompt";
 import { useRecordings } from "../recordings/hooks/useRecordings";
+import SummarizerTest from "./SummarizerTest";
 
 const Settings: React.FC = () => {
   const { theme, setTheme, loading: themeLoading } = useTheme();
@@ -102,6 +103,9 @@ const Settings: React.FC = () => {
                   </span>
                 </Button>
               </div>
+
+              {/* Summarizer API Test */}
+              <SummarizerTest />
             </div>
           </SettingsCard>
 

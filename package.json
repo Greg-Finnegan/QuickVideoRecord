@@ -28,6 +28,7 @@
     "lucide-react": "^0.561.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.10.1",
     "webextension-polyfill": "^0.12.0"
   },
@@ -35,6 +36,7 @@
     "@crxjs/vite-plugin": "^2.0.3",
     "@tailwindcss/vite": "^4.1.11",
     "@types/chrome": "^0.1.11",
+    "@types/dom-chromium-ai": "^0.0.16",
     "@types/node": "^24.9.1",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
