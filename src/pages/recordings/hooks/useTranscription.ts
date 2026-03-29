@@ -10,8 +10,20 @@ export const useTranscription = ({
   selectedRecording,
   onRecordingUpdate,
 }: UseTranscriptionProps) => {
-  const [transcribing, setTranscribing] = useState(false);
+  const [transcribing, setTranscribing] = useState(
+    () => !!selectedRecording?.transcribing
+  );
   const [transcriptionProgress, setTranscriptionProgress] = useState<string>("");
+
+  useEffect(() => {
+    if (selectedRecording?.transcribing) {
+      setTranscribing(true);
+      setTranscriptionProgress("Transcription in progress...");
+    } else {
+      setTranscribing(false);
+      setTranscriptionProgress("");
+    }
+  }, [selectedRecording?.id]);
 
   const transcribeRecording = useCallback(
     async (recording: Recording) => {
