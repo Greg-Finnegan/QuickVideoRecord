@@ -21,6 +21,7 @@ interface RecordingCardProps {
   onCopyTranscript?: (transcript: string) => void;
   onOpenInAI?: (transcript: string) => void;
   aiProviderLabel?: string;
+  isClipboardOnly?: boolean;
   onShowInFinder?: (downloadId: number) => void;
   onOpenFileLocally?: (recordingId: string, filename: string) => void;
   isJiraConnected?: boolean;
@@ -45,6 +46,7 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
   onCopyTranscript,
   onOpenInAI,
   aiProviderLabel = "ChatGPT",
+  isClipboardOnly = false,
   onShowInFinder,
   onOpenFileLocally,
   isJiraConnected,
@@ -144,11 +146,13 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
             disabled={!recording.transcript}
             title={
               recording.transcript
-                ? `Open in ${aiProviderLabel} with transcript`
+                ? isClipboardOnly
+                  ? `Copy transcript to clipboard and open ${aiProviderLabel}`
+                  : `Open in ${aiProviderLabel} with transcript`
                 : "No transcript available"
             }
           >
-            Open in {aiProviderLabel}
+            {isClipboardOnly ? `Copy & Open ${aiProviderLabel}` : `Open in ${aiProviderLabel}`}
             <Icon name="external-link" size={14} />
           </Button>
           {isJiraConnected &&

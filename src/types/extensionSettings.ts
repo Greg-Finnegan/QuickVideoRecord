@@ -73,6 +73,8 @@ export type AiProvider = "chatgpt" | "claude" | "gemini" | "deepseek" | "perplex
 export interface AiProviderConfig {
   label: string;
   urlPrefix: string;
+  clipboardOnly?: boolean;
+  baseUrl?: string;
 }
 
 export const AI_PROVIDER_CONFIG: Record<AiProvider, AiProviderConfig> = {
@@ -87,10 +89,14 @@ export const AI_PROVIDER_CONFIG: Record<AiProvider, AiProviderConfig> = {
   gemini: {
     label: "Gemini",
     urlPrefix: "https://gemini.google.com/app?q=",
+    clipboardOnly: true,
+    baseUrl: "https://gemini.google.com/app",
   },
   deepseek: {
     label: "DeepSeek",
     urlPrefix: "https://chat.deepseek.com/?q=",
+    clipboardOnly: true,
+    baseUrl: "https://chat.deepseek.com/",
   },
   perplexity: {
     label: "Perplexity",

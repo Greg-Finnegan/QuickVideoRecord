@@ -40,6 +40,16 @@ const AiProviderSetting: React.FC<AiProviderSettingProps> = ({
           </Button>
         ))}
       </div>
+      {AI_PROVIDER_CONFIG[provider].clipboardOnly && (
+        <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-sm text-red-800 dark:text-red-200">
+            {AI_PROVIDER_CONFIG[provider].label} does not support pre-filling
+            the chat via URL. When you use "Copy & Open {AI_PROVIDER_CONFIG[provider].label}", the prompt and
+            transcript will be copied to your clipboard and a new chat will be
+            opened — you'll need to paste it manually.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

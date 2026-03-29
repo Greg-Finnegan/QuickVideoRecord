@@ -59,12 +59,14 @@ export const useAiSettings = () => {
 
   const aiProviderConfig: AiProviderConfig = AI_PROVIDER_CONFIG[aiProvider];
   const aiProviderLabel: string = aiProviderConfig.label;
+  const isClipboardOnly: boolean = !!aiProviderConfig.clipboardOnly;
 
   return {
     aiProvider,
     aiProviderLabel,
     aiProviderConfig,
     aiPrompt,
+    isClipboardOnly,
     handleProviderChange,
     handlePromptChange,
   };

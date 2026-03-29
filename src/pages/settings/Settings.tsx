@@ -62,54 +62,10 @@ const Settings: React.FC = () => {
         />
 
         <div className="space-y-8">
-          {/* Application Settings Section */}
-          <SettingsCard title="Application Settings">
-            <div className="space-y-6">
-              {/* Theme Setting */}
-              <div>
-                <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-1">
-                  Theme
-                </label>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                  Choose your preferred color scheme. System will match your
-                  operating system settings.
-                </p>
-                {themeLoading ? (
-                  <div className="h-11 bg-slate-100 dark:bg-slate-700 rounded-full animate-pulse w-80" />
-                ) : (
-                  <ThemeSlider value={theme} onChange={setTheme} />
-                )}
-              </div>
-
-              {/* Discord Community */}
-              <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
-                <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-1">
-                  Join the Community
-                </label>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                  Have a feature idea or need help? Join our Discord community to
-                  request features, report bugs, and get support from the team.
-                </p>
-                <Button
-                  variant="secondary"
-                  rounded="full"
-                  onClick={() =>
-                    window.open("https://discord.gg/MmAk8BScWg", "_blank")
-                  }
-                >
-                  <span className="flex items-center gap-2">
-                    <Icon name="external-link" size={16} />
-                    Join our Discord
-                  </span>
-                </Button>
-              </div>
-            </div>
-          </SettingsCard>
-
           {/* AI Integration Section */}
           <SettingsCard
             title="AI Integration"
-            description="Choose your preferred AI provider and customize the prompt prepended to your transcript."
+            description='Choose your preferred AI provider and customize the prompt prepended to your transcript. No data is automatically sent to any provider. You must click the "Open in" button, which transfers your prompt + transcript via URL parameters if the provider supports it.'
           >
             <div className="space-y-6">
               <AiProviderSetting
@@ -199,7 +155,49 @@ const Settings: React.FC = () => {
               </div>
             )}
           </SettingsCard>
+          {/* Application Settings Section */}
+          <SettingsCard title="Application Settings">
+            <div className="space-y-6">
+              {/* Theme Setting */}
+              <div>
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-1">
+                  Theme
+                </label>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                  Choose your preferred color scheme. System will match your
+                  operating system settings.
+                </p>
+                {themeLoading ? (
+                  <div className="h-11 bg-slate-100 dark:bg-slate-700 rounded-full animate-pulse w-80" />
+                ) : (
+                  <ThemeSlider value={theme} onChange={setTheme} />
+                )}
+              </div>
 
+              {/* Discord Community */}
+              <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-100 mb-1">
+                  Join the Community
+                </label>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                  Have a feature idea or need help? Join our Discord community to
+                  request features, report bugs, and get support from the team.
+                </p>
+                <Button
+                  variant="secondary"
+                  rounded="full"
+                  onClick={() =>
+                    window.open("https://discord.gg/MmAk8BScWg", "_blank")
+                  }
+                >
+                  <span className="flex items-center gap-2">
+                    <Icon name="external-link" size={16} />
+                    Join our Discord
+                  </span>
+                </Button>
+              </div>
+            </div>
+          </SettingsCard>
           {/* Recording Settings Section */}
           <SettingsCard
             title="Recording Settings"

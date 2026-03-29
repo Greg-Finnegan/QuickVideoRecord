@@ -69,7 +69,7 @@ const Recordings: React.FC = () => {
   const { isJiraConnected } = useJiraConnection();
   const { defaultProject } = useJiraProjects(isJiraConnected);
   const { toasts, removeToast, success } = useToast();
-  const { aiProvider, aiProviderLabel, aiProviderConfig, aiPrompt } = useAiSettings();
+  const { aiProvider, aiProviderLabel, aiProviderConfig, aiPrompt, isClipboardOnly } = useAiSettings();
 
   const {
     showCreateIssueModal,
@@ -113,9 +113,19 @@ const Recordings: React.FC = () => {
     }
   };
 
-  const handleOpenInAI = (transcript: string) => {
+  const handleOpenInAI = async (transcript: string) => {
     const fullMessage = `${aiPrompt}\n\n${transcript}`;
-    window.open(aiProviderConfig.urlPrefix + encodeURIComponent(fullMessage), '_blank');
+    if (isClipboardOnly && aiProviderConfig.baseUrl) {
+      try {
+        await navigator.clipboard.writeText(fullMessage);
+        success("Prompt + transcript copied to clipboard! Paste it in the chat.");
+      } catch (err) {
+        console.error('Failed to copy to clipboard:', err);
+      }
+      window.open(aiProviderConfig.baseUrl, '_blank');
+    } else {
+      window.open(aiProviderConfig.urlPrefix + encodeURIComponent(fullMessage), '_blank');
+    }
   };
 
   const handleShowInFinder = (downloadId: number) => {
@@ -234,6 +244,7 @@ const Recordings: React.FC = () => {
                   onCopyTranscript={handleCopyTranscript}
                   onOpenInAI={handleOpenInAI}
                   aiProviderLabel={aiProviderLabel}
+                  isClipboardOnly={isClipboardOnly}
                   onShowInFinder={handleShowInFinder}
                   onOpenFileLocally={handleDownloadAndOpenFileLocally}
                   isJiraConnected={isJiraConnected}
