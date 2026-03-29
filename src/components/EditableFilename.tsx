@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { SquarePen } from "lucide-react";
 
 interface EditableFilenameProps {
   filename: string;
@@ -60,7 +61,7 @@ const EditableFilename: React.FC<EditableFilenameProps> = ({
 
   return (
     <div
-      className="relative inline-flex items-center gap-2 cursor-pointer group"
+      className="inline-flex items-center gap-1.5 cursor-pointer group"
       onClick={handleClick}
     >
       <h3
@@ -68,11 +69,9 @@ const EditableFilename: React.FC<EditableFilenameProps> = ({
       >
         {filename}
       </h3>
-      <span
-        className={`absolute -right-6 top-0 ${textSizeClass} text-slate-400 dark:text-slate-500 opacity-40 group-hover:opacity-100 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-all`}
-      >
-        ✎
-      </span>
+      <SquarePen
+        className="mb-1 size-4 shrink-0 text-slate-400 dark:text-slate-500 opacity-40 group-hover:opacity-100 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-all"
+      />
     </div>
   );
 };
