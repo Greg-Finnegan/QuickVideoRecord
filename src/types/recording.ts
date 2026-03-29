@@ -32,3 +32,9 @@ export interface TranscriptionJob {
 export interface TranscriptionJobsStorage {
   transcriptionJobs?: { [recordingId: string]: TranscriptionJob };
 }
+
+// Session storage state for tracking active recording across side panel lifecycle
+export interface RecordingSessionState {
+  isRecording: boolean;
+  recorderTabId: number | null;
+}

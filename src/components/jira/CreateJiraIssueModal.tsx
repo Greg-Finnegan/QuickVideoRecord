@@ -145,13 +145,33 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
     loadUsers();
   }, [isJiraConnected, projectKey]);
 
+  // Close protection: confirm before closing during upload
+  const handleCloseAttempt = () => {
+    if (!creating) {
+      onClose();
+      return;
+    }
+    const confirmed = confirm(
+      "Upload is still in progress. Closing now may interrupt the process.\n\nAre you sure you want to close?"
+    );
+    if (confirmed) {
+      onClose();
+    }
+  };
+
   // Escape key handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !creating) {
+      if (e.key === "Escape") {
         const target = e.target as HTMLElement;
         if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
           return;
+        }
+        if (creating) {
+          const confirmed = confirm(
+            "Upload is still in progress. Closing now may interrupt the process.\n\nAre you sure you want to close?"
+          );
+          if (!confirmed) return;
         }
         onClose();
       }
@@ -327,7 +347,7 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
   return (
     <div
       className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
+      onClick={handleCloseAttempt}
     >
       <div
         className="bg-white dark:bg-slate-800 rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl"
@@ -346,8 +366,7 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
           <Button
             variant="ghost"
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
-            onClick={onClose}
-            disabled={creating}
+            onClick={handleCloseAttempt}
           >
             <Icon name="close" size={24} />
           </Button>
@@ -546,8 +565,7 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
             <Button
               type="button"
               variant="secondary"
-              onClick={onClose}
-              disabled={creating}
+              onClick={handleCloseAttempt}
             >
               Cancel
             </Button>
