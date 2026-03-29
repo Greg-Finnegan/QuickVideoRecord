@@ -66,6 +66,33 @@ export interface ExtensionSettings {
 }
 
 /**
+ * AI provider options
+ */
+export type AiProvider = "chatgpt" | "claude" | "gemini";
+
+export interface AiProviderConfig {
+  label: string;
+  urlPrefix: string;
+}
+
+export const AI_PROVIDER_CONFIG: Record<AiProvider, AiProviderConfig> = {
+  chatgpt: {
+    label: "ChatGPT",
+    urlPrefix: "https://chatgpt.com/?q=",
+  },
+  claude: {
+    label: "Claude",
+    urlPrefix: "https://claude.ai/new?q=",
+  },
+  gemini: {
+    label: "Gemini",
+    urlPrefix: "https://gemini.google.com/app?q=",
+  },
+};
+
+export const DEFAULT_AI_PROVIDER: AiProvider = "chatgpt";
+
+/**
  * Storage structure for extension settings
  */
 export interface ExtensionSettingsStorage {
@@ -74,12 +101,13 @@ export interface ExtensionSettingsStorage {
   transcriptionSettings?: TranscriptionSettings;
   notificationSettings?: NotificationSettings;
   chatGptPrompt?: string;
+  aiProvider?: AiProvider;
 }
 
 /**
- * Default ChatGPT prompt prepended to transcripts
+ * Default prompt prepended to transcripts
  */
-export const DEFAULT_CHATGPT_PROMPT =
+export const DEFAULT_AI_PROMPT =
   "short hand cliff notes and make name for this dev ticket - below is the transcript describing the bug/ticket";
 
 /**

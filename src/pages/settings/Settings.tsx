@@ -11,14 +11,15 @@ import DefaultProjectSetting from "./components/DefaultProjectSetting";
 import DefaultPrioritySetting from "./components/DefaultPrioritySetting";
 import DefaultAssigneeSetting from "./components/DefaultAssigneeSetting";
 import DefaultSprintSetting from "./components/DefaultSprintSetting";
-import ChatGptPromptSetting from "./components/ChatGptPromptSetting";
+import AiPromptSetting from "./components/AiPromptSetting";
+import AiProviderSetting from "./components/AiProviderSetting";
 import { useTheme } from "../../hooks/useTheme";
 import { useJiraConnection } from "./hooks/useJiraConnection";
 import { useJiraProjects } from "./hooks/useJiraProjects";
 import { useJiraPriorities } from "./hooks/useJiraPriorities";
 import { useJiraUsers } from "./hooks/useJiraUsers";
 import { useJiraSprints } from "./hooks/useJiraSprints";
-import { useChatGptPrompt } from "./hooks/useChatGptPrompt";
+import { useAiSettings } from "./hooks/useAiSettings";
 import { useRecordings } from "../recordings/hooks/useRecordings";
 
 const Settings: React.FC = () => {
@@ -45,7 +46,7 @@ const Settings: React.FC = () => {
     loadingSprints,
     handleDefaultSprintChange,
   } = useJiraSprints(isJiraConnected);
-  const { chatGptPrompt, handlePromptChange } = useChatGptPrompt();
+  const { aiProvider, aiPrompt, handleProviderChange, handlePromptChange } = useAiSettings();
   const { clearAllRecordings } = useRecordings();
 
   return (
@@ -105,15 +106,23 @@ const Settings: React.FC = () => {
             </div>
           </SettingsCard>
 
-          {/* ChatGPT Integration Section */}
+          {/* AI Integration Section */}
           <SettingsCard
-            title="ChatGPT Integration"
-            description="Customize the prompt that is prepended to your transcript when opening in ChatGPT."
+            title="AI Integration"
+            description="Choose your preferred AI provider and customize the prompt prepended to your transcript."
           >
-            <ChatGptPromptSetting
-              prompt={chatGptPrompt}
-              onPromptChange={handlePromptChange}
-            />
+            <div className="space-y-6">
+              <AiProviderSetting
+                provider={aiProvider}
+                onProviderChange={handleProviderChange}
+              />
+              <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
+                <AiPromptSetting
+                  prompt={aiPrompt}
+                  onPromptChange={handlePromptChange}
+                />
+              </div>
+            </div>
           </SettingsCard>
 
           {/* Jira Integration Section */}

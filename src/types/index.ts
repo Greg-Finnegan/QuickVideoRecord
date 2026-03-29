@@ -50,10 +50,14 @@ export type {
   ExtensionSettingsStorage,
   ExtensionVersion,
   ExtensionState,
+  AiProvider,
+  AiProviderConfig,
 } from "./extensionSettings";
 
-// Re-export default settings
+// Re-export default settings and constants
 export {
   DEFAULT_EXTENSION_SETTINGS,
-  DEFAULT_CHATGPT_PROMPT,
+  DEFAULT_AI_PROMPT,
+  DEFAULT_AI_PROVIDER,
+  AI_PROVIDER_CONFIG,
 } from "./extensionSettings";

@@ -15,12 +15,12 @@ import { useJiraIssueManagement } from "./hooks/useJiraIssueManagement";
 import { usePagination } from "./hooks/usePagination";
 import { useJiraConnection } from "../settings/hooks/useJiraConnection";
 import { useJiraProjects } from "../settings/hooks/useJiraProjects";
+import { useAiSettings } from "../settings/hooks/useAiSettings";
 import { useToast } from "../../hooks/useToast";
 import { formatDate, formatSize, formatDuration } from "./utils/formatters";
 import CreateJiraIssueModal from "@src/components/jira/CreateJiraIssueModal";
 import { videoStorage } from "../../utils/videoStorage";
 import type { Recording } from "../../types";
-import { DEFAULT_CHATGPT_PROMPT } from "../../types";
 
 const Recordings: React.FC = () => {
   const { recordings, loading, setRecordings, deleteRecording } =
@@ -69,6 +69,7 @@ const Recordings: React.FC = () => {
   const { isJiraConnected } = useJiraConnection();
   const { defaultProject } = useJiraProjects(isJiraConnected);
   const { toasts, removeToast, success } = useToast();
+  const { aiProvider, aiProviderLabel, aiProviderConfig, aiPrompt } = useAiSettings();
 
   const {
     showCreateIssueModal,
@@ -112,21 +113,9 @@ const Recordings: React.FC = () => {
     }
   };
 
-  const handleOpenInChatGPT = async (transcript: string) => {
-    const result = await chrome.storage.local.get("chatGptPrompt");
-    const prompt =
-      typeof result.chatGptPrompt === "string"
-        ? result.chatGptPrompt
-        : DEFAULT_CHATGPT_PROMPT;
-    const fullMessage = `${prompt}\n\n${transcript}`;
-
-    try {
-      await navigator.clipboard.writeText(fullMessage);
-      window.open('https://chatgpt.com/?q=' + fullMessage, '_blank');
-      success("Prompt copied to clipboard! Paste it into ChatGPT.");
-    } catch (error) {
-      console.error('Failed to copy prompt or open ChatGPT:', error);
-    }
+  const handleOpenInAI = (transcript: string) => {
+    const fullMessage = `${aiPrompt}\n\n${transcript}`;
+    window.open(aiProviderConfig.urlPrefix + encodeURIComponent(fullMessage), '_blank');
   };
 
   const handleShowInFinder = (downloadId: number) => {
@@ -243,7 +232,8 @@ const Recordings: React.FC = () => {
                   onUnlinkJiraIssue={handleUnlinkJiraIssue}
                   onCopyJiraLink={handleCopyJiraLink}
                   onCopyTranscript={handleCopyTranscript}
-                  onOpenInChatGPT={handleOpenInChatGPT}
+                  onOpenInAI={handleOpenInAI}
+                  aiProviderLabel={aiProviderLabel}
                   onShowInFinder={handleShowInFinder}
                   onOpenFileLocally={handleDownloadAndOpenFileLocally}
                   isJiraConnected={isJiraConnected}

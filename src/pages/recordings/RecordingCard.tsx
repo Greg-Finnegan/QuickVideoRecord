@@ -19,7 +19,8 @@ interface RecordingCardProps {
   onUnlinkJiraIssue?: (recordingId: string) => void;
   onCopyJiraLink?: (url: string) => void;
   onCopyTranscript?: (transcript: string) => void;
-  onOpenInChatGPT?: (transcript: string) => void;
+  onOpenInAI?: (transcript: string) => void;
+  aiProviderLabel?: string;
   onShowInFinder?: (downloadId: number) => void;
   onOpenFileLocally?: (recordingId: string, filename: string) => void;
   isJiraConnected?: boolean;
@@ -42,7 +43,8 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
   onUnlinkJiraIssue,
   onCopyJiraLink,
   onCopyTranscript,
-  onOpenInChatGPT,
+  onOpenInAI,
+  aiProviderLabel = "ChatGPT",
   onShowInFinder,
   onOpenFileLocally,
   isJiraConnected,
@@ -135,18 +137,18 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
             className="bg-transparent !px-2 !py-2 text-lg flex-shrink-0 !gap-1"
             onClick={(e) => {
               e.stopPropagation();
-              if (recording.transcript && onOpenInChatGPT) {
-                onOpenInChatGPT(recording.transcript);
+              if (recording.transcript && onOpenInAI) {
+                onOpenInAI(recording.transcript);
               }
             }}
             disabled={!recording.transcript}
             title={
               recording.transcript
-                ? "Open in ChatGPT with transcript"
+                ? `Open in ${aiProviderLabel} with transcript`
                 : "No transcript available"
             }
           >
-            Open in ChatGPT
+            Open in {aiProviderLabel}
             <Icon name="external-link" size={14} />
           </Button>
           {isJiraConnected &&
