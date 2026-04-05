@@ -1,27 +1,32 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import Icon from "../../components/Icon";
 import Button from "../../components/Button";
+import BrowserToolbarVisual from "./BrowserToolbarVisual";
 
-/**
- * Empty state component displayed when there are no recordings
- */
 const EmptyRecordingsState: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="text-center py-20 px-5">
-      <div className="text-slate-600 dark:text-slate-400 mb-4 flex justify-center">
-        <Icon name="video" size={64} />
+    <div className="text-center py-16 px-5">
+      <div className="flex justify-center mb-8">
+        <BrowserToolbarVisual />
       </div>
+
       <h2 className="m-0 mb-2 text-xl font-medium text-slate-900 dark:text-slate-100">
         No recordings yet
       </h2>
-      <p className="m-0 text-sm text-slate-600 dark:text-slate-400">
-        Your recording history will appear here after you create your first
+      <p className="m-0 text-sm text-slate-600 dark:text-slate-400 max-w-xs mx-auto">
+        Click the extension icon in your toolbar to open the side panel and start
         recording.
       </p>
-      <div className="mt-4 flex justify-center">
+      <div className="mt-4 flex justify-center gap-3">
+        <Button
+          variant="primary"
+          rounded="full"
+          onClick={() => chrome.runtime.sendMessage({ action: "openSidePanel" })}
+        >
+          Open Side Panel
+        </Button>
         <Button
           variant="secondary"
           rounded="full"

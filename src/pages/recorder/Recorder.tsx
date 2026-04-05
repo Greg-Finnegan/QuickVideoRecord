@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import fixWebmDuration from 'fix-webm-duration';
 import '../../index.css';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
@@ -9,6 +10,7 @@ const Recorder: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
+  const recordingStartTimeRef = useRef<number>(0);
   const [isRecording, setIsRecording] = useState(false);
   const [showStartButton, setShowStartButton] = useState(true);
 
@@ -159,7 +161,9 @@ const Recorder: React.FC = () => {
 
       recorder.onstop = async () => {
         console.log('Recording stopped, total chunks:', recordedChunksRef.current.length);
-        const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+        const duration = Date.now() - recordingStartTimeRef.current;
+        const rawBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+        const blob = await fixWebmDuration(rawBlob, duration, { logger: false });
         const url = URL.createObjectURL(blob);
         const filename = `recording_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
         const recordingId = Date.now().toString();
@@ -223,6 +227,7 @@ const Recorder: React.FC = () => {
         }
       };
 
+      recordingStartTimeRef.current = Date.now();
       recorder.start(1000); // Collect data every second
       console.log('MediaRecorder started!');
 

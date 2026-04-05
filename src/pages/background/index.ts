@@ -63,6 +63,17 @@ chrome.action.onClicked.addListener((tab) => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Open the side panel from another extension page
+  if (message.action === "openSidePanel") {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const windowId = tabs[0]?.windowId;
+      if (windowId) {
+        chrome.sidePanel.open({ windowId });
+      }
+    });
+    return false;
+  }
+
   // Forward transcription progress messages (best-effort from offscreen)
   if (message.action === "transcriptionProgress") {
     return false;
