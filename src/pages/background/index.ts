@@ -8,12 +8,38 @@ checkStuckTranscriptions();
 
 clearStaleRecordingState();
 
+// Restore recording icon if service worker restarts mid-recording
+chrome.storage.session.get("isRecording").then((data) => {
+  if (data.isRecording) setRecordingIcon();
+});
+
+function setRecordingIcon() {
+  chrome.action.setIcon({
+    path: {
+      16: "icon-recording-16.png",
+      48: "icon-recording-48.png",
+      128: "icon-recording-128.png",
+    },
+  });
+}
+
+function setDefaultIcon() {
+  chrome.action.setIcon({
+    path: {
+      16: "icon-16.png",
+      48: "icon-48.png",
+      128: "icon-128.png",
+    },
+  });
+}
+
 const CLEARED_RECORDING_STATE = { isRecording: false, recorderTabId: null } as const satisfies RecordingSessionState;
 
 chrome.tabs.onRemoved.addListener(async (tabId) => {
   const data = await chrome.storage.session.get("recorderTabId") as Partial<RecordingSessionState>;
   if (data.recorderTabId === tabId) {
     chrome.storage.session.set(CLEARED_RECORDING_STATE);
+    setDefaultIcon();
   }
 });
 
@@ -24,6 +50,7 @@ async function clearStaleRecordingState() {
       await chrome.tabs.get(data.recorderTabId);
     } catch {
       await chrome.storage.session.set(CLEARED_RECORDING_STATE);
+      setDefaultIcon();
     }
   }
 }
@@ -44,11 +71,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "recordingStarted") {
     const recorderTabId = sender.tab?.id ?? null;
     chrome.storage.session.set({ isRecording: true, recorderTabId } satisfies RecordingSessionState);
+    setRecordingIcon();
     return false;
   }
 
   if (message.action === "recordingError") {
     chrome.storage.session.set(CLEARED_RECORDING_STATE);
+    setDefaultIcon();
     return false;
   }
 
@@ -111,6 +140,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       },
       () => {
         chrome.storage.session.set(CLEARED_RECORDING_STATE);
+        setDefaultIcon();
         chrome.runtime.sendMessage({ action: "downloadReady" });
       }
     );
