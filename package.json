@@ -1,6 +1,6 @@
 {
   "name": "jira-quick-video-recorder",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Jira Quick Video Recorder - Screen recording with local AI transcription and Jira integration.",
   "license": "MIT",
   "repository": {
