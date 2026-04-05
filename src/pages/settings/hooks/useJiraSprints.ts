@@ -4,11 +4,19 @@ import type { JiraSettingsStorage, JiraSprint } from "../../../types";
 
 /**
  * Hook to manage Jira sprints and default sprint selection
+ *
+ * @param isJiraConnected - Whether Jira is connected
+ * @param options.lazy - When true, skip eager sprint loading; caller must invoke `loadSprints` manually
  */
-export const useJiraSprints = (isJiraConnected: boolean) => {
+export const useJiraSprints = (
+  isJiraConnected: boolean,
+  options?: { lazy?: boolean }
+) => {
+  const lazy = options?.lazy ?? false;
   const [sprints, setSprints] = useState<JiraSprint[]>([]);
   const [defaultSprint, setDefaultSprint] = useState<JiraSprint | null>(null);
   const [loadingSprints, setLoadingSprints] = useState(false);
+  const [sprintsLoaded, setSprintsLoaded] = useState(false);
 
   // Load default sprint on mount
   useEffect(() => {
@@ -41,15 +49,16 @@ export const useJiraSprints = (isJiraConnected: boolean) => {
     };
   }, []);
 
-  // Load sprints when Jira connection status changes
+  // Load sprints when Jira connection status changes (skip in lazy mode)
   useEffect(() => {
+    if (lazy) return;
     if (isJiraConnected) {
       loadJiraSprints();
     } else {
       setSprints([]);
       setDefaultSprint(null);
     }
-  }, [isJiraConnected]);
+  }, [isJiraConnected, lazy]);
 
   const loadJiraSprints = async () => {
     setLoadingSprints(true);
@@ -91,12 +100,19 @@ export const useJiraSprints = (isJiraConnected: boolean) => {
       });
 
       setSprints(sprintArray);
+      setSprintsLoaded(true);
     } catch (error) {
       console.error("Failed to load Jira sprints:", error);
       setSprints([]);
     } finally {
       setLoadingSprints(false);
     }
+  };
+
+  /** Load sprints on demand (useful in lazy mode) */
+  const loadSprints = async () => {
+    if (sprintsLoaded || !isJiraConnected) return;
+    await loadJiraSprints();
   };
 
   const loadDefaultSprint = async () => {
@@ -131,5 +147,6 @@ export const useJiraSprints = (isJiraConnected: boolean) => {
     defaultSprint,
     loadingSprints,
     handleDefaultSprintChange,
+    loadSprints,
   };
 };

@@ -1,5 +1,6 @@
 import React from "react";
 import JiraDropdown from "../../../components/jira/JiraDropdown";
+import { getSprintStateLabel } from "../../../utils/jiraHelpers";
 import type { JiraSprintOption, JiraSprint } from "../../../types";
 
 interface DefaultSprintSettingProps {
@@ -18,19 +19,6 @@ const DefaultSprintSetting: React.FC<DefaultSprintSettingProps> = ({
   loadingSprints,
   onSprintChange,
 }) => {
-  const getSprintStateLabel = (state: string) => {
-    switch (state) {
-      case "active":
-        return "🟢";
-      case "future":
-        return "🔵";
-      case "closed":
-        return "⚪";
-      default:
-        return "";
-    }
-  };
-
   const handleSprintChange = (sprintId: string) => {
     if (!sprintId) {
       onSprintChange(null);
