@@ -71,11 +71,11 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
   return (
     <div
       className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-      onClick={handleCloseAttempt}
+      onMouseDown={handleCloseAttempt}
     >
       <div
         className="bg-white dark:bg-slate-800 rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between flex-shrink-0">
