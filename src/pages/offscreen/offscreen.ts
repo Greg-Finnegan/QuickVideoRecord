@@ -1,5 +1,7 @@
 import { transcriptionWorkerService } from '../../utils/transcriptionWorkerService';
 import { videoStorage } from '../../utils/videoStorage';
+import { sanitizeRecordingFilename } from '../../utils/sanitizeFilename';
+import { generateTitle } from '../../utils/summarizerConfig';
 
 console.log('Offscreen document loaded for transcription');
 
@@ -10,7 +12,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     sendResponse({ success: true, started: true });
 
     // Continue transcription in background (fire-and-forget)
-    handleTranscribe(message.recordingId).catch((error) => {
+    handleTranscribe(message.recordingId, message.summarizerEnabled === true).catch((error) => {
       console.error('[Offscreen] Background transcription failed:', error);
     });
 
@@ -50,7 +52,7 @@ function sendProgress(recordingId: string, statusMessage: string, progress: numb
   }
 }
 
-async function handleTranscribe(recordingId: string): Promise<string> {
+async function handleTranscribe(recordingId: string, summarizerEnabled: boolean): Promise<string> {
   console.log('[Offscreen] Starting transcription for recording:', recordingId);
 
   try {
@@ -73,7 +75,24 @@ async function handleTranscribe(recordingId: string): Promise<string> {
       }
     );
 
-    console.log('[Offscreen] Transcription completed, saving transcript...');
+    console.log('[Offscreen] Transcription completed, generating filename...');
+
+    // Attempt to generate a descriptive filename via Summarizer API
+    let generatedFilename: string | null = null;
+    if (summarizerEnabled) {
+      try {
+        sendProgress(recordingId, 'Generating title...', 97);
+        const title = await generateTitle(transcript);
+        if (title) {
+          const sanitized = sanitizeRecordingFilename(title);
+          if (sanitized) {
+            generatedFilename = sanitized;
+          }
+        }
+      } catch (err) {
+        console.warn('[Offscreen] Summarization failed, keeping original filename:', err);
+      }
+    }
 
     // Send transcript to background for persistence. This wakes the service
     // worker if needed and waits for acknowledgement.
@@ -81,6 +100,7 @@ async function handleTranscribe(recordingId: string): Promise<string> {
       action: 'saveTranscript',
       recordingId,
       transcript,
+      generatedFilename,
     });
 
     if (saveResult?.success) {

@@ -19,7 +19,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   // Save transcript from offscreen document to the recording in storage
   if (message.action === "saveTranscript") {
-    saveTranscript(message.recordingId, message.transcript)
+    saveTranscript(message.recordingId, message.transcript, message.generatedFilename)
       .then(() => sendResponse({ success: true }))
       .catch((err: any) => sendResponse({ success: false, error: err.message }));
     return true; // async response
@@ -102,7 +102,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 // Save transcript to the recording in storage (called by offscreen via message)
-async function saveTranscript(recordingId: string, transcript: string) {
+async function saveTranscript(recordingId: string, transcript: string, generatedFilename?: string | null) {
   const result = (await chrome.storage.local.get("recordings")) as any;
   const recordings = result.recordings || [];
   const idx = recordings.findIndex((r: any) => r.id === recordingId);
@@ -113,6 +113,9 @@ async function saveTranscript(recordingId: string, transcript: string) {
 
   recordings[idx].transcript = transcript;
   recordings[idx].transcribing = false;
+  if (generatedFilename) {
+    recordings[idx].filename = generatedFilename;
+  }
   await chrome.storage.local.set({ recordings });
   console.log("[Background] Transcript saved for recording:", recordingId);
 
@@ -169,12 +172,16 @@ async function startTranscription(recordingId: string) {
       recordingId,
     });
 
-    // Create offscreen document if it doesn't exist
-    await setupOffscreenDocument();
+    // Read summarizer setting and create offscreen document in parallel
+    const [settingsResult] = await Promise.all([
+      chrome.storage.local.get("summarizerEnabled"),
+      setupOffscreenDocument(),
+    ]);
+    const summarizerEnabled = settingsResult.summarizerEnabled === true;
 
     // Fire-and-forget: offscreen handles the rest (including persisting the transcript)
     chrome.runtime.sendMessage(
-      { action: "transcribeVideo", recordingId },
+      { action: "transcribeVideo", recordingId, summarizerEnabled },
       () => {
         if (chrome.runtime.lastError) {
           // Expected — channel closes immediately

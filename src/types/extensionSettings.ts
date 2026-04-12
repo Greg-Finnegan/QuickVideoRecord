@@ -74,6 +74,7 @@ export interface ExtensionSettingsStorage {
   transcriptionSettings?: TranscriptionSettings;
   notificationSettings?: NotificationSettings;
   chatGptPrompt?: string;
+  summarizerEnabled?: boolean;
 }
 
 /**
