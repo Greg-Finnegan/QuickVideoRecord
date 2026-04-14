@@ -44,10 +44,11 @@ const SummarizerToggle: React.FC = () => {
         </button>
       </div>
 
-      <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+      <p className="text-sm text-slate-600 dark:text-slate-400">
         Use Chrome's built-in AI to generate descriptive filenames from
         transcripts after recording.
-
+      </p>
+      <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
         Note: Chrome's experimental AI APIs can occasionally be
         sluggish depending on the local device's GPU/NPU availability.
       </p>
