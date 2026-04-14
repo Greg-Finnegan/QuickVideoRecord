@@ -116,6 +116,7 @@ export interface ExtensionSettingsStorage {
   notificationSettings?: NotificationSettings;
   chatGptPrompt?: string;
   aiProvider?: AiProvider;
+  summarizerEnabled?: boolean;
 }
 
 /**

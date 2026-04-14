@@ -21,6 +21,7 @@ import { useJiraUsers } from "./hooks/useJiraUsers";
 import { useJiraSprints } from "./hooks/useJiraSprints";
 import { useAiSettings } from "./hooks/useAiSettings";
 import { useRecordings } from "../recordings/hooks/useRecordings";
+import SummarizerToggle from "./SummarizerToggle";
 
 const Settings: React.FC = () => {
   const { theme, setTheme, loading: themeLoading } = useTheme();
@@ -78,6 +79,9 @@ const Settings: React.FC = () => {
                   onPromptChange={handlePromptChange}
                 />
               </div>
+
+              {/* Auto-Generate Filenames */}
+              <SummarizerToggle />
             </div>
           </SettingsCard>
 
