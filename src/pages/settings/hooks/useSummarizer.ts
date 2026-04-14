@@ -53,31 +53,41 @@ export const useSummarizer = () => {
 
   const handleToggle = useCallback(async (enabled: boolean) => {
     setError(null);
-    setSummarizerEnabled(enabled);
-    await chrome.storage.local.set({ summarizerEnabled: enabled });
 
-    if (enabled) {
-      try {
-        setDownloadProgress(0);
-        const api = getSummarizerApi()!;
-        const summarizer = await api.create({
-          ...SUMMARIZER_CREATE_OPTIONS,
-          monitor(m: CreateMonitor) {
-            m.addEventListener("downloadprogress", (e: ProgressEvent) => {
-              setDownloadProgress(Math.round((e.loaded / e.total) * 100));
-            });
-          },
-        });
-        // Model is now cached; destroy the instance
-        summarizer.destroy();
-        setAvailability("available");
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to download model.");
-        setSummarizerEnabled(false);
-        await chrome.storage.local.set({ summarizerEnabled: false });
-      } finally {
-        setDownloadProgress(null);
+    if (!enabled) {
+      setSummarizerEnabled(false);
+      await chrome.storage.local.set({ summarizerEnabled: false });
+      return;
+    }
+
+    try {
+      setDownloadProgress(0);
+      const api = getSummarizerApi();
+      if (!api) {
+        setError("Summarizer API is no longer available.");
+        return;
       }
+      const summarizer = await api.create({
+        ...SUMMARIZER_CREATE_OPTIONS,
+        monitor(m: CreateMonitor) {
+          m.addEventListener("downloadprogress", (e: ProgressEvent) => {
+            setDownloadProgress(
+              e.total > 0 ? Math.round((e.loaded / e.total) * 100) : null
+            );
+          });
+        },
+      });
+      // Model is now cached; destroy the instance
+      summarizer.destroy();
+      setAvailability("available");
+      setSummarizerEnabled(true);
+      await chrome.storage.local.set({ summarizerEnabled: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to download model.");
+      setSummarizerEnabled(false);
+      await chrome.storage.local.set({ summarizerEnabled: false });
+    } finally {
+      setDownloadProgress(null);
     }
   }, []);
 
