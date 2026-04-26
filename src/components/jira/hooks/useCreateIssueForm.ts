@@ -50,9 +50,10 @@ export const useCreateIssueForm = (
   const issueTypeDefaultApplied = useRef(false);
 
   useEffect(() => {
-    chrome.storage.local.get("defaultJiraIssueType").then((result) => {
-      if (result.defaultJiraIssueType) {
-        setDefaultIssueType(result.defaultJiraIssueType);
+    chrome.storage.local.get("defaultJiraIssueType").then((result: { [key: string]: unknown }) => {
+      const value = result.defaultJiraIssueType;
+      if (typeof value === "string") {
+        setDefaultIssueType(value);
       }
     });
   }, []);
@@ -149,13 +150,13 @@ export const useCreateIssueForm = (
       },
       ...(defaultSprintNotInList
         ? [
-            {
-              value: defaultSprint.id.toString(),
-              label: `${getSprintStateLabel(defaultSprint.state)} ${defaultSprint.name}`,
-              description:
-                defaultSprint.goal || `Sprint ID: ${defaultSprint.id}`,
-            },
-          ]
+          {
+            value: defaultSprint.id.toString(),
+            label: `${getSprintStateLabel(defaultSprint.state)} ${defaultSprint.name}`,
+            description:
+              defaultSprint.goal || `Sprint ID: ${defaultSprint.id}`,
+          },
+        ]
         : []),
       ...sprints.map((sprint) => ({
         value: sprint.id.toString(),
