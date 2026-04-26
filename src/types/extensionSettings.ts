@@ -117,6 +117,7 @@ export interface ExtensionSettingsStorage {
   chatGptPrompt?: string;
   aiProvider?: AiProvider;
   summarizerEnabled?: boolean;
+  devMode?: boolean;
 }
 
 /**

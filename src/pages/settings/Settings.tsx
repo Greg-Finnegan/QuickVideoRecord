@@ -21,6 +21,7 @@ import { useJiraUsers } from "./hooks/useJiraUsers";
 import { useJiraSprints } from "./hooks/useJiraSprints";
 import { useAiSettings } from "./hooks/useAiSettings";
 import { useRecordings } from "../recordings/hooks/useRecordings";
+import { useDevMode } from "../../hooks/useDevMode";
 import SummarizerToggle from "./SummarizerToggle";
 
 const Settings: React.FC = () => {
@@ -49,6 +50,7 @@ const Settings: React.FC = () => {
   } = useJiraSprints(isJiraConnected);
   const { aiProvider, aiPrompt, handleProviderChange, handlePromptChange } = useAiSettings();
   const { clearAllRecordings } = useRecordings();
+  const { devMode, setDevMode } = useDevMode();
 
   return (
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans">
@@ -176,6 +178,29 @@ const Settings: React.FC = () => {
                 ) : (
                   <ThemeSlider value={theme} onChange={setTheme} />
                 )}
+              </div>
+
+              {/* Dev Mode */}
+              <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-slate-900 dark:text-slate-100">
+                    Developer Mode
+                  </label>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={devMode}
+                    onClick={() => setDevMode(!devMode)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${devMode ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-600"}`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${devMode ? "translate-x-5" : "translate-x-0"}`}
+                    />
+                  </button>
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Show raw recording data in the video player for debugging.
+                </p>
               </div>
 
               {/* Discord Community */}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import EditableFilename from "./EditableFilename";
 import Icon from "./Icon";
+import { useDevMode } from "../hooks/useDevMode";
 import { Recording, RecordingStorage } from "../types/recording";
 
 interface VideoPlayerModalProps {
@@ -25,6 +26,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   onUpdateRecording,
   onCopyTranscript,
 }) => {
+  const { devMode } = useDevMode();
   const [showTranscript, setShowTranscript] = useState(false);
   const [showRawData, setShowRawData] = useState(false);
   const [editingRawData, setEditingRawData] = useState(false);
@@ -215,7 +217,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           )}
 
           {/* Raw Data Section for Dev */}
-          <div className="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded">
+          {devMode && <div className="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded">
             <button
               onClick={() => setShowRawData(!showRawData)}
               className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-600/50 transition-colors rounded"
@@ -280,7 +282,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                 )}
               </div>
             )}
-          </div>
+          </div>}
         </div>
       </div>
     </div>
