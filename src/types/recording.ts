@@ -1,3 +1,15 @@
+export interface JiraDraft {
+  projectKey?: string;
+  issueTypeName?: string;
+  summary?: string;
+  description?: string;
+  priority?: string;
+  assigneeId?: string;
+  sprintId?: string;
+  labelsInput?: string;
+  attachVideo?: boolean;
+}
+
 export interface Recording {
   id: string;
   filename: string;
@@ -9,6 +21,7 @@ export interface Recording {
   jiraIssueKey?: string;
   jiraIssueUrl?: string;
   downloadId?: number; // Chrome download ID for instant "Show in Finder"
+  jiraDraft?: JiraDraft;
 }
 
 export interface RecordingStorage {

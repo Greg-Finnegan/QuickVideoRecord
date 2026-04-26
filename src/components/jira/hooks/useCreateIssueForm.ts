@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useJiraConnection } from "../../../pages/settings/hooks/useJiraConnection";
 import { useJiraProjects } from "../../../pages/settings/hooks/useJiraProjects";
 import { useJiraIssueTypes } from "../../../pages/recordings/hooks/useJiraIssueTypes";
@@ -8,27 +8,37 @@ import { useJiraUsers } from "../../../pages/settings/hooks/useJiraUsers";
 import { useJiraSprints } from "../../../pages/settings/hooks/useJiraSprints";
 import { getSprintStateLabel, parseLabels } from "../../../utils/jiraHelpers";
 import { formatDate } from "../../../pages/recordings/utils/formatters";
-import type { Recording, CreateIssueFormData } from "../../../types";
+import type { Recording, CreateIssueFormData, JiraDraft } from "../../../types";
+import type { RecordingStorage } from "../../../types/recording";
 
 export const useCreateIssueForm = (
   recording: Recording,
   defaultProjectKey?: string
 ) => {
+  const draft = recording.jiraDraft;
+
   const { isJiraConnected } = useJiraConnection();
   const { jiraProjects, loadingProjects } = useJiraProjects(isJiraConnected);
 
-  const [projectKey, setProjectKey] = useState(defaultProjectKey || "");
-  const [issueTypeName, setIssueTypeName] = useState("");
-  const [defaultIssueType, setDefaultIssueType] = useState("Task");
-  const [summary, setSummary] = useState(recording.filename);
-  const [description, setDescription] = useState(
-    `Recording captured on ${formatDate(recording.timestamp)}${recording.transcript ? `\n\nTranscript:\n${recording.transcript}` : ""}`
+  const [projectKey, setProjectKey] = useState(
+    draft?.projectKey ?? defaultProjectKey ?? ""
   );
-  const [priority, setPriority] = useState("");
-  const [assigneeId, setAssigneeId] = useState("");
-  const [sprintId, setSprintId] = useState("");
-  const [labelsInput, setLabelsInput] = useState("");
-  const [attachVideo, setAttachVideo] = useState(true);
+  const [issueTypeName, setIssueTypeName] = useState(
+    draft?.issueTypeName ?? ""
+  );
+  const [defaultIssueType, setDefaultIssueType] = useState("Task");
+  const [summary, setSummary] = useState(
+    draft?.summary ?? recording.filename
+  );
+  const [description, setDescription] = useState(
+    draft?.description ??
+      `Recording captured on ${formatDate(recording.timestamp)}${recording.transcript ? `\n\nTranscript:\n${recording.transcript}` : ""}`
+  );
+  const [priority, setPriority] = useState(draft?.priority ?? "");
+  const [assigneeId, setAssigneeId] = useState(draft?.assigneeId ?? "");
+  const [sprintId, setSprintId] = useState(draft?.sprintId ?? "");
+  const [labelsInput, setLabelsInput] = useState(draft?.labelsInput ?? "");
+  const [attachVideo, setAttachVideo] = useState(draft?.attachVideo ?? true);
 
   const { issueTypes, loading: loadingIssueTypes } =
     useJiraIssueTypes(projectKey);
@@ -47,7 +57,7 @@ export const useCreateIssueForm = (
   } = useJiraSprints(isJiraConnected, { lazy: true });
 
   // Load default issue type from storage
-  const issueTypeDefaultApplied = useRef(false);
+  const issueTypeDefaultApplied = useRef(!!draft?.issueTypeName);
 
   useEffect(() => {
     chrome.storage.local.get("defaultJiraIssueType").then((result: { [key: string]: unknown }) => {
@@ -59,9 +69,10 @@ export const useCreateIssueForm = (
   }, []);
 
   // Track each default independently so late-arriving defaults still apply
-  const priorityDefaultApplied = useRef(false);
-  const assigneeDefaultApplied = useRef(false);
-  const sprintDefaultApplied = useRef(false);
+  // Skip if draft already provided a value
+  const priorityDefaultApplied = useRef(draft?.priority != null);
+  const assigneeDefaultApplied = useRef(draft?.assigneeId != null);
+  const sprintDefaultApplied = useRef(draft?.sprintId != null);
 
   useEffect(() => {
     if (!priorityDefaultApplied.current && defaultPriority) {
@@ -91,6 +102,76 @@ export const useCreateIssueForm = (
       issueTypeDefaultApplied.current = true;
     }
   }, [issueTypes, defaultIssueType]);
+
+  // ── Draft auto-save ──────────────────────────────────────────────────────
+
+  // Use refs for text fields so saveDraft always reads the latest values
+  // without needing them in the useCallback dependency array
+  const summaryRef = useRef(summary);
+  const descriptionRef = useRef(description);
+  const labelsInputRef = useRef(labelsInput);
+
+  useEffect(() => { summaryRef.current = summary; }, [summary]);
+  useEffect(() => { descriptionRef.current = description; }, [description]);
+  useEffect(() => { labelsInputRef.current = labelsInput; }, [labelsInput]);
+
+  const saveDraftTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const saveDraft = useCallback(async () => {
+    const draftData: JiraDraft = {
+      projectKey,
+      issueTypeName,
+      summary: summaryRef.current,
+      description: descriptionRef.current,
+      priority,
+      assigneeId,
+      sprintId,
+      labelsInput: labelsInputRef.current,
+      attachVideo,
+    };
+    const result = await chrome.storage.local.get("recordings") as RecordingStorage;
+    const allRecordings = result.recordings || [];
+    const updatedRecordings = allRecordings.map((r) =>
+      r.id === recording.id
+        ? { ...r, jiraDraft: draftData, filename: summaryRef.current || r.filename }
+        : r
+    );
+    await chrome.storage.local.set({ recordings: updatedRecordings });
+  }, [projectKey, issueTypeName, priority, assigneeId, sprintId, attachVideo, recording.id]);
+
+  const saveDraftDebounced = useCallback(() => {
+    if (saveDraftTimeoutRef.current) clearTimeout(saveDraftTimeoutRef.current);
+    saveDraftTimeoutRef.current = setTimeout(saveDraft, 500);
+  }, [saveDraft]);
+
+  // Auto-save when dropdown/checkbox values change (skip initial render)
+  const hasMounted = useRef(false);
+
+  useEffect(() => {
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
+    saveDraftDebounced();
+  }, [projectKey, issueTypeName, priority, assigneeId, sprintId, attachVideo, saveDraftDebounced]);
+
+  // Flush any pending debounced save on unmount
+  useEffect(() => {
+    return () => {
+      if (saveDraftTimeoutRef.current) {
+        clearTimeout(saveDraftTimeoutRef.current);
+        saveDraft();
+      }
+    };
+  }, [saveDraft]);
+
+  // Flush pending debounced save, then save immediately with latest text values
+  const onFieldBlur = useCallback(() => {
+    if (saveDraftTimeoutRef.current) clearTimeout(saveDraftTimeoutRef.current);
+    saveDraft();
+  }, [saveDraft]);
+
+  // ── Options ──────────────────────────────────────────────────────────────
 
   const projectOptions = useMemo(
     () =>
@@ -166,6 +247,8 @@ export const useCreateIssueForm = (
     ];
   }, [sprints, defaultSprint]);
 
+  // ── Submit ───────────────────────────────────────────────────────────────
+
   const handleSubmit = async () => {
     const formData: CreateIssueFormData = {
       recordingId: recording.id,
@@ -181,8 +264,21 @@ export const useCreateIssueForm = (
     };
 
     const result = await createIssue(formData);
+
+    // Clear draft on successful submit
+    if (result) {
+      const storageResult = await chrome.storage.local.get("recordings") as RecordingStorage;
+      const allRecordings = storageResult.recordings || [];
+      const cleaned = allRecordings.map((r) =>
+        r.id === recording.id ? { ...r, jiraDraft: undefined } : r
+      );
+      await chrome.storage.local.set({ recordings: cleaned });
+    }
+
     return result;
   };
+
+  // ── Save defaults ────────────────────────────────────────────────────────
 
   const saveDefaultIssueType = async () => {
     await chrome.storage.local.set({ defaultJiraIssueType: issueTypeName });
@@ -245,7 +341,7 @@ export const useCreateIssueForm = (
     error,
     defaultIssueType,
     saveDefaultIssueType,
-    defaultProjectKey: defaultProjectKey || "",
+    defaultProjectKey: defaultProjectKey ?? "",
     defaultPriority: defaultPriority || "",
     defaultAssignee: defaultAssignee || "",
     defaultSprintId: defaultSprint?.id?.toString() || "",
@@ -253,5 +349,6 @@ export const useCreateIssueForm = (
     saveDefaultPriority,
     saveDefaultAssignee,
     saveDefaultSprint,
+    onFieldBlur,
   };
 };

@@ -94,6 +94,7 @@ const IssueFormFields: React.FC<IssueFormFieldsProps> = ({ form }) => {
           type="text"
           value={form.summary}
           onChange={(e) => form.setSummary(e.target.value)}
+          onBlur={form.onFieldBlur}
           placeholder="Brief description of the issue"
           maxLength={255}
           disabled={form.creating}
@@ -112,6 +113,7 @@ const IssueFormFields: React.FC<IssueFormFieldsProps> = ({ form }) => {
         <MarkdownEditor
           value={form.description}
           onChange={form.setDescription}
+          onBlur={form.onFieldBlur}
           disabled={form.creating}
           rows={6}
           placeholder="Detailed description — supports **bold**, *italic*, # headings, and lists"
@@ -202,6 +204,7 @@ const IssueFormFields: React.FC<IssueFormFieldsProps> = ({ form }) => {
           type="text"
           value={form.labelsInput}
           onChange={(e) => form.setLabelsInput(e.target.value)}
+          onBlur={form.onFieldBlur}
           placeholder="bug, enhancement, urgent"
           disabled={form.creating}
           className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"

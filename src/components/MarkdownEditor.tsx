@@ -15,6 +15,7 @@ import {
 interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   disabled?: boolean;
   rows?: number;
   placeholder?: string;
@@ -164,6 +165,7 @@ function applyFormat(
 const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   value,
   onChange,
+  onBlur,
   disabled = false,
   rows = 6,
   placeholder = "Write a description...",
@@ -260,6 +262,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
           ref={textareaRef}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
           placeholder={placeholder}
           rows={rows}
           disabled={disabled}
