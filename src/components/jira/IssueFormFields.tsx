@@ -24,7 +24,7 @@ const SetDefaultButton: React.FC<{
       type="button"
       variant="secondary"
       rounded="full"
-      className="!px-2 !py-1 mt-1 text-xs"
+      className="!px-2 !py-1 mt-2 text-xs"
       onClick={async () => {
         await onSave();
         setSaved(true);
