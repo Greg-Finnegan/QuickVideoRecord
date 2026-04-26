@@ -149,6 +149,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
             variant="ghost"
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
             onClick={onClose}
+            rounded="full"
           >
             <Icon name="close" size={24} />
           </Button>
@@ -188,8 +189,8 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                   <Icon name="file-text" size={16} /> Transcript
                 </h3>
-                <span className="text-lg text-slate-600 dark:text-slate-400">
-                  {showTranscript ? "▼" : "▶"}
+                <span className={`text-slate-600 dark:text-slate-400 inline-flex transition-transform ${showTranscript ? "rotate-90" : ""}`}>
+                  <Icon name="chevron-right" size={18} />
                 </span>
               </button>
               {showTranscript && (
@@ -222,8 +223,8 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
               <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Icon name="wrench" size={16} /> Raw Data (Dev)
               </h3>
-              <span className="text-lg text-slate-600 dark:text-slate-400">
-                {showRawData ? "▼" : "▶"}
+              <span className={`text-slate-600 dark:text-slate-400 inline-flex transition-transform ${showRawData ? "rotate-90" : ""}`}>
+                <Icon name="chevron-right" size={18} />
               </span>
             </button>
             {showRawData && (

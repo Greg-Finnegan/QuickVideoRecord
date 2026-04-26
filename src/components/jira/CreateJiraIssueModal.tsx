@@ -91,6 +91,7 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
             variant="ghost"
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
             onClick={handleCloseAttempt}
+            rounded="full"
           >
             <Icon name="close" size={24} />
           </Button>
