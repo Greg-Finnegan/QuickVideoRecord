@@ -242,13 +242,23 @@ const SidePanel: React.FC = () => {
 
   return (
     <div className="w-full min-h-screen m-0 p-0 font-sans bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 flex flex-col">
-      <div className="p-5 px-4 bg-white dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700">
-        <h2 className="m-0 mb-1 text-xl font-medium text-slate-900 dark:text-slate-100">
-          Jira Quick Video Recorder
-        </h2>
-        <p className="m-0 text-xs text-slate-600 dark:text-slate-400 font-normal">
-          Start recording from here
-        </p>
+      <div className="p-5 px-4 bg-white dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700 flex items-start justify-between">
+        <div>
+          <h2 className="m-0 mb-1 text-xl font-medium text-slate-900 dark:text-slate-100">
+            Jira Quick Video Recorder
+          </h2>
+          <p className="m-0 text-xs text-slate-600 dark:text-slate-400 font-normal">
+            Start recording from here
+          </p>
+        </div>
+        <Button
+          onClick={() => window.close()}
+          aria-label="Close side panel"
+          variant="secondary"
+          rounded="full"
+        >
+          <Icon name="close" size={18} />
+        </Button>
       </div>
 
       <div className="p-4 flex-1 bg-slate-100 dark:bg-slate-800/50">
@@ -280,8 +290,8 @@ const SidePanel: React.FC = () => {
             micStatus === "success"
               ? "success"
               : micStatus === "error"
-              ? "error"
-              : "secondary"
+                ? "error"
+                : "secondary"
           }
           rounded="full"
           fullWidth
@@ -321,11 +331,10 @@ const SidePanel: React.FC = () => {
         {status && (
           <div className="mt-3 px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded flex items-center gap-2 text-xs text-left text-slate-600 dark:text-slate-300">
             <span
-              className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                isRecording
+              className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isRecording
                   ? "bg-red-600 animate-[pulse_1.5s_ease-in-out_infinite]"
                   : "bg-slate-400 dark:bg-slate-500"
-              }`}
+                }`}
             ></span>
             {status}
           </div>
