@@ -10,6 +10,7 @@ import ThemeSlider from "../../components/ThemeSlider";
 import DefaultProjectSetting from "./components/DefaultProjectSetting";
 import DefaultPrioritySetting from "./components/DefaultPrioritySetting";
 import DefaultAssigneeSetting from "./components/DefaultAssigneeSetting";
+import DefaultIssueTypeSetting from "./components/DefaultIssueTypeSetting";
 import DefaultSprintSetting from "./components/DefaultSprintSetting";
 import AiPromptSetting from "./components/AiPromptSetting";
 import AiProviderSetting from "./components/AiProviderSetting";
@@ -20,6 +21,8 @@ import { useJiraPriorities } from "./hooks/useJiraPriorities";
 import { useJiraUsers } from "./hooks/useJiraUsers";
 import { useJiraSprints } from "./hooks/useJiraSprints";
 import { useAiSettings } from "./hooks/useAiSettings";
+import { useJiraIssueType } from "./hooks/useJiraIssueType";
+import { useJiraIssueTypes } from "../recordings/hooks/useJiraIssueTypes";
 import { useRecordings } from "../recordings/hooks/useRecordings";
 import { useDevMode } from "../../hooks/useDevMode";
 import SummarizerToggle from "./SummarizerToggle";
@@ -48,6 +51,8 @@ const Settings: React.FC = () => {
     loadingSprints,
     handleDefaultSprintChange,
   } = useJiraSprints(isJiraConnected);
+  const { issueTypes, loading: loadingIssueTypes } = useJiraIssueTypes(defaultProject);
+  const { defaultIssueType, handleIssueTypeChange } = useJiraIssueType();
   const { aiProvider, aiPrompt, handleProviderChange, handlePromptChange } = useAiSettings();
   const { clearAllRecordings } = useRecordings();
   const { devMode, setDevMode } = useDevMode();
@@ -116,6 +121,13 @@ const Settings: React.FC = () => {
                   defaultProject={defaultProject}
                   loadingProjects={loadingProjects}
                   onProjectChange={handleDefaultProjectChange}
+                />
+
+                <DefaultIssueTypeSetting
+                  issueTypes={issueTypes}
+                  defaultIssueType={defaultIssueType}
+                  loadingIssueTypes={loadingIssueTypes}
+                  onIssueTypeChange={handleIssueTypeChange}
                 />
 
                 <DefaultPrioritySetting
@@ -201,6 +213,25 @@ const Settings: React.FC = () => {
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   Show raw recording data in the video player for debugging.
                 </p>
+                {devMode && (
+                  <Button
+                    variant="error"
+                    rounded="full"
+                    className="mt-4"
+                    onClick={async () => {
+                      await chrome.storage.local.remove([
+                        "defaultJiraProject",
+                        "defaultJiraIssueType",
+                        "defaultJiraPriority",
+                        "defaultJiraAssignee",
+                        "defaultJiraSprint",
+                      ]);
+                      window.location.reload();
+                    }}
+                  >
+                    Clear All Jira Defaults
+                  </Button>
+                )}
               </div>
 
               {/* Discord Community */}

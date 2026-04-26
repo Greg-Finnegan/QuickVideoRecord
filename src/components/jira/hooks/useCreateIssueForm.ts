@@ -18,7 +18,8 @@ export const useCreateIssueForm = (
   const { jiraProjects, loadingProjects } = useJiraProjects(isJiraConnected);
 
   const [projectKey, setProjectKey] = useState(defaultProjectKey || "");
-  const [issueTypeName, setIssueTypeName] = useState("Task");
+  const [issueTypeName, setIssueTypeName] = useState("");
+  const [defaultIssueType, setDefaultIssueType] = useState("Task");
   const [summary, setSummary] = useState(recording.filename);
   const [description, setDescription] = useState(
     `Recording captured on ${formatDate(recording.timestamp)}${recording.transcript ? `\n\nTranscript:\n${recording.transcript}` : ""}`
@@ -44,6 +45,17 @@ export const useCreateIssueForm = (
     loadingSprints,
     loadSprints,
   } = useJiraSprints(isJiraConnected, { lazy: true });
+
+  // Load default issue type from storage
+  const issueTypeDefaultApplied = useRef(false);
+
+  useEffect(() => {
+    chrome.storage.local.get("defaultJiraIssueType").then((result) => {
+      if (result.defaultJiraIssueType) {
+        setDefaultIssueType(result.defaultJiraIssueType);
+      }
+    });
+  }, []);
 
   // Track each default independently so late-arriving defaults still apply
   const priorityDefaultApplied = useRef(false);
@@ -72,11 +84,12 @@ export const useCreateIssueForm = (
   }, [defaultSprint]);
 
   useEffect(() => {
-    if (issueTypes.length > 0 && !issueTypeName) {
-      const taskType = issueTypes.find((type) => type.name === "Task");
-      setIssueTypeName(taskType ? taskType.name! : issueTypes[0].name!);
+    if (issueTypes.length > 0 && !issueTypeDefaultApplied.current) {
+      const preferredType = issueTypes.find((type) => type.name === defaultIssueType);
+      setIssueTypeName(preferredType ? preferredType.name! : issueTypes[0].name!);
+      issueTypeDefaultApplied.current = true;
     }
-  }, [issueTypes, issueTypeName]);
+  }, [issueTypes, defaultIssueType]);
 
   const projectOptions = useMemo(
     () =>
@@ -170,6 +183,32 @@ export const useCreateIssueForm = (
     return result;
   };
 
+  const saveDefaultIssueType = async () => {
+    await chrome.storage.local.set({ defaultJiraIssueType: issueTypeName });
+    setDefaultIssueType(issueTypeName);
+  };
+
+  const saveDefaultProject = async () => {
+    await chrome.storage.local.set({ defaultJiraProject: projectKey });
+  };
+
+  const saveDefaultPriority = async () => {
+    await chrome.storage.local.set({ defaultJiraPriority: priority });
+  };
+
+  const saveDefaultAssignee = async () => {
+    await chrome.storage.local.set({ defaultJiraAssignee: assigneeId });
+  };
+
+  const saveDefaultSprint = async () => {
+    const sprint = sprints.find((s) => s.id.toString() === sprintId) || defaultSprint;
+    if (sprint) {
+      await chrome.storage.local.set({ defaultJiraSprint: sprint });
+    } else {
+      await chrome.storage.local.set({ defaultJiraSprint: null });
+    }
+  };
+
   return {
     projectKey,
     setProjectKey,
@@ -203,5 +242,15 @@ export const useCreateIssueForm = (
     loadSprints,
     creating,
     error,
+    defaultIssueType,
+    saveDefaultIssueType,
+    defaultProjectKey: defaultProjectKey || "",
+    defaultPriority: defaultPriority || "",
+    defaultAssignee: defaultAssignee || "",
+    defaultSprintId: defaultSprint?.id?.toString() || "",
+    saveDefaultProject,
+    saveDefaultPriority,
+    saveDefaultAssignee,
+    saveDefaultSprint,
   };
 };

@@ -74,7 +74,7 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
       onMouseDown={handleCloseAttempt}
     >
       <div
-        className="bg-white dark:bg-slate-800 rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl"
+        className="bg-white dark:bg-slate-800 rounded-lg max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}

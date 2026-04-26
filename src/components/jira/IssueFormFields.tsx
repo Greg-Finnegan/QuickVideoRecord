@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import JiraDropdown from "./JiraDropdown";
+import Button from "../Button";
 import MarkdownEditor from "../MarkdownEditor";
 import { parseLabels } from "../../utils/jiraHelpers";
 import type { useCreateIssueForm } from "./hooks/useCreateIssueForm";
@@ -9,6 +10,30 @@ type FormState = ReturnType<typeof useCreateIssueForm>;
 interface IssueFormFieldsProps {
   form: FormState;
 }
+
+const SetDefaultButton: React.FC<{
+  onSave: () => Promise<void>;
+  label: string;
+}> = ({ onSave, label }) => {
+  const [saved, setSaved] = useState(false);
+
+  if (saved) return null;
+
+  return (
+    <Button
+      type="button"
+      variant="secondary"
+      rounded="full"
+      className="!px-2 !py-1 mt-1 text-xs"
+      onClick={async () => {
+        await onSave();
+        setSaved(true);
+      }}
+    >
+      Set as default {label}
+    </Button>
+  );
+};
 
 const IssueFormFields: React.FC<IssueFormFieldsProps> = ({ form }) => {
   return (
@@ -25,9 +50,16 @@ const IssueFormFields: React.FC<IssueFormFieldsProps> = ({ form }) => {
           loading={form.loadingProjects}
           disabled={form.creating}
         />
-        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-          Select the Jira project for this issue
-        </p>
+        {form.projectKey && form.projectKey !== form.defaultProjectKey ? (
+          <SetDefaultButton
+            onSave={form.saveDefaultProject}
+            label="project"
+          />
+        ) : (
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            Select the Jira project for this issue
+          </p>
+        )}
       </div>
 
       <div className="mb-6">
@@ -42,9 +74,16 @@ const IssueFormFields: React.FC<IssueFormFieldsProps> = ({ form }) => {
           loading={form.loadingIssueTypes}
           disabled={form.creating || !form.projectKey}
         />
-        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-          Type of issue (e.g., Bug, Task, Story)
-        </p>
+        {form.issueTypeName && form.issueTypeName !== form.defaultIssueType ? (
+          <SetDefaultButton
+            onSave={form.saveDefaultIssueType}
+            label="issue type"
+          />
+        ) : (
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            Type of issue (e.g., Bug, Task, Story)
+          </p>
+        )}
       </div>
 
       <div className="mb-6">
@@ -94,9 +133,16 @@ const IssueFormFields: React.FC<IssueFormFieldsProps> = ({ form }) => {
           disabled={form.creating}
           loading={form.loadingPriorities}
         />
-        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-          Issue priority (optional)
-        </p>
+        {form.priority !== form.defaultPriority ? (
+          <SetDefaultButton
+            onSave={form.saveDefaultPriority}
+            label="priority"
+          />
+        ) : (
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            Issue priority (optional)
+          </p>
+        )}
       </div>
 
       <div className="mb-6">
@@ -111,9 +157,16 @@ const IssueFormFields: React.FC<IssueFormFieldsProps> = ({ form }) => {
           disabled={form.creating || !form.projectKey}
           loading={form.loadingUsers}
         />
-        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-          User to assign this issue to (optional)
-        </p>
+        {form.assigneeId !== form.defaultAssignee ? (
+          <SetDefaultButton
+            onSave={form.saveDefaultAssignee}
+            label="assignee"
+          />
+        ) : (
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            User to assign this issue to (optional)
+          </p>
+        )}
       </div>
 
       <div className="mb-6">
@@ -129,9 +182,16 @@ const IssueFormFields: React.FC<IssueFormFieldsProps> = ({ form }) => {
           loading={form.loadingSprints}
           onOpen={form.loadSprints}
         />
-        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-          Sprint to assign this issue to (optional)
-        </p>
+        {form.sprintId !== form.defaultSprintId ? (
+          <SetDefaultButton
+            onSave={form.saveDefaultSprint}
+            label="sprint"
+          />
+        ) : (
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            Sprint to assign this issue to (optional)
+          </p>
+        )}
       </div>
 
       <div className="mb-6">
