@@ -1,6 +1,10 @@
 # Changelog
 
 ## v1.2.4 — 2026-04-26
+- **Responsive recording card layout** — metadata stacks above action buttons on narrower screens; clicking anywhere on a card opens the video player
+- Wider recordings list container
+- Plus icon on Create Jira Ticket button
+- Spacing fix on Set as Default button
 - **Auto-save Jira form state** — issue form fields persist to the recording so progress is preserved if you close the modal
 - **On-device AI filenames** — Chrome's built-in Summarizer API generates descriptive filenames from transcripts after recording
 - **Set-as-default buttons** — change a field in the issue form and set it as your new default for Project, Issue Type, Priority, Assignee, or Sprint
