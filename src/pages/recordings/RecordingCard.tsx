@@ -54,13 +54,19 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
   formatSize,
   formatDuration,
 }) => {
+  const handleCardClick = () => {
+    if (renamingId !== recording.id) onPlay(recording);
+  };
+
   return (
-    <div className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-full p-4 flex items-center gap-4 transition-all hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-[0_1px_3px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
-      <div className="text-slate-600 dark:text-slate-400 flex-shrink-0">
+    <div
+      className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-4 flex flex-col xl:flex-row items-stretch xl:items-center gap-4 transition-all hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-[0_1px_3px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_1px_3px_rgba(0,0,0,0.3)] cursor-pointer"
+      onClick={handleCardClick}
+    >
+      <div className="text-slate-600 dark:text-slate-400 flex-shrink-0 hidden xl:block">
         <Icon name="video" size={32} />
       </div>
       {renamingId === recording.id ? (
-        // modal
         <>
           <div className="flex-1 min-w-0 flex items-center gap-2">
             <input
@@ -104,142 +110,135 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
           </Button>
         </>
       ) : (
-        // list
         <>
           <RecordingMetadata
             recording={recording}
-            onPlay={onPlay}
             formatDate={formatDate}
             formatSize={formatSize}
             formatDuration={formatDuration}
           />
-          <Button
-            variant="ghost"
-            rounded="full"
-            className="bg-transparent !px-2 !py-2 text-lg flex-shrink-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (recording.transcript && onCopyTranscript) {
-                onCopyTranscript(recording.transcript);
+          <div className="flex items-center gap-2 flex-shrink-0 self-end xl:self-center">
+            <Button
+              variant="ghost"
+              rounded="full"
+              className="bg-transparent !px-2 !py-2 text-lg flex-shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (recording.transcript && onCopyTranscript) {
+                  onCopyTranscript(recording.transcript);
+                }
+              }}
+              disabled={!recording.transcript}
+              title={
+                recording.transcript
+                  ? "Copy transcript to clipboard"
+                  : "No transcript available"
               }
-            }}
-            disabled={!recording.transcript}
-            title={
-              recording.transcript
-                ? "Copy transcript to clipboard"
-                : "No transcript available"
-            }
-          >
-            Copy Script
-            <Icon name="copy" size={14} />
-          </Button>
-          <Button
-            variant="ghost"
-            rounded="full"
-            className="bg-transparent !px-2 !py-2 text-lg flex-shrink-0 !gap-1"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (recording.transcript && onOpenInAI) {
-                onOpenInAI(recording.transcript);
+            >
+              Copy Script
+              <Icon name="copy" size={14} />
+            </Button>
+            <Button
+              variant="ghost"
+              rounded="full"
+              className="bg-transparent !px-2 !py-2 text-lg flex-shrink-0 !gap-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (recording.transcript && onOpenInAI) {
+                  onOpenInAI(recording.transcript);
+                }
+              }}
+              disabled={!recording.transcript}
+              title={
+                recording.transcript
+                  ? isClipboardOnly
+                    ? `Copy transcript to clipboard and open ${aiProviderLabel}`
+                    : `Open in ${aiProviderLabel} with transcript`
+                  : "No transcript available"
               }
-            }}
-            disabled={!recording.transcript}
-            title={
-              recording.transcript
-                ? isClipboardOnly
-                  ? `Copy transcript to clipboard and open ${aiProviderLabel}`
-                  : `Open in ${aiProviderLabel} with transcript`
-                : "No transcript available"
-            }
-          >
-            {isClipboardOnly ? `Copy & Open ${aiProviderLabel}` : `Open in ${aiProviderLabel}`}
-            <Icon name="external-link" size={14} />
-          </Button>
-          {isJiraConnected &&
-            (recording.jiraIssueKey ? (
-              <a
-                href={recording.jiraIssueUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="px-3 py-2 text-sm font-medium flex-shrink-0 bg-blue-600 dark:bg-blue-500 text-white rounded-full hover:bg-blue-700 dark:hover:bg-blue-600 transition-all flex items-center gap-2"
-                title={`View Jira Issue ${recording.jiraIssueKey}`}
-              >
-                {recording.jiraIssueKey}
-              </a>
-            ) : onCreateJiraIssue ? (
-              <Button
-                variant="primary"
-                rounded="full"
-                className="px-3 py-2 text-sm flex-shrink-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCreateJiraIssue(recording);
-                }}
-                title="Create Jira Issue"
-              >
-                <Icon name="plus" size={16} />
-                Create Jira Ticket
-              </Button>
-            ) : null)}
-          <div onClick={(e) => e.stopPropagation()}>
-            <ContextMenu
-              items={[
-                // Add Rename as first item
-                {
-                  label: "Rename",
-                  icon: <Icon name="edit" size={16} />,
-                  onClick: () => onStartRename(recording),
-                  className: "",
-                },
-                {
-                  label: "Open Local File",
-                  icon: <Icon name="folder" size={16} />,
-                  onClick: () => onShowInFinder?.(recording.downloadId!),
-                  className: "",
-                },
-
-                // Add Open file locally option (fallback)
-                ...(onOpenFileLocally
-                  ? [
-                    {
-                      label: "Download",
-                      icon: <Icon name="folder" size={16} />,
-                      onClick: () => onOpenFileLocally(recording.id, recording.filename),
-                      className: "",
-                    },
-                  ]
-                  : []),
-                // Conditionally add Copy Jira Link if linked
-                ...(recording.jiraIssueKey && recording.jiraIssueUrl && onCopyJiraLink
-                  ? [{
-                      label: "Copy Jira Link",
-                      icon: <Icon name="copy" size={16} />,
-                      onClick: () => onCopyJiraLink(recording.jiraIssueUrl!),
-                      className: "",
-                    }]
-                  : []),
-                // Conditionally add Unlink Jira Issue if linked
-                ...(recording.jiraIssueKey && onUnlinkJiraIssue
-                  ? [
-                    {
-                      label: "Unlink Jira Issue",
-                      icon: <Icon name="link" size={16} />,
-                      onClick: () => onUnlinkJiraIssue(recording.id),
-                      className:
-                        "text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20",
-                    },
-                  ]
-                  : []),
-                {
-                  label: "Delete",
-                  icon: <Icon name="trash" size={16} />,
-                  onClick: () => onDelete(recording.id),
-                  className:
-                    "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20",
-                },
-              ]}
-            />
+            >
+              {isClipboardOnly ? `Copy & Open ${aiProviderLabel}` : `Open in ${aiProviderLabel}`}
+              <Icon name="external-link" size={14} />
+            </Button>
+            {isJiraConnected &&
+              (recording.jiraIssueKey ? (
+                <a
+                  href={recording.jiraIssueUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="px-3 py-2 text-sm font-medium flex-shrink-0 bg-blue-600 dark:bg-blue-500 text-white rounded-full hover:bg-blue-700 dark:hover:bg-blue-600 transition-all flex items-center gap-2"
+                  title={`View Jira Issue ${recording.jiraIssueKey}`}
+                >
+                  {recording.jiraIssueKey}
+                </a>
+              ) : onCreateJiraIssue ? (
+                <Button
+                  variant="primary"
+                  rounded="full"
+                  className="px-3 py-2 text-sm flex-shrink-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreateJiraIssue(recording);
+                  }}
+                  title="Create Jira Issue"
+                >
+                  <Icon name="plus" size={16} />
+                  Create Jira Ticket
+                </Button>
+              ) : null)}
+            <div onClick={(e) => e.stopPropagation()}>
+              <ContextMenu
+                items={[
+                  {
+                    label: "Rename",
+                    icon: <Icon name="edit" size={16} />,
+                    onClick: () => onStartRename(recording),
+                  },
+                  {
+                    label: "Open Local File",
+                    icon: <Icon name="folder" size={16} />,
+                    onClick: () => onShowInFinder?.(recording.downloadId!),
+                  },
+                  ...(onOpenFileLocally
+                    ? [
+                        {
+                          label: "Download",
+                          icon: <Icon name="folder" size={16} />,
+                          onClick: () => onOpenFileLocally(recording.id, recording.filename),
+                        },
+                      ]
+                    : []),
+                  ...(recording.jiraIssueKey && recording.jiraIssueUrl && onCopyJiraLink
+                    ? [
+                        {
+                          label: "Copy Jira Link",
+                          icon: <Icon name="copy" size={16} />,
+                          onClick: () => onCopyJiraLink(recording.jiraIssueUrl!),
+                        },
+                      ]
+                    : []),
+                  ...(recording.jiraIssueKey && onUnlinkJiraIssue
+                    ? [
+                        {
+                          label: "Unlink Jira Issue",
+                          icon: <Icon name="link" size={16} />,
+                          onClick: () => onUnlinkJiraIssue(recording.id),
+                          className:
+                            "text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20",
+                        },
+                      ]
+                    : []),
+                  {
+                    label: "Delete",
+                    icon: <Icon name="trash" size={16} />,
+                    onClick: () => onDelete(recording.id),
+                    className:
+                      "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20",
+                  },
+                ]}
+              />
+            </div>
           </div>
         </>
       )}

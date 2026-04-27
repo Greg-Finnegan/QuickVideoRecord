@@ -4,29 +4,22 @@ import Icon from "../../components/Icon";
 
 interface RecordingMetadataProps {
   recording: Recording;
-  onPlay: (recording: Recording) => void;
   formatDate: (timestamp: number) => string;
   formatSize: (bytes?: number) => string;
   formatDuration: (seconds?: number) => string;
 }
 
-/**
- * Displays recording metadata including filename, date, duration, size, and transcription status
- * Clickable area to play the recording
- */
 const RecordingMetadata: React.FC<RecordingMetadataProps> = ({
   recording,
-  onPlay,
   formatDate,
   formatSize,
   formatDuration,
 }) => {
   return (
     <div
-      className="flex-1 min-w-0 cursor-pointer"
-      onClick={() => onPlay(recording)}
+      className="xl:flex-1 min-w-0"
     >
-      <h3 className="m-0 mb-2 text-sm font-medium text-slate-900 dark:text-slate-100 break-words hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+      <h3 className="m-0 mb-2 text-sm font-medium text-slate-900 dark:text-slate-100 break-words">
         {recording.filename}
       </h3>
       <div className="flex flex-wrap gap-4">
