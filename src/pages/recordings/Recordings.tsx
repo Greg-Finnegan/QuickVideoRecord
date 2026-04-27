@@ -216,7 +216,7 @@ const Recordings: React.FC = () => {
         subtitle="View and manage your screen recordings"
       />
 
-      <div className="px-10 py-6 max-w-[1200px] mx-auto">
+      <div className="px-10 py-6 max-w-[1600px] mx-auto">
         {loading ? (
           <div className="text-center py-20 px-5">
             <p>Loading recordings...</p>
