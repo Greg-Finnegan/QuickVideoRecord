@@ -178,6 +178,7 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
                 }}
                 title="Create Jira Issue"
               >
+                <Icon name="plus" size={16} />
                 Create Jira Ticket
               </Button>
             ) : null)}
