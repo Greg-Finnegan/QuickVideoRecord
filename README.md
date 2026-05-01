@@ -60,11 +60,6 @@ Many users also:
 - Direct link to ChatGPT / LLM with transcript + custom prompt
 - Refreshable extension without store publication
 
-## Current limitations & known realities
-
-- Very long recordings may take a while to transcribe but should complete reliably
-- Transcription quality depends heavily on clear speech & low background noise
-
 ## Installation
 
 1. Clone or download this repository OR Run the build (bash) script (`build-chrome-extension.sh`)
