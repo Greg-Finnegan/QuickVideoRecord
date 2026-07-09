@@ -3,6 +3,8 @@ import fixWebmDuration from 'fix-webm-duration';
 import '../../index.css';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
+import AudioVisualizer from '../../components/AudioVisualizer';
+import { useStreamAudioLevels } from '../../hooks/useStreamAudioLevels';
 import { Recording, RecordingStorage } from '../../types/recording';
 import { videoStorage } from '../../utils/videoStorage';
 
@@ -13,6 +15,10 @@ const Recorder: React.FC = () => {
   const recordingStartTimeRef = useRef<number>(0);
   const [isRecording, setIsRecording] = useState(false);
   const [showStartButton, setShowStartButton] = useState(true);
+  const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
+
+  // Tap the recorded audio locally and broadcast levels to the side panel.
+  const audioLevels = useStreamAudioLevels(audioStream, { broadcast: true });
 
   useEffect(() => {
     console.log('Recorder component mounted');
@@ -132,6 +138,9 @@ const Recorder: React.FC = () => {
       if (videoRef.current) {
         videoRef.current.srcObject = finalStream;
       }
+
+      // Drive the audio visualizer (local + broadcast to side panel).
+      setAudioStream(finalStream);
 
       recordedChunksRef.current = [];
 
@@ -256,6 +265,8 @@ const Recorder: React.FC = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
     }
+    // Tear down the visualizer / stop broadcasting levels.
+    setAudioStream(null);
   };
 
   return (
@@ -279,6 +290,12 @@ const Recorder: React.FC = () => {
           <div className="bg-black/85 dark:bg-black/90 text-white px-8 py-4 rounded-full flex items-center gap-3 text-base font-medium shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
             <span className="w-3 h-3 bg-red-600 dark:bg-red-500 rounded-full flex-shrink-0 animate-[pulse_1.5s_ease-in-out_infinite]"></span>
             <span className="leading-none">Recording in progress...</span>
+          </div>
+          <div className="bg-black/85 dark:bg-black/90 px-6 py-3 rounded-2xl w-[280px] flex flex-col items-center gap-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <AudioVisualizer levels={audioLevels} isActive className="w-full" />
+            <span className="flex items-center gap-1.5 text-slate-300 text-xs">
+              <Icon name="mic" size={12} /> Audio is being captured
+            </span>
           </div>
           <Button
             variant="warning"

@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.2.5 — 2026-07-09
+- **Live audio visualizer** — animated frequency bars show while recording, on both the recorder tab and the side panel, so you can see audio is being captured
+
 ## v1.2.4 — 2026-04-26
 - **Responsive recording card layout** — metadata stacks above action buttons on narrower screens; clicking anywhere on a card opens the video player
 - Wider recordings list container

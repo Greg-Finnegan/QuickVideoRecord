@@ -3,13 +3,16 @@ import "../../index.css";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
 import Icon from "../../components/Icon";
+import AudioVisualizer from "../../components/AudioVisualizer";
 import CopyButton from "@src/components/CopyButton";
 import type { RecordingSessionState } from "../../types";
+import { AUDIO_LEVELS_MESSAGE } from "../../hooks/useStreamAudioLevels";
 import { useAiSettings } from "../settings/hooks/useAiSettings";
 
 const SidePanel: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [status, setStatus] = useState("");
+  const [audioLevels, setAudioLevels] = useState<number[]>([]);
   const [recorderTabId, setRecorderTabId] = useState<number | null>(null);
   const recorderTabIdRef = useRef<number | null>(null);
   const [micStatus, setMicStatus] = useState<
@@ -49,6 +52,7 @@ const SidePanel: React.FC = () => {
           setIsRecording(false);
           setRecorderTabId(null);
           recorderTabIdRef.current = null;
+          setAudioLevels([]);
         }
       }
       if (changes.recorderTabId) {
@@ -66,6 +70,13 @@ const SidePanel: React.FC = () => {
 
   useEffect(() => {
     const messageListener = (msg: any) => {
+      // High-frequency audio level updates from the recorder tab — handle first
+      // and return to avoid log spam / unnecessary work.
+      if (msg.action === AUDIO_LEVELS_MESSAGE) {
+        if (Array.isArray(msg.levels)) setAudioLevels(msg.levels);
+        return;
+      }
+
       console.log("SidePanel received message:", JSON.stringify(msg));
 
       if (msg.action === "recordingStarted") {
@@ -134,6 +145,7 @@ const SidePanel: React.FC = () => {
     try {
       await chrome.tabs.sendMessage(recorderTabId, { action: "stopRecording" });
       setIsRecording(false);
+      setAudioLevels([]);
       setStatus("Processing download...");
     } catch (err: any) {
       setStatus("Error stopping: " + err.message);
@@ -284,6 +296,15 @@ const SidePanel: React.FC = () => {
           <Icon name="stop" size={16} />
           Stop & Download
         </Button>
+
+        {isRecording && (
+          <div className="mb-2 px-4 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg flex flex-col items-center gap-1.5">
+            <AudioVisualizer levels={audioLevels} isActive className="w-full" />
+            <span className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+              <Icon name="mic" size={12} /> Audio is being captured
+            </span>
+          </div>
+        )}
 
         <Button
           variant={
