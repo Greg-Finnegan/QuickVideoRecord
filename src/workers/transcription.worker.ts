@@ -98,6 +98,13 @@ async function initializeModel(): Promise<void> {
         // v3+ replaces the `quantized` boolean with `dtype`.
         // 'q8' resolves to the bundled `*_quantized.onnx` weights.
         dtype: 'q8',
+        // ORT 1.26 tries to fuse DequantizeLinear->MatMul into its MatMulNBits
+        // operator, but these q8 weights (built in the @xenova era) lack the
+        // block-wise scale that fusion requires. That fusion is an extended
+        // (Level-2) optimization, so cap optimization at 'basic' to skip it.
+        session_options: {
+          graphOptimizationLevel: 'basic',
+        },
         progress_callback: (progress: any) => {
           if (progress.progress !== undefined) {
             const progressPercent = Math.round(progress.progress);
