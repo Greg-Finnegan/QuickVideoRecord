@@ -1,6 +1,5 @@
 import { pipeline, env } from '@huggingface/transformers';
 
-// Model path will be set by the offscreen document which has chrome API access
 let modelPathConfigured = false;
 
 function configureModelPath(basePath: string, ortPath?: string) {
@@ -8,29 +7,20 @@ function configureModelPath(basePath: string, ortPath?: string) {
   env.allowRemoteModels = false;
   env.allowLocalModels = true;
 
-  // onnxruntime-web (transformers.js v3+) fetches its wasm backend via a
-  // dynamic import(). Inside this blob-URL module worker the import would
-  // resolve against the blob and fail, so point ORT at the runtime files we
-  // ship under the extension origin (public/ort -> chrome-extension://<id>/ort/).
   const wasm = env.backends?.onnx?.wasm;
   if (wasm) {
     if (ortPath) {
       wasm.wasmPaths = ortPath;
     }
-    // Offscreen documents are not cross-origin isolated, so SharedArrayBuffer /
-    // threaded wasm is unavailable — run single-threaded to avoid a backend
-    // spawn failure.
     wasm.numThreads = 1;
   }
 
   modelPathConfigured = true;
 }
 
-// Worker state
 let transcriber: any = null;
 let isLoading: boolean = false;
 
-// Message types
 interface InitializeMessage {
   action: 'initialize';
   modelPath?: string;
@@ -48,7 +38,6 @@ interface TerminateMessage {
 
 type WorkerMessage = InitializeMessage | TranscribeMessage | TerminateMessage;
 
-// Response types
 interface ProgressResponse {
   type: 'progress';
   status: string;
@@ -76,7 +65,6 @@ function postMessage(message: WorkerResponse): void {
   self.postMessage(message);
 }
 
-// Initialize the Whisper model
 async function initializeModel(): Promise<void> {
   if (transcriber) {
     postMessage({ type: 'initialized' });
@@ -95,13 +83,7 @@ async function initializeModel(): Promise<void> {
       'automatic-speech-recognition',
       'Xenova/whisper-tiny.en',
       {
-        // v3+ replaces the `quantized` boolean with `dtype`.
-        // 'q8' resolves to the bundled `*_quantized.onnx` weights.
         dtype: 'q8',
-        // ORT 1.26 tries to fuse DequantizeLinear->MatMul into its MatMulNBits
-        // operator, but these q8 weights (built in the @xenova era) lack the
-        // block-wise scale that fusion requires. That fusion is an extended
-        // (Level-2) optimization, so cap optimization at 'basic' to skip it.
         session_options: {
           graphOptimizationLevel: 'basic',
         },
@@ -111,7 +93,7 @@ async function initializeModel(): Promise<void> {
             postMessage({
               type: 'progress',
               status: 'Loading AI model',
-              progress: Math.min(progressPercent, 30), // Cap at 30% for model loading
+              progress: Math.min(progressPercent, 30),
             });
           }
         },

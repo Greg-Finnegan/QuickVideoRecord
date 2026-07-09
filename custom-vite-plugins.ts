@@ -11,10 +11,6 @@ import type { PluginOption } from 'vite';
 export function copyOrtRuntime (): PluginOption {
   const srcDir = resolve(__dirname, 'node_modules/onnxruntime-web/dist')
   const destDir = resolve(__dirname, 'public/ort')
-
-  // We run wasm-only (no WebGPU), so onnxruntime-web only ever loads the base
-  // and asyncify builds — jsep/jspi come from the onnxruntime-web/webgpu entry
-  // and are statically unreachable here. Ship just these two variants.
   const KEEP = [
     'ort-wasm-simd-threaded.mjs',
     'ort-wasm-simd-threaded.wasm',

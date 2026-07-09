@@ -1,4 +1,3 @@
-// Worker response types (matching worker implementation)
 interface ProgressResponse {
   type: 'progress';
   status: string;
