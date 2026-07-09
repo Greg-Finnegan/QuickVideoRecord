@@ -1,4 +1,4 @@
-import { pipeline, env } from '@xenova/transformers';
+import { pipeline, env } from '@huggingface/transformers';
 
 // Model path will be set by the offscreen document which has chrome API access
 let modelPathConfigured = false;
@@ -78,7 +78,9 @@ async function initializeModel(): Promise<void> {
       'automatic-speech-recognition',
       'Xenova/whisper-tiny.en',
       {
-        quantized: true,
+        // v3+ replaces the `quantized` boolean with `dtype`.
+        // 'q8' resolves to the bundled `*_quantized.onnx` weights.
+        dtype: 'q8',
         progress_callback: (progress: any) => {
           if (progress.progress !== undefined) {
             const progressPercent = Math.round(progress.progress);
