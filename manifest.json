@@ -35,7 +35,8 @@
       "resources": [
         "src/pages/recorder/index.html",
         "models/*",
-        "models/**/*"
+        "models/**/*",
+        "ort/*"
       ],
       "matches": [
         "<all_urls>"

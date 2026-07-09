@@ -1,23 +1,30 @@
-import { pipeline, env } from '@xenova/transformers';
+import { pipeline, env } from '@huggingface/transformers';
 
-// Model path will be set by the offscreen document which has chrome API access
 let modelPathConfigured = false;
 
-function configureModelPath(basePath: string) {
+function configureModelPath(basePath: string, ortPath?: string) {
   env.localModelPath = basePath;
   env.allowRemoteModels = false;
   env.allowLocalModels = true;
+
+  const wasm = env.backends?.onnx?.wasm;
+  if (wasm) {
+    if (ortPath) {
+      wasm.wasmPaths = ortPath;
+    }
+    wasm.numThreads = 1;
+  }
+
   modelPathConfigured = true;
 }
 
-// Worker state
 let transcriber: any = null;
 let isLoading: boolean = false;
 
-// Message types
 interface InitializeMessage {
   action: 'initialize';
   modelPath?: string;
+  ortPath?: string;
 }
 
 interface TranscribeMessage {
@@ -31,7 +38,6 @@ interface TerminateMessage {
 
 type WorkerMessage = InitializeMessage | TranscribeMessage | TerminateMessage;
 
-// Response types
 interface ProgressResponse {
   type: 'progress';
   status: string;
@@ -59,7 +65,6 @@ function postMessage(message: WorkerResponse): void {
   self.postMessage(message);
 }
 
-// Initialize the Whisper model
 async function initializeModel(): Promise<void> {
   if (transcriber) {
     postMessage({ type: 'initialized' });
@@ -78,14 +83,17 @@ async function initializeModel(): Promise<void> {
       'automatic-speech-recognition',
       'Xenova/whisper-tiny.en',
       {
-        quantized: true,
+        dtype: 'q8',
+        session_options: {
+          graphOptimizationLevel: 'basic',
+        },
         progress_callback: (progress: any) => {
           if (progress.progress !== undefined) {
             const progressPercent = Math.round(progress.progress);
             postMessage({
               type: 'progress',
               status: 'Loading AI model',
-              progress: Math.min(progressPercent, 30), // Cap at 30% for model loading
+              progress: Math.min(progressPercent, 30),
             });
           }
         },
@@ -171,9 +179,9 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
   try {
     switch (action) {
       case 'initialize':
-        const { modelPath } = event.data as InitializeMessage;
+        const { modelPath, ortPath } = event.data as InitializeMessage;
         if (modelPath) {
-          configureModelPath(modelPath);
+          configureModelPath(modelPath, ortPath);
         }
         await initializeModel();
         break;
