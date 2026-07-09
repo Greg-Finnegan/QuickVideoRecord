@@ -38,3 +38,5 @@ scripts/chrome-webstore-auth.ts
 scripts/chrome-webstore-publish.ts
 scripts/chrome-webstore-types.ts
 .claude/worktrees/
+# onnxruntime-web runtime copied from node_modules at build time
+public/ort/

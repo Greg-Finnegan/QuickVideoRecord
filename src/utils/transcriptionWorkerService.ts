@@ -109,7 +109,8 @@ class TranscriptionWorkerService {
         // Send initialize message to worker with model path
         // chrome.runtime.getURL is available here (offscreen document context)
         const modelPath = chrome.runtime.getURL('models/');
-        this.worker.postMessage({ action: 'initialize', modelPath });
+        const ortPath = chrome.runtime.getURL('ort/');
+        this.worker.postMessage({ action: 'initialize', modelPath, ortPath });
       } catch (error) {
         this.isInitializing = false;
         reject(error);

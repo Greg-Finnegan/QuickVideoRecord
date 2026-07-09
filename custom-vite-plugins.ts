@@ -2,6 +2,36 @@ import fs from 'fs';
 import { resolve } from 'path';
 import type { PluginOption } from 'vite';
 
+// plugin to copy the onnxruntime-web runtime (.mjs glue + .wasm binaries) into
+// public/ort so the transcription worker can load them from the extension
+// origin. transformers.js v3+ has onnxruntime-web fetch these via a dynamic
+// import(); inside a blob-URL module worker that would otherwise resolve
+// against the blob and fail. Serving them as static assets + pointing
+// env.backends.onnx.wasm.wasmPaths at them makes the URLs absolute.
+export function copyOrtRuntime (): PluginOption {
+  const srcDir = resolve(__dirname, 'node_modules/onnxruntime-web/dist')
+  const destDir = resolve(__dirname, 'public/ort')
+
+  return {
+    name: 'copy-ort-runtime',
+    buildStart () {
+      if (!fs.existsSync(srcDir)) return
+      fs.mkdirSync(destDir, { recursive: true })
+      const files = fs.readdirSync(srcDir).filter(
+        (f) => f.startsWith('ort-wasm-simd-threaded.') && (f.endsWith('.mjs') || f.endsWith('.wasm'))
+      )
+      for (const file of files) {
+        const src = resolve(srcDir, file)
+        const dest = resolve(destDir, file)
+        // copy only when missing or changed to keep dev rebuilds fast
+        if (!fs.existsSync(dest) || fs.statSync(src).mtimeMs > fs.statSync(dest).mtimeMs) {
+          fs.copyFileSync(src, dest)
+        }
+      }
+    }
+  }
+}
+
 // plugin to remove dev icons from prod build
 export function stripDevIcons (isDev: boolean) {
   if (isDev) return null

@@ -3,10 +3,26 @@ import { pipeline, env } from '@huggingface/transformers';
 // Model path will be set by the offscreen document which has chrome API access
 let modelPathConfigured = false;
 
-function configureModelPath(basePath: string) {
+function configureModelPath(basePath: string, ortPath?: string) {
   env.localModelPath = basePath;
   env.allowRemoteModels = false;
   env.allowLocalModels = true;
+
+  // onnxruntime-web (transformers.js v3+) fetches its wasm backend via a
+  // dynamic import(). Inside this blob-URL module worker the import would
+  // resolve against the blob and fail, so point ORT at the runtime files we
+  // ship under the extension origin (public/ort -> chrome-extension://<id>/ort/).
+  const wasm = env.backends?.onnx?.wasm;
+  if (wasm) {
+    if (ortPath) {
+      wasm.wasmPaths = ortPath;
+    }
+    // Offscreen documents are not cross-origin isolated, so SharedArrayBuffer /
+    // threaded wasm is unavailable — run single-threaded to avoid a backend
+    // spawn failure.
+    wasm.numThreads = 1;
+  }
+
   modelPathConfigured = true;
 }
 
@@ -18,6 +34,7 @@ let isLoading: boolean = false;
 interface InitializeMessage {
   action: 'initialize';
   modelPath?: string;
+  ortPath?: string;
 }
 
 interface TranscribeMessage {
@@ -173,9 +190,9 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
   try {
     switch (action) {
       case 'initialize':
-        const { modelPath } = event.data as InitializeMessage;
+        const { modelPath, ortPath } = event.data as InitializeMessage;
         if (modelPath) {
-          configureModelPath(modelPath);
+          configureModelPath(modelPath, ortPath);
         }
         await initializeModel();
         break;
