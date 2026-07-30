@@ -112,10 +112,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // Save transcript from offscreen document to the recording in storage
   if (message.action === "saveTranscript") {
-    saveTranscript(message.recordingId, message.transcript, message.generatedFilename)
+    saveTranscript(
+      message.recordingId,
+      message.transcript,
+      message.generatingFilename === true
+    )
       .then(() => sendResponse({ success: true }))
       .catch((err: any) => sendResponse({ success: false, error: err.message }));
     return true; // async response
+  }
+
+  if (message.action === "saveGeneratedFilename") {
+    saveGeneratedFilename(message.recordingId, message.generatedFilename)
+      .then(() => sendResponse({ success: true }))
+      .catch((err: any) => sendResponse({ success: false, error: err.message }));
+    return true;
   }
 
   // Handle transcription failure from offscreen document
@@ -197,7 +208,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // Save transcript to the recording in storage (called by offscreen via message)
-async function saveTranscript(recordingId: string, transcript: string, generatedFilename?: string | null) {
+async function saveTranscript(
+  recordingId: string,
+  transcript: string,
+  generatingFilename: boolean
+) {
   const result = (await chrome.storage.local.get("recordings")) as any;
   const recordings = result.recordings || [];
   const idx = recordings.findIndex((r: any) => r.id === recordingId);
@@ -208,9 +223,7 @@ async function saveTranscript(recordingId: string, transcript: string, generated
 
   recordings[idx].transcript = transcript;
   recordings[idx].transcribing = false;
-  if (generatedFilename) {
-    recordings[idx].filename = generatedFilename;
-  }
+  recordings[idx].generatingFilename = generatingFilename;
   await chrome.storage.local.set({ recordings });
   console.log("[Background] Transcript saved for recording:", recordingId);
 
@@ -219,6 +232,32 @@ async function saveTranscript(recordingId: string, transcript: string, generated
     action: "transcriptionComplete",
     recordingId,
     transcript,
+    generatingFilename,
+  });
+}
+
+async function saveGeneratedFilename(
+  recordingId: string,
+  generatedFilename?: string | null
+) {
+  const result = (await chrome.storage.local.get("recordings")) as any;
+  const recordings = result.recordings || [];
+  const idx = recordings.findIndex((r: any) => r.id === recordingId);
+
+  if (idx === -1) {
+    throw new Error("Recording not found");
+  }
+
+  if (generatedFilename) {
+    recordings[idx].filename = generatedFilename;
+  }
+  recordings[idx].generatingFilename = false;
+  await chrome.storage.local.set({ recordings });
+
+  chrome.runtime.sendMessage({
+    action: "filenameGenerationComplete",
+    recordingId,
+    generatedFilename,
   });
 }
 
@@ -230,6 +269,7 @@ async function clearTranscribingFlag(recordingId: string) {
     const idx = recordings.findIndex((r: any) => r.id === recordingId);
     if (idx !== -1) {
       recordings[idx].transcribing = false;
+      recordings[idx].generatingFilename = false;
       await chrome.storage.local.set({ recordings });
       console.log("[Background] Cleared transcribing flag for:", recordingId);
     }
@@ -259,6 +299,7 @@ async function startTranscription(recordingId: string) {
 
     // Mark recording as transcribing
     recording.transcribing = true;
+    recording.generatingFilename = false;
     await chrome.storage.local.set({ recordings });
 
     // Notify UI that transcription started
@@ -295,6 +336,7 @@ async function startTranscription(recordingId: string) {
       const idx = recordings.findIndex((r: any) => r.id === recordingId);
       if (idx !== -1) {
         recordings[idx].transcribing = false;
+        recordings[idx].generatingFilename = false;
         await chrome.storage.local.set({ recordings });
       }
     } catch {
@@ -315,6 +357,10 @@ async function checkStuckTranscriptions() {
       if (recording.transcribing) {
         console.warn("[Background] Found stuck transcription on startup:", recording.id);
         recording.transcribing = false;
+        changed = true;
+      }
+      if (recording.generatingFilename) {
+        recording.generatingFilename = false;
         changed = true;
       }
     }

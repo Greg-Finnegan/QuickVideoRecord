@@ -20,14 +20,37 @@ export const useRecordingTranscriptionUpdates = ({
         setRecordings((prevRecordings) =>
           prevRecordings.map((r) =>
             r.id === message.recordingId
-              ? { ...r, transcript: message.transcript, transcribing: false }
+              ? {
+                  ...r,
+                  transcript: message.transcript,
+                  transcribing: false,
+                  generatingFilename: message.generatingFilename === true,
+                }
+              : r
+          )
+        );
+      } else if (message.action === "filenameGenerationComplete") {
+        setRecordings((prevRecordings) =>
+          prevRecordings.map((r) =>
+            r.id === message.recordingId
+              ? {
+                  ...r,
+                  filename: message.generatedFilename || r.filename,
+                  generatingFilename: false,
+                }
               : r
           )
         );
       } else if (message.action === "transcriptionFailed") {
         setRecordings((prevRecordings) =>
           prevRecordings.map((r) =>
-            r.id === message.recordingId ? { ...r, transcribing: false } : r
+            r.id === message.recordingId
+              ? {
+                  ...r,
+                  transcribing: false,
+                  generatingFilename: false,
+                }
+              : r
           )
         );
       }

@@ -1,6 +1,7 @@
 import React from "react";
 import type { Recording } from "../../types";
 import Icon from "../../components/Icon";
+import { Sparkles } from "lucide-react";
 
 interface RecordingMetadataProps {
   recording: Recording;
@@ -44,6 +45,11 @@ const RecordingMetadata: React.FC<RecordingMetadataProps> = ({
         {recording.transcript && !recording.transcribing && (
           <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
             <Icon name="check" size={14} /> Transcribed
+          </span>
+        )}
+        {recording.generatingFilename && (
+          <span className="text-xs text-purple-600 dark:text-purple-400 flex items-center gap-1">
+            <Sparkles size={14} /> Generating filename...
           </span>
         )}
       </div>

@@ -18,6 +18,7 @@ export interface Recording {
   size?: number;
   transcript?: string;
   transcribing?: boolean;
+  generatingFilename?: boolean;
   jiraIssueKey?: string;
   jiraIssueUrl?: string;
   downloadId?: number; // Chrome download ID for instant "Show in Finder"

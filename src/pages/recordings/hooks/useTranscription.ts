@@ -63,6 +63,13 @@ export const useTranscription = ({
       const updated = newRecordings.find((r) => r.id === selectedRecording.id);
       if (!updated) return;
 
+      if (
+        updated.filename !== selectedRecording.filename ||
+        updated.generatingFilename !== selectedRecording.generatingFilename
+      ) {
+        onRecordingUpdate(updated);
+      }
+
       // Transcript appeared — transcription completed
       if (updated.transcript && !selectedRecording.transcript) {
         onRecordingUpdate(updated);
@@ -97,6 +104,7 @@ export const useTranscription = ({
           ...selectedRecording,
           transcript: message.transcript,
           transcribing: false,
+          generatingFilename: message.generatingFilename === true,
         });
         setTranscriptionProgress("Transcription complete!");
         setTranscribing(false);

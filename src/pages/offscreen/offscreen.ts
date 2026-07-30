@@ -75,7 +75,22 @@ async function handleTranscribe(recordingId: string, summarizerEnabled: boolean)
       }
     );
 
-    console.log('[Offscreen] Transcription completed, generating filename...');
+    console.log('[Offscreen] Transcription completed');
+
+    // Persist and publish the transcript immediately so transcript-dependent UI
+    // is usable while optional local filename generation continues.
+    const saveResult = await sendToBackground({
+      action: 'saveTranscript',
+      recordingId,
+      transcript,
+      generatingFilename: summarizerEnabled,
+    });
+
+    if (!saveResult?.success) {
+      throw new Error(saveResult?.error || 'Background failed to save transcript');
+    }
+
+    console.log('[Offscreen] Transcript saved successfully:', recordingId);
 
     // Attempt to generate a descriptive filename via Summarizer API
     let generatedFilename: string | null = null;
@@ -94,19 +109,18 @@ async function handleTranscribe(recordingId: string, summarizerEnabled: boolean)
       }
     }
 
-    // Send transcript to background for persistence. This wakes the service
-    // worker if needed and waits for acknowledgement.
-    const saveResult = await sendToBackground({
-      action: 'saveTranscript',
-      recordingId,
-      transcript,
-      generatedFilename,
-    });
-
-    if (saveResult?.success) {
-      console.log('[Offscreen] Transcript saved successfully:', recordingId);
-    } else {
-      console.error('[Offscreen] Background failed to save transcript:', saveResult?.error);
+    if (summarizerEnabled) {
+      const filenameResult = await sendToBackground({
+        action: 'saveGeneratedFilename',
+        recordingId,
+        generatedFilename,
+      });
+      if (!filenameResult?.success) {
+        console.error(
+          '[Offscreen] Background failed to save generated filename:',
+          filenameResult?.error
+        );
+      }
     }
 
     // Clean up worker to prevent ONNX thread errors after transcription

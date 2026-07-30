@@ -5,6 +5,7 @@
 - **Open Side Panel from the main header** - button added for this.
 - **Improved main navigation** — the Jira profile button now opens your Jira homepage.
 - **Quick Create Jira issues** — open a prefilled Jira issue form directly from the main header.
+- **Faster transcript access** — copy or use a transcript immediately while automatic filename generation continues in the background.
 
 ## v1.2.6 — 2026-07-09
 - Upgraded authentication keeps Atlassian tokens safer by using code-to-token and refresh-token exchange (backend service endpoint) (/v1/oauth/token).
