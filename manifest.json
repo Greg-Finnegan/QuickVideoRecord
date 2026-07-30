@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Jira Quick Video Recorder",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "Screen recording with local AI transcription and Jira integration. Built for speed and web compatibility.",
   "icons": {
     "16": "icon-16.png",
@@ -23,7 +23,6 @@
     "offscreen"
   ],
   "host_permissions": [
-    "https://auth.atlassian.com/*",
     "https://api.atlassian.com/*"
   ],
   "background": {

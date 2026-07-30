@@ -7,7 +7,7 @@ gcloud run deploy "${CLOUD_RUN_SERVICE}" \
   --project="${GCP_PROJECT_ID}" \
   --region="${GCP_REGION}" \
   --source="${SERVER_DIR}" \
-  --allow-unauthenticated \
+  --no-invoker-iam-check \
   --service-account="${RUNTIME_SERVICE_ACCOUNT_EMAIL}" \
   --set-secrets="JIRA_CLIENT_ID=${JIRA_CLIENT_ID}:latest,JIRA_CLIENT_SECRET=${JIRA_CLIENT_SECRET}:latest" \
   --set-env-vars="JIRA_REDIRECT_URI=https://${CHROME_EXTENSION_ID}.chromiumapp.org/oauth2,ALLOWED_EXTENSION_ORIGIN=chrome-extension://${CHROME_EXTENSION_ID}" \
