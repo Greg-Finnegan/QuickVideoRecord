@@ -1,15 +1,15 @@
 # Privacy Policy for JiraQuickVideoRecord
 
-**Last updated:** March 8, 2026  
+**Last updated:** July 30, 2026  
 **Developer:** Greg
 
-This Chrome extension (JiraQuickVideoRecord) integrates with Jira via Atlassian OAuth 2.0 authentication. We are committed to protecting your privacy.
+This Chrome extension (JiraQuickVideoRecord) integrates with Jira via Atlassian [OAuth 2.0 (3LO)](https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/) authentication. We are committed to protecting your privacy.
 
 ## 1. No Cloud Data Collection or Storage
 This extension **does not collect, store, transmit, share, or process** any personal data, user content, or sensitive information on servers or in the cloud controlled by the developer.
 
 - Everything runs **locally** in your browser.
-- Temporary OAuth authorization codes and refresh tokens are sent to the extension's Cloud Run OAuth exchange service solely to exchange them with Atlassian. The service does not persist them.
+- Temporary OAuth authorization codes and refresh tokens are sent to the extension's private OAuth exchange service solely to exchange them with Atlassian. The service does not persist them.
 - Access and refresh tokens are stored **only** in Chrome's local storage on your device. Jira API traffic goes directly from the extension to Atlassian.
 
 ## 2. No Tracking, Analytics, or Telemetry
@@ -19,7 +19,7 @@ This extension **does not collect, store, transmit, share, or process** any pers
 ## 3. Data Access and Permissions
 - The extension requests **only the minimum** Chrome extension permissions and Atlassian OAuth scopes required for its functionality.
 - It can only access your Jira data **after you explicitly authorize it** via Atlassian's official consent screen.
-- Jira API interactions occur directly between your browser and Atlassian's servers. The Cloud Run service handles only OAuth token exchanges and does not receive Jira issues, projects, recordings, or API requests.
+- Jira API interactions occur directly between your browser and Atlassian's servers. The private cloud exchange service handles only OAuth token exchanges and does not receive Jira issues, projects, recordings, or API requests.
 
 ## 4. Security Practices
 - OAuth is implemented using Chrome's secure `chrome.identity.launchWebAuthFlow` method.
