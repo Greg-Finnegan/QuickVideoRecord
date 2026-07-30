@@ -30,6 +30,7 @@ import {
   Pause,
   Play,
   type LucideProps,
+  PanelLeftClose,
 } from "lucide-react";
 
 /**
@@ -64,7 +65,8 @@ export type IconName =
   | "arrow-right"
   | "plus"
   | "pause"
-  | "play";
+  | "play"
+  | "panel-left-close"
 
 /**
  * Icon component props
@@ -107,6 +109,7 @@ const iconMap: Record<IconName, React.ComponentType<LucideProps>> = {
   plus: Plus,
   pause: Pause,
   play: Play,
+  "panel-left-close": PanelLeftClose,
 };
 
 /**

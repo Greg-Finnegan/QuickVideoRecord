@@ -57,7 +57,11 @@ class JiraAuthService {
 
   async getAccessibleResources(
     accessToken: string
-  ): Promise<{ cloudId: string; siteName: string } | null> {
+  ): Promise<{
+    cloudId: string;
+    siteName: string;
+    siteUrl?: string;
+  } | null> {
     try {
       const response = await fetch(
         "https://api.atlassian.com/oauth/token/accessible-resources",
@@ -83,6 +87,7 @@ class JiraAuthService {
       return {
         cloudId: resources[0].id,
         siteName: resources[0].name,
+        siteUrl: resources[0].url,
       };
     } catch (error) {
       console.error("Failed to get Jira resources:", error);

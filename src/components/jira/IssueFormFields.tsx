@@ -9,6 +9,7 @@ type FormState = ReturnType<typeof useCreateIssueForm>;
 
 interface IssueFormFieldsProps {
   form: FormState;
+  showAttachVideo?: boolean;
 }
 
 const SetDefaultButton: React.FC<{
@@ -35,7 +36,10 @@ const SetDefaultButton: React.FC<{
   );
 };
 
-const IssueFormFields: React.FC<IssueFormFieldsProps> = ({ form }) => {
+const IssueFormFields: React.FC<IssueFormFieldsProps> = ({
+  form,
+  showAttachVideo = true,
+}) => {
   return (
     <>
       <div className="mb-6">
@@ -226,23 +230,25 @@ const IssueFormFields: React.FC<IssueFormFieldsProps> = ({ form }) => {
         )}
       </div>
 
-      <div className="mb-6">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={form.attachVideo}
-            onChange={(e) => form.setAttachVideo(e.target.checked)}
-            disabled={form.creating}
-            className="w-4 h-4 text-blue-600 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 disabled:opacity-50"
-          />
-          <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
-            Attach video recording to issue
-          </span>
-        </label>
-        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 ml-6">
-          Video will be uploaded as an attachment
-        </p>
-      </div>
+      {showAttachVideo && (
+        <div className="mb-6">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.attachVideo}
+              onChange={(e) => form.setAttachVideo(e.target.checked)}
+              disabled={form.creating}
+              className="w-4 h-4 text-blue-600 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 disabled:opacity-50"
+            />
+            <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+              Attach video recording to issue
+            </span>
+          </label>
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 ml-6">
+            Video will be uploaded as an attachment
+          </p>
+        </div>
+      )}
     </>
   );
 };

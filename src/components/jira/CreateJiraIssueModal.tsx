@@ -6,7 +6,7 @@ import { useCreateIssueForm } from "./hooks/useCreateIssueForm";
 import type { Recording } from "../../types";
 
 interface CreateJiraIssueModalProps {
-  recording: Recording;
+  recording?: Recording;
   onClose: () => void;
   onSuccess: (issueKey: string, issueUrl: string) => void;
   defaultProjectKey?: string;
@@ -84,7 +84,8 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
               Create Jira Issue
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 truncate mt-1">
-              {recording.filename}
+              {recording?.filename ??
+                "Create an issue using your saved Jira defaults"}
             </p>
           </div>
           <Button
@@ -99,7 +100,7 @@ const CreateJiraIssueModal: React.FC<CreateJiraIssueModalProps> = ({
 
         {/* Form */}
         <form onSubmit={onSubmit} className="p-6 overflow-y-auto flex-1">
-          <IssueFormFields form={form} />
+          <IssueFormFields form={form} showAttachVideo={Boolean(recording)} />
 
           {/* Error Display */}
           {form.error && (

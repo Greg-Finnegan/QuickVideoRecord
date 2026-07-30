@@ -478,6 +478,7 @@ async function handleJiraAuth(
     const cloudInfo = {
       cloudId: resources[0].id,
       siteName: resources[0].name,
+      siteUrl: resources[0].url,
     };
 
     // Store tokens
@@ -487,6 +488,7 @@ async function handleJiraAuth(
       expiresAt: Date.now() + tokens.expires_in * 1000,
       cloudId: cloudInfo.cloudId,
       siteName: cloudInfo.siteName,
+      siteUrl: cloudInfo.siteUrl,
     };
 
     await chrome.storage.local.set({ jiraTokens });

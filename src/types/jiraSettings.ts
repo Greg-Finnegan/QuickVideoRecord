@@ -9,6 +9,7 @@ export interface JiraTokens {
   expiresAt: number;
   cloudId?: string;
   siteName?: string;
+  siteUrl?: string;
 }
 
 /**
@@ -28,7 +29,7 @@ export interface JiraOAuthConfig {
 export interface JiraAccessibleResource {
   cloudId: string;
   siteName: string;
-  url?: string;
+  siteUrl?: string;
   scopes?: string[];
 }
 

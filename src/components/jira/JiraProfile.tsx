@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import Icon from "../Icon";
 import { jiraService } from "../../utils/jiraService";
 import { jiraAuth } from "../../utils/jiraAuth";
@@ -14,8 +13,8 @@ const JiraProfile: React.FC<JiraProfileProps> = ({
   clickable = true,
   showDisconnect = true
 }) => {
-  const navigate = useNavigate();
   const [user, setUser] = useState<Version3Models.User | null>(null);
+  const [siteUrl, setSiteUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +28,28 @@ const JiraProfile: React.FC<JiraProfileProps> = ({
     try {
       const currentUser = await jiraService.getCurrentUser();
       setUser(currentUser);
+      const tokens = await jiraAuth.getTokens();
+      let connectedSiteUrl = tokens?.siteUrl;
+
+      // Existing installations may have authenticated before siteUrl was stored.
+      if (!connectedSiteUrl && tokens?.accessToken) {
+        const resource = await jiraAuth.getAccessibleResources(
+          tokens.accessToken
+        );
+        connectedSiteUrl = resource?.siteUrl;
+        if (resource) {
+          await chrome.storage.local.set({
+            jiraTokens: {
+              ...tokens,
+              cloudId: resource.cloudId,
+              siteName: resource.siteName,
+              siteUrl: resource.siteUrl,
+            },
+          });
+        }
+      }
+
+      setSiteUrl(connectedSiteUrl || null);
     } catch (err) {
       console.error("Failed to load Jira user:", err);
       setError("Failed to load user profile");
@@ -46,8 +67,8 @@ const JiraProfile: React.FC<JiraProfileProps> = ({
   };
 
   const handleClick = () => {
-    if (clickable) {
-      navigate("/settings");
+    if (clickable && siteUrl) {
+      window.open(siteUrl, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -70,7 +91,7 @@ const JiraProfile: React.FC<JiraProfileProps> = ({
       className={`flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-full hover:border-slate-400 dark:hover:border-slate-600 transition-all group ${
         clickable ? "cursor-pointer" : ""
       }`}
-      title={clickable ? "Go to settings" : undefined}
+      title={clickable ? "Open Jira" : undefined}
     >
       {user.avatarUrls?.["48x48"] && (
         <img

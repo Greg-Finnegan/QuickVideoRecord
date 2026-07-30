@@ -184,7 +184,7 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
                   title="Create Jira Issue"
                 >
                   <Icon name="plus" size={16} />
-                  Create Jira Ticket
+                  Create Jira Issue
                 </Button>
               ) : null)}
             <div onClick={(e) => e.stopPropagation()}>

@@ -12,10 +12,10 @@ import type { Recording, CreateIssueFormData, JiraDraft } from "../../../types";
 import type { RecordingStorage } from "../../../types/recording";
 
 export const useCreateIssueForm = (
-  recording: Recording,
+  recording?: Recording,
   defaultProjectKey?: string
 ) => {
-  const draft = recording.jiraDraft;
+  const draft = recording?.jiraDraft;
 
   const { isJiraConnected } = useJiraConnection();
   const { jiraProjects, loadingProjects } = useJiraProjects(isJiraConnected);
@@ -27,18 +27,23 @@ export const useCreateIssueForm = (
     draft?.issueTypeName ?? ""
   );
   const [defaultIssueType, setDefaultIssueType] = useState("Task");
+  const [defaultIssueTypeLoaded, setDefaultIssueTypeLoaded] = useState(false);
   const [summary, setSummary] = useState(
-    draft?.summary ?? recording.filename
+    draft?.summary ?? recording?.filename ?? ""
   );
   const [description, setDescription] = useState(
     draft?.description ??
-      `Recording captured on ${formatDate(recording.timestamp)}${recording.transcript ? `\n\nTranscript:\n${recording.transcript}` : ""}`
+      (recording
+        ? `Recording captured on ${formatDate(recording.timestamp)}${recording.transcript ? `\n\nTranscript:\n${recording.transcript}` : ""}`
+        : "")
   );
   const [priority, setPriority] = useState(draft?.priority ?? "");
   const [assigneeId, setAssigneeId] = useState(draft?.assigneeId ?? "");
   const [sprintId, setSprintId] = useState(draft?.sprintId ?? "");
   const [labelsInput, setLabelsInput] = useState(draft?.labelsInput ?? "");
-  const [attachVideo, setAttachVideo] = useState(draft?.attachVideo ?? true);
+  const [attachVideo, setAttachVideo] = useState(
+    recording ? (draft?.attachVideo ?? true) : false
+  );
 
   const { issueTypes, loading: loadingIssueTypes } =
     useJiraIssueTypes(projectKey);
@@ -65,6 +70,7 @@ export const useCreateIssueForm = (
       if (typeof value === "string") {
         setDefaultIssueType(value);
       }
+      setDefaultIssueTypeLoaded(true);
     });
   }, []);
 
@@ -96,12 +102,16 @@ export const useCreateIssueForm = (
   }, [defaultSprint]);
 
   useEffect(() => {
-    if (issueTypes.length > 0 && !issueTypeDefaultApplied.current) {
+    if (
+      defaultIssueTypeLoaded &&
+      issueTypes.length > 0 &&
+      !issueTypeDefaultApplied.current
+    ) {
       const preferredType = issueTypes.find((type) => type.name === defaultIssueType);
       setIssueTypeName(preferredType ? preferredType.name! : issueTypes[0].name!);
       issueTypeDefaultApplied.current = true;
     }
-  }, [issueTypes, defaultIssueType]);
+  }, [issueTypes, defaultIssueType, defaultIssueTypeLoaded]);
 
   // ── Draft auto-save ──────────────────────────────────────────────────────
 
@@ -118,6 +128,8 @@ export const useCreateIssueForm = (
   const saveDraftTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const saveDraft = useCallback(async () => {
+    if (!recording) return;
+
     const draftData: JiraDraft = {
       projectKey,
       issueTypeName,
@@ -137,7 +149,7 @@ export const useCreateIssueForm = (
         : r
     );
     await chrome.storage.local.set({ recordings: updatedRecordings });
-  }, [projectKey, issueTypeName, priority, assigneeId, sprintId, attachVideo, recording.id]);
+  }, [projectKey, issueTypeName, priority, assigneeId, sprintId, attachVideo, recording]);
 
   const saveDraftDebounced = useCallback(() => {
     if (saveDraftTimeoutRef.current) clearTimeout(saveDraftTimeoutRef.current);
@@ -251,7 +263,7 @@ export const useCreateIssueForm = (
 
   const handleSubmit = async () => {
     const formData: CreateIssueFormData = {
-      recordingId: recording.id,
+      recordingId: recording?.id,
       projectKey,
       summary,
       description: description.trim() || undefined,
@@ -266,7 +278,7 @@ export const useCreateIssueForm = (
     const result = await createIssue(formData);
 
     // Clear draft on successful submit
-    if (result) {
+    if (result && recording) {
       const storageResult = await chrome.storage.local.get("recordings") as RecordingStorage;
       const allRecordings = storageResult.recordings || [];
       const cleaned = allRecordings.map((r) =>

@@ -2,7 +2,7 @@
  * Form data for creating a Jira issue from a recording
  */
 export interface CreateIssueFormData {
-  recordingId: string;
+  recordingId?: string;
   projectKey: string;
   summary: string;
   description?: string;

@@ -37,6 +37,9 @@ export const useJiraIssueCreation = () => {
   const getSiteUrl = async (): Promise<string | null> => {
     try {
       const tokens = await jiraAuth.getTokens();
+      if (tokens?.siteUrl) {
+        return tokens.siteUrl.replace(/\/+$/, "");
+      }
       if (tokens?.siteName) {
         // Convert site name to URL format (e.g., "My Site" -> "my-site")
         const siteSlug = tokens.siteName.toLowerCase().replace(/\s+/g, "-");
@@ -93,15 +96,21 @@ export const useJiraIssueCreation = () => {
 
       let attachmentFailed = false;
 
-      // Get the recording data (we'll need it for attachment and updating)
-      const result = await chrome.storage.local.get("recordings");
-      const recordings = result.recordings || [];
-      const recordingIndex = recordings.findIndex(
-        (r: { id: string }) => r.id === formData.recordingId
-      );
+      // Recording data is only needed for recording-backed issue creation.
+      let recordings: any[] = [];
+      let recordingIndex = -1;
+      if (formData.recordingId) {
+        const result = await chrome.storage.local.get("recordings");
+        recordings = Array.isArray(result.recordings)
+          ? result.recordings
+          : [];
+        recordingIndex = recordings.findIndex(
+          (r: { id: string }) => r.id === formData.recordingId
+        );
+      }
 
       // Attach video if requested
-      if (formData.attachVideo) {
+      if (formData.attachVideo && formData.recordingId) {
         try {
           const videoBlob = await videoStorage.getVideo(formData.recordingId);
 

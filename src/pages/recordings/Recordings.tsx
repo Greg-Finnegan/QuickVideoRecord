@@ -253,7 +253,7 @@ const Recordings: React.FC = () => {
                   formatDuration={formatDuration}
                 />
               ))}
-              {recordings.length <= 2 && <EmptyRecordingsState variant="few" />}
+              {recordings.length <= 4 && <EmptyRecordingsState variant="few" />}
             </div>
 
             <Pagination
