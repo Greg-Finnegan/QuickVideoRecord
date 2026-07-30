@@ -349,12 +349,15 @@ async function handleJiraAuth(
   try {
     const config = {
       clientId: message.config.clientId,
-      clientSecret: message.config.clientSecret,
+      exchangeUrl: message.config.exchangeUrl,
       redirectUri: chrome.identity.getRedirectURL("oauth2"),
       authUrl: "https://auth.atlassian.com/authorize",
-      tokenUrl: "https://auth.atlassian.com/oauth/token",
       scope: "read:jira-user read:jira-work write:jira-work offline_access",
     };
+    const stateBytes = crypto.getRandomValues(new Uint8Array(32));
+    const state = Array.from(stateBytes, (byte) =>
+      byte.toString(16).padStart(2, "0")
+    ).join("");
 
     // Build OAuth URL
     const authUrl = new URL(config.authUrl);
@@ -364,10 +367,10 @@ async function handleJiraAuth(
     authUrl.searchParams.append("redirect_uri", config.redirectUri);
     authUrl.searchParams.append("response_type", "code");
     authUrl.searchParams.append("prompt", "consent");
+    authUrl.searchParams.append("state", state);
 
     console.log("Starting Jira OAuth flow...");
     console.log("Redirect URI:", config.redirectUri);
-    console.log("Full auth URL:", authUrl.toString());
 
     // Launch OAuth flow
     let responseUrl: string | undefined;
@@ -388,6 +391,16 @@ async function handleJiraAuth(
     // Extract authorization code from response
     const url = new URL(responseUrl!);
     const code = url.searchParams.get("code");
+    const returnedState = url.searchParams.get("state");
+    const oauthError = url.searchParams.get("error");
+
+    if (oauthError) {
+      throw new Error(`Atlassian authorization failed: ${oauthError}`);
+    }
+
+    if (!returnedState || returnedState !== state) {
+      throw new Error("Invalid OAuth state");
+    }
 
     if (!code) {
       throw new Error("No authorization code received");
@@ -396,31 +409,32 @@ async function handleJiraAuth(
     console.log("Authorization code received, exchanging for tokens...");
 
     // Exchange code for tokens
-    const tokenParams = new URLSearchParams({
-      grant_type: "authorization_code",
-      client_id: config.clientId,
-      client_secret: config.clientSecret,
-      code: code,
-      redirect_uri: config.redirectUri,
-    });
-
-    const tokenResponse = await fetch(config.tokenUrl, {
+    const tokenResponse = await fetch(config.exchangeUrl, {
       method: "POST",
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "application/json",
       },
-      body: tokenParams.toString(),
+      body: JSON.stringify({
+        grant_type: "authorization_code",
+        code,
+      }),
     });
 
     if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text();
-      console.error("Token exchange failed:", tokenResponse.status, errorText);
+      console.error("Token exchange failed:", tokenResponse.status);
       throw new Error(
         `Failed to exchange code for tokens: ${tokenResponse.status}`
       );
     }
 
     const tokens = await tokenResponse.json();
+    if (
+      typeof tokens.access_token !== "string" ||
+      typeof tokens.refresh_token !== "string" ||
+      typeof tokens.expires_in !== "number"
+    ) {
+      throw new Error("Token exchange returned an invalid response");
+    }
 
     // Get Jira cloud ID and site name
     const resourcesResponse = await fetch(
@@ -433,30 +447,34 @@ async function handleJiraAuth(
       }
     );
 
-    let cloudInfo = null;
-    if (resourcesResponse.ok) {
-      const resources = await resourcesResponse.json();
-      if (resources.length > 0) {
-        cloudInfo = {
-          cloudId: resources[0].id,
-          siteName: resources[0].name,
-        };
-      }
+    if (!resourcesResponse.ok) {
+      throw new Error(
+        `Failed to load accessible Jira sites: ${resourcesResponse.status}`
+      );
     }
+
+    const resources = await resourcesResponse.json();
+    if (!Array.isArray(resources) || resources.length === 0) {
+      throw new Error("No accessible Jira sites found");
+    }
+    const cloudInfo = {
+      cloudId: resources[0].id,
+      siteName: resources[0].name,
+    };
 
     // Store tokens
     const jiraTokens = {
       accessToken: tokens.access_token,
       refreshToken: tokens.refresh_token,
       expiresAt: Date.now() + tokens.expires_in * 1000,
-      cloudId: cloudInfo?.cloudId,
-      siteName: cloudInfo?.siteName,
+      cloudId: cloudInfo.cloudId,
+      siteName: cloudInfo.siteName,
     };
 
     await chrome.storage.local.set({ jiraTokens });
 
     console.log("Jira authentication successful!");
-    console.log("Connected to:", cloudInfo?.siteName);
+    console.log("Connected to:", cloudInfo.siteName);
 
     sendResponse({ success: true, tokens: jiraTokens });
   } catch (error: any) {
@@ -464,4 +482,3 @@ async function handleJiraAuth(
     sendResponse({ success: false, error: error.message });
   }
 }
-

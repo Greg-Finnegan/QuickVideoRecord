@@ -16,10 +16,9 @@ export interface JiraTokens {
  */
 export interface JiraOAuthConfig {
   clientId: string;
-  clientSecret: string;
   redirectUri: string;
   authUrl: string;
-  tokenUrl: string;
+  exchangeUrl: string;
   scope: string;
 }
 

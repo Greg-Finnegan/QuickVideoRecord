@@ -2,14 +2,24 @@ import { Version3Client } from "jira.js";
 import type { JiraTokens, JiraOAuthConfig } from "../types";
 
 // Jira OAuth Configuration
-const getJiraConfig = (): JiraOAuthConfig => ({
-  clientId: import.meta.env.VITE_JIRA_CLIENT_ID,
-  clientSecret: import.meta.env.VITE_JIRA_CLIENT_SECRET,
-  redirectUri: chrome.identity?.getRedirectURL("oauth2") || "",
-  authUrl: "https://auth.atlassian.com/authorize",
-  tokenUrl: "https://auth.atlassian.com/oauth/token",
-  scope: "read:jira-user read:jira-work write:jira-work offline_access",
-});
+const getJiraConfig = (): JiraOAuthConfig => {
+  const exchangeServerUrl = import.meta.env.VITE_JIRA_OAUTH_SERVER_URL?.replace(
+    /\/+$/,
+    ""
+  );
+  const clientId = import.meta.env.VITE_JIRA_CLIENT_ID;
+  if (!clientId || !exchangeServerUrl) {
+    throw new Error("Jira OAuth configuration is missing");
+  }
+
+  return {
+    clientId,
+    redirectUri: chrome.identity?.getRedirectURL("oauth2") || "",
+    authUrl: "https://auth.atlassian.com/authorize",
+    exchangeUrl: `${exchangeServerUrl}/v1/oauth/token`,
+    scope: "read:jira-user read:jira-work write:jira-work offline_access",
+  };
+};
 
 class JiraAuthService {
   async authenticate(): Promise<{ success: boolean; error: string }> {
@@ -21,7 +31,7 @@ class JiraAuthService {
         action: "jiraAuth",
         config: {
           clientId: config.clientId,
-          clientSecret: config.clientSecret,
+          exchangeUrl: config.exchangeUrl,
         },
       });
 
@@ -112,30 +122,32 @@ class JiraAuthService {
         return false;
       }
 
-      const refreshParams = new URLSearchParams({
-        grant_type: "refresh_token",
-        client_id: config.clientId,
-        client_secret: config.clientSecret,
-        refresh_token: tokens.refreshToken,
-      });
-
-      const response = await fetch(config.tokenUrl, {
+      const response = await fetch(config.exchangeUrl, {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
-        body: refreshParams.toString(),
+        body: JSON.stringify({
+          grant_type: "refresh_token",
+          refresh_token: tokens.refreshToken,
+        }),
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Token refresh failed:", response.status, errorText);
-        throw new Error(
-          `Failed to refresh token: ${response.status} ${errorText}`
-        );
+        console.error("Token refresh failed:", response.status);
+        if ([400, 401, 403].includes(response.status)) {
+          await chrome.storage.local.remove("jiraTokens");
+        }
+        throw new Error(`Failed to refresh token: ${response.status}`);
       }
 
       const newTokens = await response.json();
+      if (
+        typeof newTokens.access_token !== "string" ||
+        typeof newTokens.expires_in !== "number"
+      ) {
+        throw new Error("Token refresh returned an invalid response");
+      }
 
       const updatedTokens: JiraTokens = {
         ...tokens,

@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.6 — 2026-07-09
+- Upgraded authentication keeps Atlassian tokens safer by using code-to-token and refresh-token exchange (backend service endpoint) (/v1/oauth/token).
+- Added cryptographically random state generation (crypto.getRandomValues) and strict state matching to protect against CSRF attacks during auth flow.
+
 ## v1.2.5 — 2026-07-09
 - **Live audio visualizer** — animated frequency bars show while recording, on both the recorder tab and the side panel, so you can see audio is being captured
 

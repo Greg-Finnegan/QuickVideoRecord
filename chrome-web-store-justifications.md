@@ -58,9 +58,9 @@ QuickVideoRecord is a screen recording tool that captures your Chrome window wit
 
 ## Host Permission Justifications
 
-### `https://auth.atlassian.com/*` and `https://api.atlassian.com/*`
+### `https://api.atlassian.com/*` and the configured Cloud Run OAuth service
 
-**Justification:** Required for the optional Jira integration. The extension makes requests to Atlassian's OAuth authorization server for authentication and to the Jira REST API for fetching projects and creating issue attachments. Only used when the user explicitly connects their Jira account.
+**Justification:** Required for the optional Jira integration. The extension calls Jira REST APIs directly and sends OAuth authorization codes or refresh tokens to the configured Cloud Run exchange service. The service keeps the Atlassian client secret out of the extension and does not store tokens or proxy Jira data.
 
 ---
 

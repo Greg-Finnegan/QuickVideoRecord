@@ -2,7 +2,7 @@
 
 # Build script for QuickVideoRecord Chrome Extension
 # This script clones the repo, installs dependencies, builds the extension,
-# and creates a .env file with Jira credentials placeholders if missing
+# and creates a .env file with Jira OAuth configuration placeholders if missing
 
 set -e  # Exit on any error
 
@@ -57,9 +57,10 @@ ENV_FILE=".env"
 if [ ! -f "$ENV_FILE" ]; then
     echo "Creating new .env file with placeholder values..."
     cat > "$ENV_FILE" << 'EOL'
-# create in https://developer.atlassian.com/console/myapps/
-JIRA_CLIENT_ID=your_id_here
-JIRA_CLIENT_SECRET=your_secret_here
+# Create the client in https://developer.atlassian.com/console/myapps/.
+# The client secret belongs only in the deployed jira-oauth-server.
+VITE_JIRA_CLIENT_ID=your_id_here
+VITE_JIRA_OAUTH_SERVER_URL=https://your-service-url.run.app
 EOL
     echo "→ .env file created. Please edit it and add your real Jira OAuth credentials."
     echo ""

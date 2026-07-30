@@ -28,13 +28,13 @@ const JiraConnect: React.FC = () => {
   const handleConnect = async () => {
     setIsConnecting(true);
     try {
-      const success = await jiraAuth.authenticate();
-      if (success) {
+      const result = await jiraAuth.authenticate();
+      if (result.success) {
         setIsConnected(true);
         const tokens = await jiraAuth.getTokens();
         setSiteName(tokens?.siteName);
       } else {
-        alert("Failed to connect to Jira. Please try again.");
+        alert(result.error || "Failed to connect to Jira. Please try again.");
       }
     } catch (error) {
       console.error("Jira connection error:", error);

@@ -11,6 +11,11 @@ import pkg from './package.json';
 
 const env = loadEnv('', process.cwd(), '');
 const isDev = process.env.__DEV__ === 'true';
+const jiraOAuthServerUrl =
+  process.env.VITE_JIRA_OAUTH_SERVER_URL || env.VITE_JIRA_OAUTH_SERVER_URL;
+const jiraOAuthHostPermission = jiraOAuthServerUrl
+  ? `${new URL(jiraOAuthServerUrl).origin}/*`
+  : undefined;
 // set this flag to true, if you want localization support
 const localize = false;
 
@@ -24,6 +29,10 @@ export const baseManifest = {
       default_locale : 'en'
     } : {}),
     ...(env.CHROME_EXTENSION_KEY ? { key: env.CHROME_EXTENSION_KEY } : {}),
+    host_permissions: [
+      ...(manifest.host_permissions || []),
+      ...(jiraOAuthHostPermission ? [jiraOAuthHostPermission] : []),
+    ],
 } as ManifestV3Export
 
 export const baseBuildOptions: BuildOptions = {

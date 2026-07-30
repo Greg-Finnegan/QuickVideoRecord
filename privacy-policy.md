@@ -9,8 +9,8 @@ This Chrome extension (JiraQuickVideoRecord) integrates with Jira via Atlassian 
 This extension **does not collect, store, transmit, share, or process** any personal data, user content, or sensitive information on servers or in the cloud controlled by the developer.
 
 - Everything runs **locally** in your browser.
-- Temporary OAuth authorization codes, access tokens, and refresh tokens (obtained from Atlassian) are handled entirely client-side.
-- Tokens are stored **only** in Chrome's local storage or session storage on your device — never sent to the developer or any third party (except Atlassian's official auth and API endpoints as part of the standard OAuth 2.0 flow).
+- Temporary OAuth authorization codes and refresh tokens are sent to the extension's Cloud Run OAuth exchange service solely to exchange them with Atlassian. The service does not persist them.
+- Access and refresh tokens are stored **only** in Chrome's local storage on your device. Jira API traffic goes directly from the extension to Atlassian.
 
 ## 2. No Tracking, Analytics, or Telemetry
 - No analytics tools, tracking pixels, error reporting that includes personal data, logging of user behavior, or any form of data collection is implemented.
@@ -19,11 +19,12 @@ This extension **does not collect, store, transmit, share, or process** any pers
 ## 3. Data Access and Permissions
 - The extension requests **only the minimum** Chrome extension permissions and Atlassian OAuth scopes required for its functionality.
 - It can only access your Jira data **after you explicitly authorize it** via Atlassian's official consent screen.
-- All API interactions occur directly between your browser and Atlassian's servers — the developer has **no access** to your Jira account, issues, projects, or any other data.
+- Jira API interactions occur directly between your browser and Atlassian's servers. The Cloud Run service handles only OAuth token exchanges and does not receive Jira issues, projects, recordings, or API requests.
 
 ## 4. Security Practices
 - OAuth is implemented using Chrome's secure `chrome.identity.launchWebAuthFlow` method.
-- Tokens remain scoped to the extension and are protected by Chrome's storage security model.
+- No Password Storage: Application uses OAuth 2.0 to access Atlassian products, meaning we never see, collect, or store Atlassian account passwords.
+- Users that they can revoke app’s access at any time through their Atlassian Account / Connected Apps settings.
 - No unnecessary network requests are made beyond what's required for Jira authentication and API usage.
 
 ## 5. Changes to This Policy
