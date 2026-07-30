@@ -7,13 +7,16 @@ import AudioVisualizer from '../../components/AudioVisualizer';
 import { useStreamAudioLevels } from '../../hooks/useStreamAudioLevels';
 import { Recording, RecordingStorage } from '../../types/recording';
 import { videoStorage } from '../../utils/videoStorage';
+import { RecordingTimer } from '../../utils/recordingTimer';
 
 const Recorder: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingStreamRef = useRef<MediaStream | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
-  const recordingStartTimeRef = useRef<number>(0);
+  const recordingTimerRef = useRef(new RecordingTimer());
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [showStartButton, setShowStartButton] = useState(true);
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
 
@@ -49,6 +52,12 @@ const Recorder: React.FC = () => {
 
       if (message.action === 'stopRecording') {
         stopRecording();
+        sendResponse({ success: true });
+      } else if (message.action === 'pauseRecording') {
+        pauseRecording();
+        sendResponse({ success: true });
+      } else if (message.action === 'resumeRecording') {
+        resumeRecording();
         sendResponse({ success: true });
       }
 
@@ -140,6 +149,7 @@ const Recorder: React.FC = () => {
       }
 
       // Drive the audio visualizer (local + broadcast to side panel).
+      recordingStreamRef.current = finalStream;
       setAudioStream(finalStream);
 
       recordedChunksRef.current = [];
@@ -170,7 +180,7 @@ const Recorder: React.FC = () => {
 
       recorder.onstop = async () => {
         console.log('Recording stopped, total chunks:', recordedChunksRef.current.length);
-        const duration = Date.now() - recordingStartTimeRef.current;
+        const duration = recordingTimerRef.current.stop();
         const rawBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
         const blob = await fixWebmDuration(rawBlob, duration, { logger: false });
         const url = URL.createObjectURL(blob);
@@ -236,8 +246,8 @@ const Recorder: React.FC = () => {
         }
       };
 
-      recordingStartTimeRef.current = Date.now();
       recorder.start(1000); // Collect data every second
+      recordingTimerRef.current.start();
       console.log('MediaRecorder started!');
 
       mediaRecorderRef.current = recorder;
@@ -261,11 +271,36 @@ const Recorder: React.FC = () => {
     }
   };
 
+  const pauseRecording = () => {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder || recorder.state !== 'recording') return;
+
+    recorder.pause();
+    recordingTimerRef.current.pause();
+    setIsPaused(true);
+    setAudioStream(null);
+    chrome.runtime.sendMessage({ action: 'recordingPaused' });
+  };
+
+  const resumeRecording = () => {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder || recorder.state !== 'paused') return;
+
+    recorder.resume();
+    recordingTimerRef.current.resume();
+    setIsPaused(false);
+    setAudioStream(recordingStreamRef.current);
+    chrome.runtime.sendMessage({ action: 'recordingResumed' });
+  };
+
   const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
+    const recorder = mediaRecorderRef.current;
+    if (recorder && (recorder.state === 'recording' || recorder.state === 'paused')) {
+      recordingTimerRef.current.stop();
+      recorder.stop();
     }
     // Tear down the visualizer / stop broadcasting levels.
+    setIsPaused(false);
     setAudioStream(null);
   };
 
@@ -288,23 +323,36 @@ const Recorder: React.FC = () => {
       {isRecording && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center flex flex-col items-center gap-6">
           <div className="bg-black/85 dark:bg-black/90 text-white px-8 py-4 rounded-full flex items-center gap-3 text-base font-medium shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
-            <span className="w-3 h-3 bg-red-600 dark:bg-red-500 rounded-full flex-shrink-0 animate-[pulse_1.5s_ease-in-out_infinite]"></span>
-            <span className="leading-none">Recording in progress...</span>
-          </div>
-          <div className="bg-black/85 dark:bg-black/90 px-6 py-3 rounded-2xl w-[280px] flex flex-col items-center gap-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
-            <AudioVisualizer levels={audioLevels} isActive className="w-full" />
-            <span className="flex items-center gap-1.5 text-slate-300 text-xs">
-              <Icon name="mic" size={12} /> Audio is being captured
+            <span className={`w-3 h-3 rounded-full flex-shrink-0 ${isPaused ? 'bg-amber-400' : 'bg-red-600 dark:bg-red-500 animate-[pulse_1.5s_ease-in-out_infinite]'}`}></span>
+            <span className="leading-none">
+              {isPaused ? 'Recording paused' : 'Recording in progress...'}
             </span>
           </div>
-          <Button
-            variant="warning"
-            className="px-10 py-4 text-base font-semibold rounded-full shadow-[0_4px_12px_rgba(222,53,11,0.3)] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,53,11,0.4)] active:translate-y-0 flex items-center gap-2"
-            onClick={stopRecording}
-          >
-            <Icon name="stop" size={18} />
-            Stop & Download
-          </Button>
+          <div className="bg-black/85 dark:bg-black/90 px-6 py-3 rounded-2xl w-[280px] flex flex-col items-center gap-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <AudioVisualizer levels={isPaused ? [] : audioLevels} isActive={!isPaused} className="w-full" />
+            <span className="flex items-center gap-1.5 text-slate-300 text-xs">
+              <Icon name="mic" size={12} />
+              {isPaused ? 'Audio capture is paused' : 'Audio is being captured'}
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="secondary"
+              className="px-7 py-4 text-base font-semibold rounded-full flex items-center gap-2"
+              onClick={isPaused ? resumeRecording : pauseRecording}
+            >
+              <Icon name={isPaused ? "play" : "pause"} size={18} />
+              {isPaused ? 'Resume' : 'Pause'}
+            </Button>
+            <Button
+              variant="warning"
+              className="px-8 py-4 text-base font-semibold rounded-full shadow-[0_4px_12px_rgba(222,53,11,0.3)] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(222,53,11,0.4)] active:translate-y-0 flex items-center gap-2"
+              onClick={stopRecording}
+            >
+              <Icon name="stop" size={18} />
+              Stop & Download
+            </Button>
+          </div>
           <p className="m-0 text-slate-400 dark:text-slate-500 text-[13px] max-w-[300px]">
             Recording will be saved as WebM file when you stop
           </p>

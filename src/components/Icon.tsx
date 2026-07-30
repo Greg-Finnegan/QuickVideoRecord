@@ -27,6 +27,8 @@ import {
   ExternalLink,
   ArrowRight,
   Plus,
+  Pause,
+  Play,
   type LucideProps,
 } from "lucide-react";
 
@@ -60,7 +62,9 @@ export type IconName =
   | "copy"
   | "external-link"
   | "arrow-right"
-  | "plus";
+  | "plus"
+  | "pause"
+  | "play";
 
 /**
  * Icon component props
@@ -101,6 +105,8 @@ const iconMap: Record<IconName, React.ComponentType<LucideProps>> = {
   "external-link": ExternalLink,
   "arrow-right": ArrowRight,
   plus: Plus,
+  pause: Pause,
+  play: Play,
 };
 
 /**

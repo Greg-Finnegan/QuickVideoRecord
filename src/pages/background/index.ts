@@ -33,7 +33,11 @@ function setDefaultIcon() {
   });
 }
 
-const CLEARED_RECORDING_STATE = { isRecording: false, recorderTabId: null } as const satisfies RecordingSessionState;
+const CLEARED_RECORDING_STATE = {
+  isRecording: false,
+  isPaused: false,
+  recorderTabId: null,
+} as const satisfies RecordingSessionState;
 
 chrome.tabs.onRemoved.addListener(async (tabId) => {
   const data = await chrome.storage.session.get("recorderTabId") as Partial<RecordingSessionState>;
@@ -81,8 +85,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.action === "recordingStarted") {
     const recorderTabId = sender.tab?.id ?? null;
-    chrome.storage.session.set({ isRecording: true, recorderTabId } satisfies RecordingSessionState);
+    chrome.storage.session.set({
+      isRecording: true,
+      isPaused: false,
+      recorderTabId,
+    } satisfies RecordingSessionState);
     setRecordingIcon();
+    return false;
+  }
+
+  if (message.action === "recordingPaused") {
+    chrome.storage.session.set({ isPaused: true });
+    return false;
+  }
+
+  if (message.action === "recordingResumed") {
+    chrome.storage.session.set({ isPaused: false });
     return false;
   }
 

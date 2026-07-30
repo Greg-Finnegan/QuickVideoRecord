@@ -11,6 +11,7 @@ import { useAiSettings } from "../settings/hooks/useAiSettings";
 
 const SidePanel: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [status, setStatus] = useState("");
   const [audioLevels, setAudioLevels] = useState<number[]>([]);
   const [recorderTabId, setRecorderTabId] = useState<number | null>(null);
@@ -24,16 +25,21 @@ const SidePanel: React.FC = () => {
   // Restore recording state from session storage on mount (handles reopen mid-recording)
   useEffect(() => {
     const restoreState = async () => {
-      const data = await chrome.storage.session.get(["isRecording", "recorderTabId"]) as Partial<RecordingSessionState>;
+      const data = await chrome.storage.session.get(["isRecording", "isPaused", "recorderTabId"]) as Partial<RecordingSessionState>;
       if (data.isRecording && data.recorderTabId) {
         try {
           await chrome.tabs.get(data.recorderTabId);
           setIsRecording(true);
+          setIsPaused(data.isPaused === true);
           setRecorderTabId(data.recorderTabId);
           recorderTabIdRef.current = data.recorderTabId;
-          setStatus("Recording in progress...");
+          setStatus(data.isPaused ? "Recording paused" : "Recording in progress...");
         } catch {
-          chrome.storage.session.set({ isRecording: false, recorderTabId: null } satisfies RecordingSessionState);
+          chrome.storage.session.set({
+            isRecording: false,
+            isPaused: false,
+            recorderTabId: null,
+          } satisfies RecordingSessionState);
         }
       }
     };
@@ -50,10 +56,19 @@ const SidePanel: React.FC = () => {
           setStatus("Recording in progress...");
         } else {
           setIsRecording(false);
+          setIsPaused(false);
           setRecorderTabId(null);
           recorderTabIdRef.current = null;
           setAudioLevels([]);
         }
+      }
+      if (changes.isPaused) {
+        const paused = changes.isPaused.newValue === true;
+        setIsPaused(paused);
+        if (isRecording || paused) {
+          setStatus(paused ? "Recording paused" : "Recording in progress...");
+        }
+        if (paused) setAudioLevels([]);
       }
       if (changes.recorderTabId) {
         const newTabId = (changes.recorderTabId.newValue as RecordingSessionState["recorderTabId"]) ?? null;
@@ -81,10 +96,19 @@ const SidePanel: React.FC = () => {
 
       if (msg.action === "recordingStarted") {
         setIsRecording(true);
+        setIsPaused(false);
+        setStatus("Recording in progress...");
+      } else if (msg.action === "recordingPaused") {
+        setIsPaused(true);
+        setAudioLevels([]);
+        setStatus("Recording paused");
+      } else if (msg.action === "recordingResumed") {
+        setIsPaused(false);
         setStatus("Recording in progress...");
       } else if (msg.action === "recordingError") {
         setStatus("Error: " + msg.error);
         setIsRecording(false);
+        setIsPaused(false);
         if (recorderTabIdRef.current) {
           chrome.tabs.remove(recorderTabIdRef.current);
           recorderTabIdRef.current = null;
@@ -95,6 +119,7 @@ const SidePanel: React.FC = () => {
         setTimeout(() => {
           setStatus("");
           setIsRecording(false);
+          setIsPaused(false);
         }, 2000);
         recorderTabIdRef.current = null;
         setRecorderTabId(null);
@@ -131,12 +156,28 @@ const SidePanel: React.FC = () => {
         if (createdTab.id) {
           setRecorderTabId(createdTab.id);
           recorderTabIdRef.current = createdTab.id;
-          chrome.storage.session.set({ isRecording: false, recorderTabId: createdTab.id } satisfies RecordingSessionState);
+          chrome.storage.session.set({
+            isRecording: false,
+            isPaused: false,
+            recorderTabId: createdTab.id,
+          } satisfies RecordingSessionState);
           console.log("Created recorder tab:", createdTab.id);
           setStatus("Select your screen in the new tab...");
         }
       }
     );
+  };
+
+  const handlePauseResume = async () => {
+    if (!recorderTabId) return;
+
+    try {
+      await chrome.tabs.sendMessage(recorderTabId, {
+        action: isPaused ? "resumeRecording" : "pauseRecording",
+      });
+    } catch (err: any) {
+      setStatus(`Error ${isPaused ? "resuming" : "pausing"}: ${err.message}`);
+    }
   };
 
   const handleStopRecording = async () => {
@@ -145,6 +186,7 @@ const SidePanel: React.FC = () => {
     try {
       await chrome.tabs.sendMessage(recorderTabId, { action: "stopRecording" });
       setIsRecording(false);
+      setIsPaused(false);
       setAudioLevels([]);
       setStatus("Processing download...");
     } catch (err: any) {
@@ -285,23 +327,37 @@ const SidePanel: React.FC = () => {
           Start Recording
         </Button>
 
-        <Button
-          variant="warning"
-          rounded="full"
-          fullWidth
-          className={`mb-2 px-4 py-2.5 flex items-center justify-center gap-2 ${!isRecording ? "hidden" : ""}`}
-          onClick={handleStopRecording}
-          disabled={!isRecording}
-        >
-          <Icon name="stop" size={16} />
-          Stop & Download
-        </Button>
+        {isRecording && (
+          <div className="mb-2 grid grid-cols-2 gap-2">
+            <Button
+              variant="secondary"
+              rounded="full"
+              fullWidth
+              className="px-4 py-2.5 flex items-center justify-center gap-2"
+              onClick={handlePauseResume}
+            >
+              <Icon name={isPaused ? "play" : "pause"} size={16} />
+              {isPaused ? "Resume" : "Pause"}
+            </Button>
+            <Button
+              variant="warning"
+              rounded="full"
+              fullWidth
+              className="px-4 py-2.5 flex items-center justify-center gap-2"
+              onClick={handleStopRecording}
+            >
+              <Icon name="stop" size={16} />
+              Stop
+            </Button>
+          </div>
+        )}
 
         {isRecording && (
           <div className="mb-2 px-4 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg flex flex-col items-center gap-1.5">
-            <AudioVisualizer levels={audioLevels} isActive className="w-full" />
+            <AudioVisualizer levels={isPaused ? [] : audioLevels} isActive={!isPaused} className="w-full" />
             <span className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
-              <Icon name="mic" size={12} /> Audio is being captured
+              <Icon name="mic" size={12} />
+              {isPaused ? "Audio capture is paused" : "Audio is being captured"}
             </span>
           </div>
         )}
@@ -353,7 +409,9 @@ const SidePanel: React.FC = () => {
           <div className="mt-3 px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded flex items-center gap-2 text-xs text-left text-slate-600 dark:text-slate-300">
             <span
               className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isRecording
-                  ? "bg-red-600 animate-[pulse_1.5s_ease-in-out_infinite]"
+                  ? isPaused
+                    ? "bg-amber-500"
+                    : "bg-red-600 animate-[pulse_1.5s_ease-in-out_infinite]"
                   : "bg-slate-400 dark:bg-slate-500"
                 }`}
             ></span>

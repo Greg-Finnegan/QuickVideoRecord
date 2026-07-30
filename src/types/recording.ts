@@ -49,5 +49,6 @@ export interface TranscriptionJobsStorage {
 // Session storage state for tracking active recording across side panel lifecycle
 export interface RecordingSessionState {
   isRecording: boolean;
+  isPaused: boolean;
   recorderTabId: number | null;
 }
