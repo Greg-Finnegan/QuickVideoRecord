@@ -41,3 +41,4 @@ scripts/chrome-webstore-types.ts
 # onnxruntime-web runtime copied from node_modules at build time
 public/ort/
 jira-oauth-server/deploy/config.local.env
+issues.md
