@@ -1,5 +1,5 @@
 // Background service worker for Chrome Window Recorder
-import type { RecordingSessionState } from "../../types";
+import type { CloseSidePanelMessage, RecordingSessionState } from "../../types";
 
 console.log("Background service worker loaded");
 
@@ -59,22 +59,76 @@ async function clearStaleRecordingState() {
   }
 }
 
+// The single place the side panel is opened — chrome.sidePanel.open() only
+// works while the user gesture that triggered it is still active, so it must
+// be called synchronously, never after an await.
+function openSidePanelForWindow(windowId: number) {
+  chrome.sidePanel.open({ windowId }).catch((error) => {
+    console.warn("[Background] Failed to open side panel:", error);
+  });
+}
+
+// Chrome has no sidePanel.close() API. The panel hosted in `windowId` closes
+// itself when it receives this; panels in other windows ignore it.
+function requestSidePanelClose(windowId: number) {
+  chrome.runtime
+    .sendMessage({
+      action: "closeSidePanel",
+      windowId,
+    } satisfies CloseSidePanelMessage)
+    .catch(() => {
+      // No extension page listening — expected when no panel is open.
+    });
+}
+
+// Best-effort fallback for senders that are not hosted in a tab. The await
+// drops the user gesture, so open() will usually reject here; it is logged
+// rather than thrown. Tab senders must use sender.tab.windowId instead.
+async function openSidePanelInLastFocusedWindow() {
+  try {
+    const win = await chrome.windows.getLastFocused();
+    if (win.id !== undefined) await chrome.sidePanel.open({ windowId: win.id });
+  } catch (error) {
+    console.warn(
+      "[Background] Could not open side panel without a tab sender:",
+      error
+    );
+  }
+}
+
 // Open side panel when extension icon is clicked
 chrome.action.onClicked.addListener((tab) => {
-  if (tab.windowId) {
-    chrome.sidePanel.open({ windowId: tab.windowId });
-  }
+  if (tab.windowId !== undefined) openSidePanelForWindow(tab.windowId);
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // Open the side panel from another extension page
+  // Open the side panel from another extension page (must stay synchronous —
+  // sidePanel.open() loses the user gesture across an await).
   if (message.action === "openSidePanel") {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const windowId = tabs[0]?.windowId;
-      if (windowId) {
-        chrome.sidePanel.open({ windowId });
-      }
-    });
+    const windowId = sender.tab?.windowId;
+    if (windowId !== undefined) {
+      openSidePanelForWindow(windowId);
+    } else {
+      openSidePanelInLastFocusedWindow();
+    }
+    return false;
+  }
+
+  // Toggle the side panel for the window the click came from. No open/closed
+  // state is tracked: the close request is dispatched to the extension contexts
+  // that exist right now, so only a panel that was ALREADY open in this window
+  // can receive it. A panel created by the open() below is created afterwards
+  // and never sees it, so exactly one of the two actions takes effect.
+  // The sendMessage must stay strictly before open(), in this same synchronous
+  // block — open() must run inside the user gesture.
+  if (message.action === "toggleSidePanel") {
+    const windowId = sender.tab?.windowId;
+    if (windowId === undefined) {
+      console.warn("[Background] toggleSidePanel ignored: sender has no window");
+      return false;
+    }
+    requestSidePanelClose(windowId);
+    openSidePanelForWindow(windowId);
     return false;
   }
 

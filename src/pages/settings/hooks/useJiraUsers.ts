@@ -39,7 +39,8 @@ export const useJiraUsers = (isConnected: boolean, projectKey?: string) => {
     const loadDefaultAssignee = async () => {
       try {
         const result = await chrome.storage.local.get("defaultJiraAssignee");
-        if (result.defaultJiraAssignee) {
+        // chrome.storage values are untyped — guard before setting state
+        if (typeof result.defaultJiraAssignee === "string") {
           setDefaultAssignee(result.defaultJiraAssignee);
         }
       } catch (error) {

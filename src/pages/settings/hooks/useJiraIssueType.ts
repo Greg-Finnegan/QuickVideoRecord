@@ -8,7 +8,8 @@ export const useJiraIssueType = () => {
 
   useEffect(() => {
     chrome.storage.local.get("defaultJiraIssueType").then((result) => {
-      if (result.defaultJiraIssueType) {
+      // chrome.storage values are untyped — guard before setting state
+      if (typeof result.defaultJiraIssueType === "string") {
         setDefaultIssueType(result.defaultJiraIssueType);
       }
     });

@@ -50,6 +50,10 @@ const Recorder: React.FC = () => {
     ) => {
       console.log('Recorder received message:', message);
 
+      // Every branch below responds synchronously, so the listener must not
+      // return true — doing so would claim an async response that never
+      // arrives and leave the message channel dangling (e.g. for broadcasts
+      // this listener ignores, such as `closeSidePanel`).
       if (message.action === 'stopRecording') {
         stopRecording();
         sendResponse({ success: true });
@@ -61,7 +65,7 @@ const Recorder: React.FC = () => {
         sendResponse({ success: true });
       }
 
-      return true;
+      return false;
     };
 
     chrome.runtime.onMessage.addListener(messageListener);

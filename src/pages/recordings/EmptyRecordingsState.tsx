@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Button from "../../components/Button";
 import Icon from "../../components/Icon";
 import BrowserToolbarVisual from "./BrowserToolbarVisual";
+import type { OpenSidePanelMessage } from "../../types";
 
 interface EmptyRecordingsStateProps {
   variant?: "empty" | "few";
@@ -35,7 +36,11 @@ const EmptyRecordingsState: React.FC<EmptyRecordingsStateProps> = ({
         <Button
           variant="primary"
           rounded="full"
-          onClick={() => chrome.runtime.sendMessage({ action: "openSidePanel" })}
+          onClick={() =>
+            chrome.runtime.sendMessage({
+              action: "openSidePanel",
+            } satisfies OpenSidePanelMessage)
+          }
           className="flex items-center gap-2"
         >
           Open Side Panel

@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import Button from "./Button";
 import Icon from "./Icon";
 import CreateJiraIssueModal from "./jira/CreateJiraIssueModal";
+import type { ToggleSidePanelMessage } from "../types";
 
 interface MainApplicationHeaderProps {
   title: string;
@@ -96,8 +97,12 @@ const MainApplicationHeader: React.FC<MainApplicationHeaderProps> = ({
             variant="secondary"
             rounded="full"
             onClick={() =>
-              chrome.runtime.sendMessage({ action: "openSidePanel" })
+              chrome.runtime.sendMessage({
+                action: "toggleSidePanel",
+              } satisfies ToggleSidePanelMessage)
             }
+            title="Toggle side panel"
+            aria-label="Toggle side panel"
             className="px-4 py-2"
           >
             <Icon name="panel-left-close" size={16} />

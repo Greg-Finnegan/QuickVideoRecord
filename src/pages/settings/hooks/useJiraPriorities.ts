@@ -39,7 +39,8 @@ export const useJiraPriorities = (isConnected: boolean) => {
     const loadDefaultPriority = async () => {
       try {
         const result = await chrome.storage.local.get("defaultJiraPriority");
-        if (result.defaultJiraPriority) {
+        // chrome.storage values are untyped — guard before setting state
+        if (typeof result.defaultJiraPriority === "string") {
           setDefaultPriority(result.defaultJiraPriority);
         }
       } catch (error) {

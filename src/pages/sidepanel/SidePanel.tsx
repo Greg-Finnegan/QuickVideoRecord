@@ -8,6 +8,7 @@ import CopyButton from "@src/components/CopyButton";
 import type { RecordingSessionState } from "../../types";
 import { AUDIO_LEVELS_MESSAGE } from "../../hooks/useStreamAudioLevels";
 import { useAiSettings } from "../settings/hooks/useAiSettings";
+import { useSidePanelCloseRequest } from "./hooks/useSidePanelCloseRequest";
 
 const SidePanel: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -21,6 +22,7 @@ const SidePanel: React.FC = () => {
   >("idle");
   const [micStream, setMicStream] = useState<MediaStream | null>(null);
   const { aiPrompt, aiProviderLabel } = useAiSettings();
+  useSidePanelCloseRequest();
 
   // Restore recording state from session storage on mount (handles reopen mid-recording)
   useEffect(() => {
@@ -91,6 +93,10 @@ const SidePanel: React.FC = () => {
         if (Array.isArray(msg.levels)) setAudioLevels(msg.levels);
         return;
       }
+
+      // Handled by useSidePanelCloseRequest (window-targeted); return early so
+      // the broadcast does not spam this console.
+      if (msg.action === "closeSidePanel") return;
 
       console.log("SidePanel received message:", JSON.stringify(msg));
 

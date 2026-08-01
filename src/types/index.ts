@@ -55,6 +55,16 @@ export type {
   AiProviderConfig,
 } from "./extensionSettings";
 
+// Side panel message types
+export type {
+  OpenSidePanelMessage,
+  ToggleSidePanelMessage,
+  CloseSidePanelMessage,
+  SidePanelMessage,
+} from "./messages";
+
+export { isCloseSidePanelMessage } from "./messages";
+
 // Re-export default settings and constants
 export {
   DEFAULT_EXTENSION_SETTINGS,

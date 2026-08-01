@@ -1,5 +1,9 @@
 import type { ThemeOption, AppliedTheme } from "../types";
 
+/** chrome.storage values are untyped — validate before treating one as a theme */
+const isThemeOption = (value: unknown): value is ThemeOption =>
+  value === "light" || value === "dark" || value === "system";
+
 class ThemeManager {
   private mediaQuery: MediaQueryList;
 
@@ -13,7 +17,9 @@ class ThemeManager {
   async getThemePreference(): Promise<ThemeOption> {
     try {
       const result = await chrome.storage.local.get("themePreference");
-      return (result.themePreference as ThemeOption) || "system";
+      return isThemeOption(result.themePreference)
+        ? result.themePreference
+        : "system";
     } catch (error) {
       console.error("Failed to get theme preference:", error);
       return "system";
@@ -81,7 +87,8 @@ class ThemeManager {
     // Listen for storage changes (for sync across pages)
     chrome.storage.local.onChanged.addListener((changes) => {
       if (changes.themePreference) {
-        this.applyTheme(changes.themePreference.newValue);
+        const newValue = changes.themePreference.newValue;
+        this.applyTheme(isThemeOption(newValue) ? newValue : "system");
       }
     });
   }
