@@ -1,5 +1,7 @@
 # JiraQuickVideoRecord
 
+## Try it now on the Chrome Web Store: https://chromewebstore.google.com/detail/jira-quick-video-recorder/eliikplchgoippacnaffpjafklchcbkc
+
 **Screen recording with local AI transcription and Jira integration**
 
 [![Chrome Version](https://img.shields.io/badge/chrome-116%2B-blue)](https://www.google.com/chrome/)
