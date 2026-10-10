@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import JiraConnect from "./jira/JiraConnect";
 import JiraProfile from "./jira/JiraProfile";
-import { jiraAuth } from "../utils/jiraAuth";
+import { useJiraConnection } from "../pages/settings/hooks/useJiraConnection";
 import { useNavigate } from "react-router-dom";
 import Button from "./Button";
 import Icon from "./Icon";
@@ -18,33 +18,9 @@ const MainApplicationHeader: React.FC<MainApplicationHeaderProps> = ({
   subtitle,
 }) => {
   const navigate = useNavigate();
-  const [isJiraConnected, setIsJiraConnected] = useState(false);
+  const { isJiraConnected } = useJiraConnection();
   const [showQuickCreate, setShowQuickCreate] = useState(false);
   const [defaultProjectKey, setDefaultProjectKey] = useState("");
-
-  useEffect(() => {
-    checkJiraConnection();
-
-    // Listen for storage changes to detect when Jira connection changes
-    const storageListener = (changes: {
-      [key: string]: chrome.storage.StorageChange;
-    }) => {
-      if (changes.jiraTokens) {
-        checkJiraConnection();
-      }
-    };
-
-    chrome.storage.local.onChanged.addListener(storageListener);
-
-    return () => {
-      chrome.storage.local.onChanged.removeListener(storageListener);
-    };
-  }, []);
-
-  const checkJiraConnection = async () => {
-    const connected = await jiraAuth.isAuthenticated();
-    setIsJiraConnected(connected);
-  };
 
   const handleQuickCreate = async () => {
     const result = await chrome.storage.local.get("defaultJiraProject");

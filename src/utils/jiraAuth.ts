@@ -22,6 +22,13 @@ const getJiraConfig = (): JiraOAuthConfig => {
 };
 
 class JiraAuthService {
+  private refreshInFlight: Promise<boolean> | null = null;
+
+  /** Optimistic: tokens exist. Expiry is handled lazily by getClient(); a failed refresh removes tokens. */
+  async isConnected(): Promise<boolean> {
+    return !!(await this.getTokens());
+  }
+
   async authenticate(): Promise<{ success: boolean; error: string }> {
     try {
       const config = getJiraConfig();
@@ -117,7 +124,15 @@ class JiraAuthService {
     }
   }
 
-  async refreshToken(): Promise<boolean> {
+  // Single-flight: concurrent callers on a cold open share one refresh instead of racing the rotating refresh token.
+  refreshToken(): Promise<boolean> {
+    this.refreshInFlight ??= this.doRefreshToken().finally(() => {
+      this.refreshInFlight = null;
+    });
+    return this.refreshInFlight;
+  }
+
+  private async doRefreshToken(): Promise<boolean> {
     try {
       const config = getJiraConfig();
       const result = await chrome.storage.local.get("jiraTokens");

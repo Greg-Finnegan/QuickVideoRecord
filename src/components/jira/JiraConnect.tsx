@@ -14,7 +14,7 @@ const JiraConnect: React.FC = () => {
 
   const checkConnection = async () => {
     setIsLoading(true);
-    const connected = await jiraAuth.isAuthenticated();
+    const connected = await jiraAuth.isConnected();
     setIsConnected(connected);
 
     if (connected) {

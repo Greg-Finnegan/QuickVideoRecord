@@ -30,7 +30,7 @@ export const useJiraConnection = () => {
   }, []);
 
   const checkJiraConnection = async () => {
-    const connected = await jiraAuth.isAuthenticated();
+    const connected = await jiraAuth.isConnected();
     setIsJiraConnected(connected);
     if (connected) {
       try {

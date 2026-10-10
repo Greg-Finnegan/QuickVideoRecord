@@ -147,6 +147,16 @@ function textToAdf(text: string): AdfDocument {
 // ── Jira Service ─────────────────────────────────────────────────────────────
 
 class JiraService {
+  private currentUser: Promise<Version3Models.User> | null = null;
+
+  constructor() {
+    chrome.storage.local.onChanged.addListener((changes) => {
+      if (changes.jiraTokens && !changes.jiraTokens.newValue) {
+        this.currentUser = null;
+      }
+    });
+  }
+
   private async getClient(): Promise<Version3Client | null> {
     return await jiraAuth.getClient();
   }
@@ -348,7 +358,16 @@ class JiraService {
   /**
    * Get current user information
    */
-  async getCurrentUser(): Promise<Version3Models.User> {
+  getCurrentUser(): Promise<Version3Models.User> {
+    // Cached per page so header + settings don't each hit /myself; cleared on failure or disconnect.
+    this.currentUser ??= this.fetchCurrentUser().catch((error) => {
+      this.currentUser = null;
+      throw error;
+    });
+    return this.currentUser;
+  }
+
+  private async fetchCurrentUser(): Promise<Version3Models.User> {
     const client = await this.getClient();
     if (!client) {
       throw new Error("Not authenticated with Jira");
