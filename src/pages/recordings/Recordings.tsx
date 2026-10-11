@@ -242,7 +242,7 @@ const Recordings: React.FC = () => {
                   onUnlinkJiraIssue={handleUnlinkJiraIssue}
                   onCopyJiraLink={handleCopyJiraLink}
                   onCopyTranscript={handleCopyTranscript}
-                  onOpenInAI={handleOpenInAI}
+                  onOpenInAI={aiProvider === "off" ? undefined : handleOpenInAI}
                   aiProviderLabel={aiProviderLabel}
                   isClipboardOnly={isClipboardOnly}
                   onShowInFinder={handleShowInFinder}

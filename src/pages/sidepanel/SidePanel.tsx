@@ -21,7 +21,7 @@ const SidePanel: React.FC = () => {
     "idle" | "testing" | "success" | "error"
   >("idle");
   const [micStream, setMicStream] = useState<MediaStream | null>(null);
-  const { aiPrompt, aiProviderLabel } = useAiSettings();
+  const { aiPrompt, aiProvider, aiProviderLabel } = useAiSettings();
   useSidePanelCloseRequest();
 
   // Restore recording state from session storage on mount (handles reopen mid-recording)
@@ -428,7 +428,7 @@ const SidePanel: React.FC = () => {
 
       <div className="p-4 bg-white dark:bg-slate-800 border-t-2 border-slate-200 dark:border-slate-700 mt-auto">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
-          <Icon name="brain" size={16} /> {aiProviderLabel} Prompt
+          <Icon name="brain" size={16} /> {aiProvider === "off" ? "AI" : aiProviderLabel} Prompt
           <CopyButton textToCopy={aiPrompt} />
         </h3>
 

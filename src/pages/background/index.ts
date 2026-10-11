@@ -1,5 +1,6 @@
 // Background service worker for Chrome Window Recorder
-import type { CloseSidePanelMessage, RecordingSessionState } from "../../types";
+import type { AiApiConfig, CloseSidePanelMessage, ExtensionSettingsStorage, JiraDraft, RecordingSessionState } from "../../types";
+import { DEFAULT_AI_PROMPT, AI_API_PROVIDER_CONFIG, isActiveAiApiProvider } from "../../types";
 
 console.log("Background service worker loaded");
 
@@ -177,7 +178,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.action === "saveGeneratedFilename") {
-    saveGeneratedFilename(message.recordingId, message.generatedFilename)
+    saveGeneratedFilename(message.recordingId, message.generatedFilename, message.jiraDraft)
       .then(() => sendResponse({ success: true }))
       .catch((err: any) => sendResponse({ success: false, error: err.message }));
     return true;
@@ -292,7 +293,8 @@ async function saveTranscript(
 
 async function saveGeneratedFilename(
   recordingId: string,
-  generatedFilename?: string | null
+  generatedFilename?: string | null,
+  jiraDraft?: JiraDraft | null
 ) {
   const result = (await chrome.storage.local.get("recordings")) as any;
   const recordings = result.recordings || [];
@@ -304,6 +306,10 @@ async function saveGeneratedFilename(
 
   if (generatedFilename) {
     recordings[idx].filename = generatedFilename;
+  }
+  if (jiraDraft) {
+    // AI fills summary/description; keep the user's other draft fields (project, priority, ...)
+    recordings[idx].jiraDraft = { ...recordings[idx].jiraDraft, ...jiraDraft };
   }
   recordings[idx].generatingFilename = false;
   await chrome.storage.local.set({ recordings });
@@ -362,16 +368,29 @@ async function startTranscription(recordingId: string) {
       recordingId,
     });
 
-    // Read summarizer setting and create offscreen document in parallel
+    // Read AI settings and create offscreen document in parallel
+    // (offscreen documents can't access chrome.storage, so we pass them along)
     const [settingsResult] = await Promise.all([
-      chrome.storage.local.get("summarizerEnabled"),
+      chrome.storage.local.get(["summarizerEnabled", "aiApiProvider", "aiApiKeys", "aiApiModels", "chatGptPrompt"]),
       setupOffscreenDocument(),
     ]);
     const summarizerEnabled = settingsResult.summarizerEnabled === true;
+    const { aiApiProvider: provider, aiApiKeys, aiApiModels, chatGptPrompt } = settingsResult as ExtensionSettingsStorage;
+    const apiKey = isActiveAiApiProvider(provider) ? String(aiApiKeys?.[provider] ?? "").trim() : "";
+    const model = isActiveAiApiProvider(provider) ? String(aiApiModels?.[provider] ?? "").trim() : "";
+    const aiApi: AiApiConfig | null =
+      isActiveAiApiProvider(provider) && apiKey
+        ? {
+            provider,
+            apiKey,
+            model: model || AI_API_PROVIDER_CONFIG[provider].defaultModel,
+            prompt: typeof chatGptPrompt === "string" && chatGptPrompt.trim() ? chatGptPrompt : DEFAULT_AI_PROMPT,
+          }
+        : null;
 
     // Fire-and-forget: offscreen handles the rest (including persisting the transcript)
     chrome.runtime.sendMessage(
-      { action: "transcribeVideo", recordingId, summarizerEnabled },
+      { action: "transcribeVideo", recordingId, summarizerEnabled, aiApi },
       () => {
         if (chrome.runtime.lastError) {
           // Expected — channel closes immediately

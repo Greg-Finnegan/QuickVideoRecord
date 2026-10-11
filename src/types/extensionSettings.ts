@@ -68,7 +68,7 @@ export interface ExtensionSettings {
 /**
  * AI provider options
  */
-export type AiProvider = "chatgpt" | "claude" | "gemini" | "deepseek" | "perplexity";
+export type AiProvider = "off" | "chatgpt" | "claude" | "gemini" | "deepseek" | "perplexity";
 
 export interface AiProviderConfig {
   label: string;
@@ -102,9 +102,62 @@ export const AI_PROVIDER_CONFIG: Record<AiProvider, AiProviderConfig> = {
     label: "Perplexity",
     urlPrefix: "https://www.perplexity.ai/search/new?q=",
   },
+  // Hides the "Open in" button
+  off: {
+    label: "Off",
+    urlPrefix: "",
+  },
 };
 
 export const DEFAULT_AI_PROVIDER: AiProvider = "chatgpt";
+
+/**
+ * Direct API provider used for automatic filename + Jira draft generation.
+ * "off" falls back to Chrome's built-in Summarizer (if enabled).
+ */
+export type AiApiProvider =
+  | "off"
+  | "openai"
+  | "anthropic"
+  | "groq"
+  | "moonshot"
+  | "gemini"
+  | "openrouter";
+
+export type ActiveAiApiProvider = Exclude<AiApiProvider, "off">;
+
+export interface AiApiProviderConfig {
+  label: string;
+  defaultModel: string;
+  /** Requested via optional_host_permissions when a key is saved */
+  origin: string;
+}
+
+export const AI_API_PROVIDER_CONFIG: Record<ActiveAiApiProvider, AiApiProviderConfig> = {
+  openai: { label: "OpenAI", defaultModel: "gpt-6-luna", origin: "https://api.openai.com/*" },
+  anthropic: { label: "Anthropic", defaultModel: "claude-haiku-5-5", origin: "https://api.anthropic.com/*" },
+  groq: { label: "Groq", defaultModel: "openai/gpt-oss-120b", origin: "https://api.groq.com/*" },
+  moonshot: { label: "Kimi (Moonshot)", defaultModel: "kimi-k2.6", origin: "https://api.moonshot.ai/*" },
+  gemini: { label: "Gemini", defaultModel: "gemini-3.7-flash", origin: "https://generativelanguage.googleapis.com/*" },
+  openrouter: { label: "OpenRouter", defaultModel: "openai/gpt-5.4-mini", origin: "https://openrouter.ai/*" },
+};
+
+export const isActiveAiApiProvider = (value: unknown): value is ActiveAiApiProvider =>
+  typeof value === "string" && value in AI_API_PROVIDER_CONFIG;
+
+/** What the offscreen document needs to call the API (passed from background). */
+export interface AiApiConfig {
+  provider: ActiveAiApiProvider;
+  apiKey: string;
+  model: string;
+  prompt: string;
+}
+
+/** Structured response we require from the API. */
+export interface AiTicketDraft {
+  title: string;
+  description: string;
+}
 
 /**
  * Storage structure for extension settings
@@ -117,6 +170,9 @@ export interface ExtensionSettingsStorage {
   chatGptPrompt?: string;
   aiProvider?: AiProvider;
   summarizerEnabled?: boolean;
+  aiApiProvider?: AiApiProvider;
+  aiApiKeys?: Partial<Record<ActiveAiApiProvider, string>>;
+  aiApiModels?: Partial<Record<ActiveAiApiProvider, string>>;
   devMode?: boolean;
 }
 

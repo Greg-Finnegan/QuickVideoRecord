@@ -49,7 +49,7 @@ const RecordingMetadata: React.FC<RecordingMetadataProps> = ({
         )}
         {recording.generatingFilename && (
           <span className="text-xs text-purple-600 dark:text-purple-400 flex items-center gap-1">
-            <Sparkles size={14} /> Generating filename...
+            <Sparkles size={14} /> Generating title...
           </span>
         )}
       </div>

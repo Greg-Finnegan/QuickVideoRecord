@@ -29,6 +29,8 @@ import {
   Plus,
   Pause,
   Play,
+  RefreshCw,
+  Zap,
   type LucideProps,
   PanelLeftClose,
 } from "lucide-react";
@@ -67,6 +69,8 @@ export type IconName =
   | "pause"
   | "play"
   | "panel-left-close"
+  | "refresh"
+  | "zap"
 
 /**
  * Icon component props
@@ -110,6 +114,8 @@ const iconMap: Record<IconName, React.ComponentType<LucideProps>> = {
   pause: Pause,
   play: Play,
   "panel-left-close": PanelLeftClose,
+  refresh: RefreshCw,
+  zap: Zap,
 };
 
 /**

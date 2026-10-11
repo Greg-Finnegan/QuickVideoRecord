@@ -53,6 +53,11 @@ export type {
   ExtensionState,
   AiProvider,
   AiProviderConfig,
+  AiApiProvider,
+  ActiveAiApiProvider,
+  AiApiProviderConfig,
+  AiApiConfig,
+  AiTicketDraft,
 } from "./extensionSettings";
 
 // Side panel message types
@@ -71,4 +76,6 @@ export {
   DEFAULT_AI_PROMPT,
   DEFAULT_AI_PROVIDER,
   AI_PROVIDER_CONFIG,
+  AI_API_PROVIDER_CONFIG,
+  isActiveAiApiProvider,
 } from "./extensionSettings";

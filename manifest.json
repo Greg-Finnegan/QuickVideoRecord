@@ -25,6 +25,14 @@
   "host_permissions": [
     "https://api.atlassian.com/*"
   ],
+  "optional_host_permissions": [
+    "https://api.openai.com/*",
+    "https://api.anthropic.com/*",
+    "https://api.groq.com/*",
+    "https://api.moonshot.ai/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://openrouter.ai/*"
+  ],
   "background": {
     "service_worker": "src/pages/background/index.ts",
     "type": "module"

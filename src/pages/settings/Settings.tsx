@@ -14,6 +14,7 @@ import DefaultIssueTypeSetting from "./components/DefaultIssueTypeSetting";
 import DefaultSprintSetting from "./components/DefaultSprintSetting";
 import AiPromptSetting from "./components/AiPromptSetting";
 import AiProviderSetting from "./components/AiProviderSetting";
+import AiApiSetting from "./components/AiApiSetting";
 import { useTheme } from "../../hooks/useTheme";
 import { useJiraConnection } from "./hooks/useJiraConnection";
 import { useJiraProjects } from "./hooks/useJiraProjects";
@@ -53,7 +54,20 @@ const Settings: React.FC = () => {
   } = useJiraSprints(isJiraConnected);
   const { issueTypes, loading: loadingIssueTypes } = useJiraIssueTypes(defaultProject);
   const { defaultIssueType, handleIssueTypeChange } = useJiraIssueType();
-  const { aiProvider, aiPrompt, handleProviderChange, handlePromptChange } = useAiSettings();
+  const {
+    aiProvider,
+    aiPrompt,
+    handleProviderChange,
+    handlePromptChange,
+    aiApiProvider,
+    aiApiKey,
+    aiApiModel,
+    aiApiLabel,
+    isAiApiActive,
+    handleApiProviderChange,
+    handleApiKeyChange,
+    handleApiModelChange,
+  } = useAiSettings();
   const { clearAllRecordings } = useRecordings();
   const { devMode, setDevMode } = useDevMode();
 
@@ -73,7 +87,11 @@ const Settings: React.FC = () => {
           {/* AI Integration Section */}
           <SettingsCard
             title="AI Integration"
-            description='Choose your preferred AI provider and customize the prompt prepended to your transcript. No data is automatically sent to any provider. You must click the "Open in" button, which transfers your prompt + transcript via URL parameters if the provider supports it.'
+            description={`Choose your preferred AI provider and customize the prompt prepended to your transcript. ${
+              isAiApiActive
+                ? `Transcripts are automatically sent to ${aiApiLabel} with this prompt after transcription.`
+                : 'No data is automatically sent to any provider. You must click the "Open in" button, which transfers your prompt + transcript via URL parameters if the provider supports it.'
+            }`}
           >
             <div className="space-y-6">
               <AiProviderSetting
@@ -87,8 +105,20 @@ const Settings: React.FC = () => {
                 />
               </div>
 
-              {/* Auto-Generate Filenames */}
-              <SummarizerToggle />
+              <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
+                <AiApiSetting
+                  provider={aiApiProvider}
+                  apiKey={aiApiKey}
+                  model={aiApiModel}
+                  label={aiApiLabel}
+                  onProviderChange={handleApiProviderChange}
+                  onApiKeyChange={handleApiKeyChange}
+                  onModelChange={handleApiModelChange}
+                />
+              </div>
+
+              {/* Auto-Generate Filenames (browser AI, used when no API is configured) */}
+              {!isAiApiActive && <SummarizerToggle />}
             </div>
           </SettingsCard>
 

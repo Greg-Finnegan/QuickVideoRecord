@@ -2,6 +2,9 @@ import { transcriptionWorkerService } from '../../utils/transcriptionWorkerServi
 import { videoStorage } from '../../utils/videoStorage';
 import { sanitizeRecordingFilename } from '../../utils/sanitizeFilename';
 import { generateTitle } from '../../utils/summarizerConfig';
+import { generateTicketDraft } from '../../utils/aiApi';
+import { AI_API_PROVIDER_CONFIG } from '../../types';
+import type { AiApiConfig, JiraDraft } from '../../types';
 
 console.log('Offscreen document loaded for transcription');
 
@@ -12,7 +15,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     sendResponse({ success: true, started: true });
 
     // Continue transcription in background (fire-and-forget)
-    handleTranscribe(message.recordingId, message.summarizerEnabled === true).catch((error) => {
+    handleTranscribe(message.recordingId, message.summarizerEnabled === true, message.aiApi ?? null).catch((error) => {
       console.error('[Offscreen] Background transcription failed:', error);
     });
 
@@ -52,8 +55,14 @@ function sendProgress(recordingId: string, statusMessage: string, progress: numb
   }
 }
 
-async function handleTranscribe(recordingId: string, summarizerEnabled: boolean): Promise<string> {
+async function handleTranscribe(
+  recordingId: string,
+  summarizerEnabled: boolean,
+  aiApi: AiApiConfig | null
+): Promise<string> {
   console.log('[Offscreen] Starting transcription for recording:', recordingId);
+  // A configured API replaces the browser Summarizer
+  const generatingFilename = summarizerEnabled || aiApi !== null;
 
   try {
     sendProgress(recordingId, 'Initializing transcription', 0);
@@ -83,7 +92,7 @@ async function handleTranscribe(recordingId: string, summarizerEnabled: boolean)
       action: 'saveTranscript',
       recordingId,
       transcript,
-      generatingFilename: summarizerEnabled,
+      generatingFilename,
     });
 
     if (!saveResult?.success) {
@@ -92,9 +101,22 @@ async function handleTranscribe(recordingId: string, summarizerEnabled: boolean)
 
     console.log('[Offscreen] Transcript saved successfully:', recordingId);
 
-    // Attempt to generate a descriptive filename via Summarizer API
     let generatedFilename: string | null = null;
-    if (summarizerEnabled) {
+    let jiraDraft: JiraDraft | null = null;
+    if (aiApi) {
+      try {
+        sendProgress(recordingId, `Awaiting ${AI_API_PROVIDER_CONFIG[aiApi.provider].label} response...`, 97);
+        const draft = await generateTicketDraft(aiApi, transcript);
+        generatedFilename = sanitizeRecordingFilename(draft.title) || null;
+        jiraDraft = {
+          summary: draft.title.slice(0, 255),
+          description: draft.description,
+        };
+      } catch (err) {
+        console.warn('[Offscreen] AI API draft failed, keeping original filename:', err);
+      }
+    } else if (summarizerEnabled) {
+      // Attempt to generate a descriptive filename via Summarizer API
       try {
         sendProgress(recordingId, 'Generating title...', 97);
         const title = await generateTitle(transcript);
@@ -109,11 +131,12 @@ async function handleTranscribe(recordingId: string, summarizerEnabled: boolean)
       }
     }
 
-    if (summarizerEnabled) {
+    if (generatingFilename) {
       const filenameResult = await sendToBackground({
         action: 'saveGeneratedFilename',
         recordingId,
         generatedFilename,
+        jiraDraft,
       });
       if (!filenameResult?.success) {
         console.error(

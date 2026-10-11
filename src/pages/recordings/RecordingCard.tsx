@@ -138,13 +138,14 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
               Copy Script
               <Icon name="copy" size={14} />
             </Button>
+            {onOpenInAI && (
             <Button
               variant="ghost"
               rounded="full"
               className="bg-transparent !px-2 !py-2 text-lg flex-shrink-0 !gap-1"
               onClick={(e) => {
                 e.stopPropagation();
-                if (recording.transcript && onOpenInAI) {
+                if (recording.transcript) {
                   onOpenInAI(recording.transcript);
                 }
               }}
@@ -160,6 +161,7 @@ const RecordingCard: React.FC<RecordingCardProps> = ({
               {isClipboardOnly ? `Copy & Open ${aiProviderLabel}` : `Open in ${aiProviderLabel}`}
               <Icon name="external-link" size={14} />
             </Button>
+            )}
             {isJiraConnected &&
               (recording.jiraIssueKey ? (
                 <a
