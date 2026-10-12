@@ -13,7 +13,7 @@
     "prebuild": "npm run download:model",
     "build:chrome": "vite build --config vite.config.chrome.ts",
     "prebuild:chrome": "npm run download:model",
-    "build:chromeWithZip": "vite build --config vite.config.chrome.ts && cd dist_chrome && zip -r ../dist_chrome.zip . && cd ..",
+    "build:chromeWithZip": "vite build --config vite.config.chrome.ts && rm -f dist_chrome.zip && cd dist_chrome && zip -r ../dist_chrome.zip . && cd ..",
     "prebuild:chromeWithZip": "npm run download:model",
     "build:firefox": "vite build --config vite.config.firefox.ts",
     "prebuild:firefox": "npm run download:model",
