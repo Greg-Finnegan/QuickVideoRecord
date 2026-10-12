@@ -1,7 +1,7 @@
 # Changelog
 
 ## v1.2.8 — 2026-10-11
-- **Bring your own AI API key** — connect OpenAI, Anthropic, Gemini, Groq, Kimi (Moonshot), or OpenRouter. After transcription, the transcript and your prompt go to the provider, which returns a recording title plus a drafted Jira summary and description.
+- **Bring your own AI API key** — connect OpenAI, Anthropic, Gemini, Grok (xAI), Kimi (Moonshot), or OpenRouter. After transcription, the transcript and your prompt go to the provider, which returns a recording title plus a drafted Jira summary and description.
 - **Optional permissions** — the extension asks for access to a provider's API host only when you use a key for that provider.
 - **"Off" option for the AI chat provider** — hides the "Open in…" button on recording cards.
 - **Faster Jira cold load** — optimistic auth and caching speed up the Jira header and Settings on first open.

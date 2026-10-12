@@ -34,8 +34,8 @@ export function getModel({ provider, apiKey, model }: Omit<AiApiConfig, "prompt"
         // Required for CORS from extension pages; the SDK doesn't add it
         headers: { "anthropic-dangerous-direct-browser-access": "true" },
       })(model);
-    case "groq":
-      return createOpenAI({ apiKey, baseURL: "https://api.groq.com/openai/v1" }).chat(model);
+    case "xai":
+      return createOpenAI({ apiKey, baseURL: "https://api.x.ai/v1" }).chat(model);
     case "moonshot":
       return createOpenAI({ apiKey, baseURL: "https://api.moonshot.ai/v1" }).chat(model);
     case "gemini":

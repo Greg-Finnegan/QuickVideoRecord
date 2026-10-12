@@ -119,7 +119,7 @@ export type AiApiProvider =
   | "off"
   | "openai"
   | "anthropic"
-  | "groq"
+  | "xai"
   | "moonshot"
   | "gemini"
   | "openrouter";
@@ -136,7 +136,7 @@ export interface AiApiProviderConfig {
 export const AI_API_PROVIDER_CONFIG: Record<ActiveAiApiProvider, AiApiProviderConfig> = {
   openai: { label: "OpenAI", defaultModel: "gpt-6-luna", origin: "https://api.openai.com/*" },
   anthropic: { label: "Anthropic", defaultModel: "claude-haiku-5-5", origin: "https://api.anthropic.com/*" },
-  groq: { label: "Groq", defaultModel: "openai/gpt-oss-120b", origin: "https://api.groq.com/*" },
+  xai: { label: "Grok (xAI)", defaultModel: "grok-4", origin: "https://api.x.ai/*" },
   moonshot: { label: "Kimi (Moonshot)", defaultModel: "kimi-k2.6", origin: "https://api.moonshot.ai/*" },
   gemini: { label: "Gemini", defaultModel: "gemini-3.7-flash", origin: "https://generativelanguage.googleapis.com/*" },
   openrouter: { label: "OpenRouter", defaultModel: "openai/gpt-5.4-mini", origin: "https://openrouter.ai/*" },
