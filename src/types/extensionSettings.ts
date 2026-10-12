@@ -174,6 +174,7 @@ export interface ExtensionSettingsStorage {
   aiApiKeys?: Partial<Record<ActiveAiApiProvider, string>>;
   aiApiModels?: Partial<Record<ActiveAiApiProvider, string>>;
   devMode?: boolean;
+  micDeviceId?: string;
 }
 
 /**

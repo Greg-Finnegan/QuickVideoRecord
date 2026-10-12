@@ -6,6 +6,7 @@ import Icon from '../../components/Icon';
 import AudioVisualizer from '../../components/AudioVisualizer';
 import { useStreamAudioLevels } from '../../hooks/useStreamAudioLevels';
 import { Recording, RecordingStorage } from '../../types/recording';
+import type { ExtensionSettingsStorage } from '../../types';
 import { videoStorage } from '../../utils/videoStorage';
 import { RecordingTimer } from '../../utils/recordingTimer';
 
@@ -15,6 +16,13 @@ const Recorder: React.FC = () => {
   const recordingStreamRef = useRef<MediaStream | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef(new RecordingTimer());
+  // Audio mixer kept around so the mic can be swapped mid-recording
+  const mixerRef = useRef<{
+    ctx: AudioContext;
+    dest: MediaStreamAudioDestinationNode;
+    micSource: MediaStreamAudioSourceNode | null;
+    micStream: MediaStream | null;
+  } | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [showStartButton, setShowStartButton] = useState(true);
@@ -70,11 +78,45 @@ const Recorder: React.FC = () => {
 
     chrome.runtime.onMessage.addListener(messageListener);
 
+    // Mic picked in the side panel while recording
+    const storageListener = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+      const next = changes.micDeviceId?.newValue;
+      if (typeof next === 'string') void switchMic(next);
+    };
+    chrome.storage.local.onChanged.addListener(storageListener);
+
     return () => {
       if (timer) clearTimeout(timer);
       chrome.runtime.onMessage.removeListener(messageListener);
+      chrome.storage.local.onChanged.removeListener(storageListener);
     };
   }, []);
+
+  const getMic = async (deviceId: string | undefined, exact = false): Promise<MediaStream | null> => {
+    const audio =
+      deviceId && deviceId !== 'default'
+        ? { deviceId: exact ? { exact: deviceId } : { ideal: deviceId } }
+        : true;
+    try {
+      return await navigator.mediaDevices.getUserMedia({ audio, video: false });
+    } catch (err) {
+      console.warn('Microphone not available:', err);
+      return null;
+    }
+  };
+
+  const switchMic = async (deviceId: string) => {
+    const mixer = mixerRef.current;
+    if (!mixer) return; // not recording
+    const next = await getMic(deviceId, true);
+    if (!next) return; // keep the current mic
+    const source = mixer.ctx.createMediaStreamSource(next);
+    source.connect(mixer.dest);
+    mixer.micSource?.disconnect();
+    mixer.micStream?.getTracks().forEach((t) => t.stop());
+    mixerRef.current = { ...mixer, micSource: source, micStream: next };
+    console.log('Switched microphone:', next.getAudioTracks()[0]?.label);
+  };
 
   const handleStartClick = () => {
     setShowStartButton(false);
@@ -100,48 +142,25 @@ const Recorder: React.FC = () => {
       console.log('Video tracks:', displayStream.getVideoTracks());
       console.log('Audio tracks:', displayStream.getAudioTracks());
 
-      // Try to get microphone audio (gracefully handle if unavailable)
-      let micStream: MediaStream | null = null;
-      try {
-        console.log('Requesting microphone access...');
-        micStream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: false,
-        });
-        console.log('Got microphone stream:', micStream);
-      } catch (micErr) {
-        console.warn('Microphone not available, recording without mic:', micErr);
-      }
+      // Mic is optional; record without it if unavailable
+      const { micDeviceId } = (await chrome.storage.local.get('micDeviceId')) as ExtensionSettingsStorage;
+      const micStream = await getMic(micDeviceId);
 
-      // Build the final stream
-      let finalStream: MediaStream;
+      // Always mix through an AudioContext so the mic can be swapped live
+      const audioContext = new AudioContext();
+      const dest = audioContext.createMediaStreamDestination();
       const systemAudioTracks = displayStream.getAudioTracks();
-
-      if (micStream) {
-        // Mix system audio + microphone audio
-        const audioContext = new AudioContext();
-        const dest = audioContext.createMediaStreamDestination();
-
-        if (systemAudioTracks.length > 0) {
-          console.log('Mixing system audio with microphone');
-          const systemSource = audioContext.createMediaStreamSource(
-            new MediaStream(systemAudioTracks)
-          );
-          systemSource.connect(dest);
-        }
-
-        const micSource = audioContext.createMediaStreamSource(micStream);
-        micSource.connect(dest);
-
-        finalStream = new MediaStream([
-          ...displayStream.getVideoTracks(),
-          ...dest.stream.getAudioTracks(),
-        ]);
-      } else {
-        // No mic — use display stream as-is (video + system audio if present)
-        console.log('Recording without microphone');
-        finalStream = displayStream;
+      if (systemAudioTracks.length > 0) {
+        audioContext.createMediaStreamSource(new MediaStream(systemAudioTracks)).connect(dest);
       }
+      const micSource = micStream ? audioContext.createMediaStreamSource(micStream) : null;
+      micSource?.connect(dest);
+      mixerRef.current = { ctx: audioContext, dest, micSource, micStream };
+
+      const finalStream = new MediaStream([
+        ...displayStream.getVideoTracks(),
+        ...dest.stream.getAudioTracks(),
+      ]);
 
       console.log('Final stream created');
       finalStream.getTracks().forEach((track) => {
@@ -303,6 +322,9 @@ const Recorder: React.FC = () => {
       recordingTimerRef.current.stop();
       recorder.stop();
     }
+    const mixer = mixerRef.current;
+    mixerRef.current = null;
+    mixer?.micStream?.getTracks().forEach((t) => t.stop());
     // Tear down the visualizer / stop broadcasting levels.
     setIsPaused(false);
     setAudioStream(null);

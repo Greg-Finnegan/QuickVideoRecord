@@ -9,6 +9,8 @@ import type { RecordingSessionState } from "../../types";
 import { AUDIO_LEVELS_MESSAGE } from "../../hooks/useStreamAudioLevels";
 import { useAiSettings } from "../settings/hooks/useAiSettings";
 import { useSidePanelCloseRequest } from "./hooks/useSidePanelCloseRequest";
+import { useMicDevices } from "./hooks/useMicDevices";
+import MicSelect from "./MicSelect";
 
 const SidePanel: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -23,6 +25,7 @@ const SidePanel: React.FC = () => {
   const [micStream, setMicStream] = useState<MediaStream | null>(null);
   const { aiPrompt, aiProvider, aiProviderLabel } = useAiSettings();
   useSidePanelCloseRequest();
+  const { devices: micDevices, micDeviceId, selectMic, refresh: refreshMicDevices } = useMicDevices();
 
   // Restore recording state from session storage on mount (handles reopen mid-recording)
   useEffect(() => {
@@ -254,11 +257,13 @@ const SidePanel: React.FC = () => {
 
       // This will trigger the permission prompt if state is "prompt"
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: micDeviceId && micDeviceId !== "default" ? { deviceId: { exact: micDeviceId } } : true,
         video: false,
       });
 
       console.log("Microphone access granted:", stream);
+      // Labels only appear once permission is granted
+      void refreshMicDevices();
       setMicStream(stream);
       setMicStatus("success");
 
@@ -330,7 +335,7 @@ const SidePanel: React.FC = () => {
           onClick={handleStartRecording}
           disabled={isRecording}
         >
-          Start Recording
+          <Icon name="video" size={16} /> Start Recording
         </Button>
 
         {isRecording && (
@@ -359,37 +364,52 @@ const SidePanel: React.FC = () => {
         )}
 
         {isRecording && (
-          <div className="mb-2 px-4 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg flex flex-col items-center gap-1.5">
+          <div className="mb-6 px-4 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg flex flex-col items-center gap-1.5">
             <AudioVisualizer levels={isPaused ? [] : audioLevels} isActive={!isPaused} className="w-full" />
             <span className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
               <Icon name="mic" size={12} />
               {isPaused ? "Audio capture is paused" : "Audio is being captured"}
             </span>
+            {/* Recorder swaps its mic input live when this changes */}
+            <div className="w-full mt-2 flex">
+              <MicSelect devices={micDevices} value={micDeviceId} onChange={(id) => void selectMic(id)} />
+            </div>
           </div>
         )}
 
-        <Button
-          variant={
-            micStatus === "success"
-              ? "success"
-              : micStatus === "error"
-                ? "error"
-                : "secondary"
-          }
-          rounded="full"
-          fullWidth
-          className={`mb-2 px-4 py-2.5 flex items-center justify-center gap-2 ${isRecording ? "hidden" : ""}`}
-          onClick={handleTestMicrophone}
-          disabled={isRecording}
-        >
-          {micStatus === "testing" && <Icon name="record" size={16} />}
-          {micStatus === "success" && <Icon name="check-circle" size={16} />}
-          {micStatus === "error" && <Icon name="x-circle" size={16} />}
-          {micStatus === "idle" && "Test Microphone"}
-          {micStatus === "testing" && "Testing... (3s)"}
-          {micStatus === "success" && "Microphone OK!"}
-          {micStatus === "error" && "Microphone Error"}
-        </Button>
+        <div className={`flex items-center w-full gap-2 mb-6 ${isRecording ? "hidden" : ""}`}>
+          <MicSelect
+            devices={micDevices}
+            value={micDeviceId}
+            onChange={(id) => void selectMic(id)}
+            disabled={micStatus === "testing"}
+          />
+          <Button
+            variant={
+              micStatus === "success"
+                ? "success"
+                : micStatus === "error"
+                  ? "error"
+                  : "secondary"
+            }
+            rounded="full"
+            className="px-4 py-2.5 whitespace-nowrap"
+            onClick={handleTestMicrophone}
+            disabled={isRecording}
+          >
+            {micStatus === "testing" && <Icon name="record" size={16} />}
+            {micStatus === "success" && <Icon name="check-circle" size={16} />}
+            {micStatus === "error" && <Icon name="x-circle" size={16} />}
+            {micStatus === "idle" && (
+              <>
+                <Icon name="mic" size={16} /> Test
+              </>
+            )}
+            {micStatus === "testing" && "Testing..."}
+            {micStatus === "success" && "OK"}
+            {micStatus === "error" && "Error"}
+          </Button>
+        </div>
         <Button
           variant="secondary"
           fullWidth

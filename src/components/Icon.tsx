@@ -20,6 +20,7 @@ import {
   Timer,
   HardDrive,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Edit,
@@ -59,6 +60,7 @@ export type IconName =
   | "timer"
   | "save"
   | "check"
+  | "chevron-down"
   | "chevron-left"
   | "chevron-right"
   | "edit"
@@ -104,6 +106,7 @@ const iconMap: Record<IconName, React.ComponentType<LucideProps>> = {
   timer: Timer,
   save: HardDrive,
   check: Check,
+  "chevron-down": ChevronDown,
   "chevron-left": ChevronLeft,
   "chevron-right": ChevronRight,
   edit: Edit,

@@ -5,6 +5,7 @@
 - **Optional permissions** — the extension asks for access to a provider's API host only when you use a key for that provider.
 - **"Off" option for the AI chat provider** — hides the "Open in…" button on recording cards.
 - **Faster Jira cold load** — optimistic auth and caching speed up the Jira header and Settings on first open.
+- **Microphone picker** — choose your mic from a dropdown in the side panel, test it, and switch mics live during a recording.
 
 ## v1.2.7 — 2026-07-30
 - **Pause and resume recordings** — pause in the middle of recording, resume when ready.

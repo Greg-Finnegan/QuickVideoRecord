@@ -65,7 +65,12 @@ const AiApiSetting: React.FC<AiApiSettingProps> = ({
   const saveDraftKey = async () => {
     if (provider === "off" || !draftKey.trim()) return;
     setTestError(null);
-    if (!(await requestAccess(provider))) return accessDenied(provider);
+    try {
+      if (!(await requestAccess(provider))) return accessDenied(provider);
+    } catch (err) {
+      // e.g. the loaded manifest predates optional_host_permissions (reload the extension)
+      return setTestError(err instanceof Error ? err.message : "Permission request failed");
+    }
     onApiKeyChange(draftKey.trim());
     setDraftKey("");
   };
